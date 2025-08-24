@@ -114,21 +114,21 @@ namespace ms
 
 			if (attack.toleft)
 			{
-				range = {
+				range = Rectangle<int16_t>(
 					origin.x() + hrange,
 					origin.x() + range.right(),
 					origin.y() + range.top(),
 					origin.y() + range.bottom()
-				};
+				);
 			}
 			else
 			{
-				range = {
+				range = Rectangle<int16_t>(
 					origin.x() - range.right(),
 					origin.x() - hrange,
 					origin.y() + range.top(),
 					origin.y() + range.bottom()
-				};
+				);
 			}
 
 			// This approach should also make it easier to implement PvP

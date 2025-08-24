@@ -24,7 +24,8 @@
 #else
 #include "../Util/WzFiles.h"
 #endif
-
+#include <cmath>
+#include <string>
 namespace ms
 {
 	template <class T>
@@ -159,58 +160,58 @@ namespace ms
 		// Return a point whose coordinates are the negation of this point's coordinates
 		constexpr Point<T> operator - () const
 		{
-			return { -a, -b };
+			return Point<T>( - a, -b);
 		}
 
 		// Return a point whose coordinates have been added the specified amount
 		constexpr Point<T> operator + (T v) const
 		{
-			return { a + v, b + v };
+			return Point<T>(a + v, b + v);
 		}
 
 		// Return a point whose coordinates have been subtracted the specified amount
 		constexpr Point<T> operator - (T v) const
 		{
-			return { a - v, b - v };
+			return Point<T>(a - v, b - v);
 		}
 
 		// Return a point whose coordinates have been multiplied by the specified amount
 		constexpr Point<T> operator * (T v) const
 		{
-			return { a * v, b * v };
+			return Point<T>(a * v, b * v);
 		}
 
 		// Return a point whose coordinates have been divided by the specified amount
 		constexpr Point<T> operator / (T v) const
 		{
-			return { a / v, b / v };
+			return Point<T>(a / v, b / v);
 		}
 
 		// Return a point whose coordinates are the sum of this and another points coordinates
 		constexpr Point<T> operator + (Point<T> v) const
 		{
-			return { a + v.a, b + v.b };
+			return Point<T>( a + v.a, b + v.b );
 		}
 
 		// Return a point whose coordinates are the difference of this and another points coordinates
 		constexpr Point<T> operator - (Point<T> v) const
 		{
-			return { a - v.a, b - v.b };
+			return Point<T>(a - v.a, b - v.b);
 		}
 
 		// Return a point whose coordinates are the product of this and another points coordinates
 		constexpr Point<T> operator * (Point<T> v) const
 		{
-			return { a / v.a, b / v.b };
+			return Point<T>(a / v.a, b / v.b);
 		}
 
 		// Return a point whose coordinates are the division of this and another points coordinates
 		constexpr Point<T> operator / (Point<T> v) const
 		{
-			return {
+			return Point<T>(
 				a / (v.a == 0 ? 1 : v.a),
 				b / (v.b == 0 ? 1 : v.b)
-			};
+			);
 		}
 
 	private:

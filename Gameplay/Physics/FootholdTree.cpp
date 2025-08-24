@@ -88,8 +88,8 @@ namespace ms
 			}
 		}
 
-		walls = { leftw + 25, rightw - 25 };
-		borders = { topb - 300, botb + 100 };
+		walls = Range<int16_t>(leftw + 25, rightw - 25);
+		borders = Range<int16_t>(topb - 300, botb + 100);
 	}
 
 	FootholdTree::FootholdTree() {}

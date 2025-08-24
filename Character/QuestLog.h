@@ -18,7 +18,7 @@
 #pragma once
 
 #include <map>
-
+#include <string>
 namespace ms
 {
 	// Class that stores information on the quest log of an individual character

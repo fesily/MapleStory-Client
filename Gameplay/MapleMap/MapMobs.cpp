@@ -128,12 +128,12 @@ namespace ms
 		Range<int16_t> horizontal = Range<int16_t>(moveobj.get_last_x(), moveobj.get_x());
 		Range<int16_t> vertical = Range<int16_t>(moveobj.get_last_y(), moveobj.get_y());
 
-		Rectangle<int16_t> player_rect = {
+		Rectangle<int16_t> player_rect(
 			horizontal.smaller(),
 			horizontal.greater(),
 			vertical.smaller() - 50,
 			vertical.greater()
-		};
+		);
 
 		auto iter = std::find_if(
 			mobs.begin(),

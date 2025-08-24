@@ -20,7 +20,7 @@
 #include "EquipStat.h"
 
 #include "Inventory/Weapon.h"
-
+#include <string>
 namespace ms
 {
 	class Job

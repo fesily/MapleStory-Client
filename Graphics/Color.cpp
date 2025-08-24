@@ -19,6 +19,8 @@
 
 #include "../Util/Lerp.h"
 
+#include <algorithm>
+
 namespace ms
 {
 	const float* Color::data() const
