@@ -231,7 +231,134 @@ namespace ms
 				return "";
 		}
 	}
-
+	// std::string Job::get_name(JobId jid) const
+	// {
+	// 	switch (jid)
+	// 	{
+	// 		case JobId::BEGINNER:
+	// 			return "Beginner";
+	// 		case JobId::WARRIOR:
+	// 			return "Swordsman";
+	// 		case JobId::FIGHTER:
+	// 			return "Fighter";
+	// 		case JobId::CRUSADER:
+	// 			return "Crusader";
+	// 		case JobId::HERO:
+	// 			return "Hero";
+	// 		case JobId::PAGE:
+	// 			return "Page";
+	// 		case JobId::WHITEKNIGHT:
+	// 			return "White Knight";
+	// 		case JobId::PALADIN:
+	// 			return "Paladin";
+	// 		case JobId::SPEARMAN:
+	// 			return "Spearman";
+	// 		case JobId::DRAGONKNIGHT:
+	// 			return "Dragon Knight";
+	// 		case JobId::DARKKNIGHT:
+	// 			return "Dark Knight";
+	// 		case JobId::MAGICIAN:
+	// 			return "Magician";
+	// 		case JobId::FP_WIZARD:
+	// 			return "Wizard (F/P)";
+	// 		case JobId::FP_MAGE:
+	// 			return "Mage (F/P)";
+	// 		case JobId::FP_ARCHMAGE:
+	// 			return "Archmage (F/P)";
+	// 		case JobId::IL_WIZARD:
+	// 			return "Wizard (I/L)";
+	// 		case JobId::IL_MAGE:
+	// 			return "Mage (I/L)";
+	// 		case JobId::IL_ARCHMAGE:
+	// 			return "Archmage (I/L)";
+	// 		case JobId::CLERIC:
+	// 			return "Cleric";
+	// 		case JobId::PRIEST:
+	// 			return "Priest";
+	// 		case JobId::BISHOP:
+	// 			return "Bishop";
+	// 		case JobId::BOWMAN:
+	// 			return "Archer";
+	// 		case JobId::HUNTER:
+	// 			return "Hunter";
+	// 		case JobId::RANGER:
+	// 			return "Ranger";
+	// 		case JobId::BOWMASTER:
+	// 			return "Bowmaster";
+	// 		case JobId::CROSSBOWMAN:
+	// 			return "Crossbowman";
+	// 		case JobId::SNIPER:
+	// 			return "Sniper";
+	// 		case JobId::MARKSMAN:
+	// 			return "Marksman";
+	// 		case JobId::THIEF:
+	// 			return "Rogue";
+	// 		case JobId::ASSASSIN:
+	// 			return "Assassin";
+	// 		case JobId::HERMIT:
+	// 			return "Hermit";
+	// 		case JobId::NIGHTLORD:
+	// 			return "Nightlord";
+	// 		case JobId::BANDIT:
+	// 			return "Bandit";
+	// 		case JobId::CHIEFBANDIT:
+	// 			return "Chief Bandit";
+	// 		case JobId::SHADOWER:
+	// 			return "Shadower";
+	// 		case JobId::PIRATE:
+	// 			return "Pirate";
+	// 		case JobId::BRAWLER:
+	// 			return "Brawler";
+	// 		case JobId::MARAUDER:
+	// 			return "Marauder";
+	// 		case JobId::BUCCANEER:
+	// 			return "Buccaneer";
+	// 		case JobId::GUNSLINGER:
+	// 			return "Gunslinger";
+	// 		case JobId::OUTLAW:
+	// 			return "Outlaw";
+	// 		case JobId::CORSAIR:
+	// 			return "Corsair";
+	// 		case JobId::NOBLESSE:
+	// 			return "Noblesse";
+	// 		case JobId::DAWNWARRIOR1:
+	// 		case JobId::DAWNWARRIOR2:
+	// 		case JobId::DAWNWARRIOR3:
+	// 		case JobId::DAWNWARRIOR4:
+	// 			return "Dawn Warrior";
+	// 		case JobId::BLAZEWIZARD1:
+	// 		case JobId::BLAZEWIZARD2:
+	// 		case JobId::BLAZEWIZARD3:
+	// 		case JobId::BLAZEWIZARD4:
+	// 			return "Blaze Wizard";
+	// 		case JobId::WINDARCHER1:
+	// 		case JobId::WINDARCHER2:
+	// 		case JobId::WINDARCHER3:
+	// 		case JobId::WINDARCHER4:
+	// 			return "Wind Archer";
+	// 		case JobId::NIGHTWALKER1:
+	// 		case JobId::NIGHTWALKER2:
+	// 		case JobId::NIGHTWALKER3:
+	// 		case JobId::NIGHTWALKER4:
+	// 			return "Night Walker";
+	// 		case JobId::THUNDERBREAKER1:
+	// 		case JobId::THUNDERBREAKER2:
+	// 		case JobId::THUNDERBREAKER3:
+	// 		case JobId::THUNDERBREAKER4:
+	// 			return "Thunder Breaker";
+	// 		case JobId::ARAN1:
+	// 		case JobId::ARAN2:
+	// 		case JobId::ARAN3:
+	// 		case JobId::ARAN4:
+	// 			return "Aran";
+	// 		case JobId::GM:
+	// 			return "GM";
+	// 		case JobId::SUPERGM:
+	// 			return "SuperGM";
+	// 		default:
+	// 			return "";
+	// 	}
+	// }
 	EquipStat::Id Job::get_primary(Weapon::Type weapontype) const
 	{
 		switch (id / 100)
