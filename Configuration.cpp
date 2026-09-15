@@ -19,7 +19,34 @@
 
 #include "Util/Misc.h"
 
+#include <cctype>
+#include <cstdlib>
 #include <fstream>
+
+namespace
+{
+	// Read an environment variable. Unset and empty variables return an empty
+	// string, neither of which overrides a setting.
+	std::string get_environment_variable(const std::string& key)
+	{
+#ifdef _WIN32
+		char* buffer = nullptr;
+		size_t size = 0;
+
+		if (_dupenv_s(&buffer, &size, key.c_str()) != 0 || !buffer)
+			return {};
+
+		std::string value = buffer;
+		free(buffer);
+
+		return value;
+#else
+		const char* value = std::getenv(key.c_str());
+
+		return value ? std::string(value) : std::string();
+#endif
+	}
+}
 
 namespace ms
 {
@@ -108,6 +135,16 @@ namespace ms
 
 			if (rsiter != rawsettings.end())
 				setting.second->value = rsiter->second;
+
+			// The environment takes precedence over the settings file, so that a
+			// client can be pointed elsewhere without editing the file
+			std::string envname = ENVPREFIX + setting.second->name;
+
+			for (char& c : envname)
+				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+
+			setting.second->env_value = get_environment_variable(envname);
+			setting.second->env_override = !setting.second->env_value.empty();
 		}
 	}
 
@@ -127,35 +164,46 @@ namespace ms
 	void Configuration::BoolEntry::save(bool b)
 	{
 		value = b ? "true" : "false";
+		clear_override();
 	}
 
 	bool Configuration::BoolEntry::load() const
 	{
-		return value == "true";
+		return load_value() == "true";
 	}
 
 	void Configuration::StringEntry::save(std::string str)
 	{
 		value = str;
+		clear_override();
 	}
 
 	std::string Configuration::StringEntry::load() const
 	{
-		return value;
+		return load_value();
 	}
 
 	void Configuration::PointEntry::save(Point<int16_t> vec)
 	{
 		value = vec.to_string();
+		clear_override();
 	}
 
 	Point<int16_t> Configuration::PointEntry::load() const
 	{
-		std::string xstr = value.substr(1, value.find(",") - 1);
-		std::string ystr = value.substr(value.find(",") + 1, value.find(")") - value.find(",") - 1);
+		// Accepts "(x,y)" as written to the settings file and "x,y" as written to
+		// the environment
+		const std::string& str = load_value();
 
-		auto x = string_conversion::or_zero<int16_t>(xstr);
-		auto y = string_conversion::or_zero<int16_t>(ystr);
+		size_t comma = str.find(',');
+		size_t first = str.find_first_not_of('(');
+		size_t last = str.find_last_not_of(')');
+
+		if (comma == std::string::npos || first == std::string::npos || last == std::string::npos)
+			return { 0, 0 };
+
+		auto x = string_conversion::or_zero<int16_t>(str.substr(first, comma - first));
+		auto y = string_conversion::or_zero<int16_t>(str.substr(comma + 1, last - comma));
 
 		return { x, y };
 	}

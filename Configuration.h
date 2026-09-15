@@ -24,6 +24,13 @@
 namespace ms
 {
 	// Manages the 'Settings' file which contains configurations set by user behavior
+	//
+	// Every setting can also be given through an environment variable named after
+	// it, e.g. "MAPLESTORY_SERVERIP" or "MAPLESTORY_UILAYOUT". The environment
+	// takes precedence over the settings file, an unset or empty variable
+	// overrides nothing, and the file is never rewritten with the environment
+	// value. A setting the running client changes itself (dragging a window,
+	// toggling full screen, ...) takes precedence again until the next load().
 	class Configuration : public Singleton<Configuration>
 	{
 	public:
@@ -131,11 +138,29 @@ namespace ms
 		protected:
 			Entry(const char* n, const char* v) : name(n), value(v) {}
 
+			// The value load() reads: the environment variable when it is set,
+			// otherwise the value from the settings file
+			const std::string& load_value() const
+			{
+				return env_override ? env_value : value;
+			}
+
+			// A value written by the running client is newer than the environment
+			// and is what gets saved to the settings file again
+			void clear_override()
+			{
+				env_override = false;
+				env_value.clear();
+			}
+
 			std::string name;
 			std::string value;
 
 		private:
 			friend class Configuration;
+
+			std::string env_value;
+			bool env_override = false;
 
 			std::string to_string() const
 			{
@@ -184,11 +209,12 @@ namespace ms
 			void save(T num)
 			{
 				value = std::to_string(num);
+				clear_override();
 			}
 
 			T load() const
 			{
-				return string_conversion::or_zero<T>(value);
+				return string_conversion::or_zero<T>(load_value());
 			}
 
 		protected:
@@ -228,6 +254,8 @@ namespace ms
 		friend struct Setting;
 
 		const char* FILENAME = "Settings";
+		// Prefix of the environment variables which override the settings file
+		const char* ENVPREFIX = "MAPLESTORY_";
 		const char* TITLE = "MapleStory";
 		const char* VERSION = "228.3";
 		const char* LoginMusic = "BgmUI.img/Title";
