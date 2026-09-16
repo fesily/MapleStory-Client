@@ -54,6 +54,7 @@ namespace ms
 	{
 		settings.emplace<ServerIP>();
 		settings.emplace<ServerPort>();
+		settings.emplace<DataPath>();
 		settings.emplace<Fullscreen>();
 		settings.emplace<Width>();
 		settings.emplace<Height>();

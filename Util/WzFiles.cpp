@@ -16,9 +16,11 @@
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
 //////////////////////////////////////////////////////////////////////////////////
 #include "WzFiles.h"
+#include "../Configuration.h"
 
 #ifndef USE_NX
 #include <fstream>
+#include <string>
 
 namespace ms
 {
@@ -26,9 +28,25 @@ namespace ms
 	{
 		Error init()
 		{
+			std::string dir = Setting<DataPath>::get().load();
+
+			while (dir.size() > 1 && (dir.back() == '/' || dir.back() == '\\'))
+				dir.pop_back();
+
+			bool use_cwd = dir.empty() || dir == ".";
+
 			for (auto filename : filenames)
-				if (std::ifstream{ filename }.good() == false)
-					return Error(Error::Code::MISSING_FILE, filename);
+			{
+				std::string path = use_cwd ? filename : dir + '/' + filename;
+
+				if (std::ifstream{ path }.good() == false)
+				{
+					static std::string missing;
+					missing = path;
+
+					return Error(Error::Code::MISSING_FILE, missing.c_str());
+				}
+			}
 
 			try
 			{

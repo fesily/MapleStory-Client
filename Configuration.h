@@ -303,6 +303,13 @@ namespace ms
 		ServerPort() : StringEntry("ServerPort", "8484") {}
 	};
 
+	// Root directory containing the *.nx game files
+	// Empty or "." means the working directory
+	struct DataPath : public Configuration::StringEntry
+	{
+		DataPath() : StringEntry("DataPath", ".") {}
+	};
+
 	// Whether to start in full screen mode
 	struct Fullscreen : public Configuration::BoolEntry
 	{
