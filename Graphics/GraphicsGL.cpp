@@ -17,10 +17,117 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "GraphicsGL.h"
 
+#include <set>
+
 #include "../Configuration.h"
+
+namespace
+{
+	// Decode the UTF-8 codepoint which starts at the given index and report how
+	// many bytes it took. Invalid sequences decode to U+FFFD and consume one byte,
+	// so the decoder always makes progress. All text the client renders is UTF-8:
+	// the server encodes strings in its client charset (see InPacket).
+	uint32_t utf8_decode(const std::string& text, size_t index, size_t& length)
+	{
+		uint8_t lead = static_cast<uint8_t>(text[index]);
+
+		if (lead < 0x80)
+		{
+			length = 1;
+
+			return lead;
+		}
+
+		size_t count;
+		uint32_t codepoint;
+
+		if ((lead & 0xE0) == 0xC0)
+		{
+			count = 2;
+			codepoint = lead & 0x1F;
+		}
+		else if ((lead & 0xF0) == 0xE0)
+		{
+			count = 3;
+			codepoint = lead & 0x0F;
+		}
+		else if ((lead & 0xF8) == 0xF0)
+		{
+			count = 4;
+			codepoint = lead & 0x07;
+		}
+		else
+		{
+			length = 1;
+
+			return 0xFFFD;
+		}
+
+		if (index + count > text.size())
+		{
+			length = 1;
+
+			return 0xFFFD;
+		}
+
+		for (size_t i = 1; i < count; i++)
+		{
+			uint8_t next = static_cast<uint8_t>(text[index + i]);
+
+			if ((next & 0xC0) != 0x80)
+			{
+				length = 1;
+
+				return 0xFFFD;
+			}
+
+			codepoint = (codepoint << 6) | (next & 0x3F);
+		}
+
+		length = count;
+
+		return codepoint;
+	}
+}
 
 namespace ms
 {
+	// The fallback faces are loaded at the pixel height of the main font plus this
+	// adjustment. 0 keeps both at the same size; lower it (e.g. -1) when the fallback
+	// glyphs look too large next to the main font.
+	const FT_Int CJK_PIXEL_ADJUST = 0;
+
+	// Every font file is loaded once per pixel size; its coverage is reported once
+	bool log_once(const char* path)
+	{
+		static std::set<std::string> logged;
+
+		return logged.insert(path).second;
+	}
+
+	// Text origin offset and line pitch of every client font, indexed by Text::Font.
+	// Frozen values, measured with FreeType from the Arial faces the layouts were
+	// aligned against: the max number of ink rows over the ASCII range, turned into
+	// int(rows * 1.35 + 1), which is what linespace() used to compute from the loaded
+	// face. They deliberately do not follow the face: otherwise a font with taller ink
+	// (e.g. a CJK font) moves the origin and the pitch of every text in the UI.
+	// values: ink rows 10 10 12 12 13 13 13 13 14 15 17 17
+	const GLshort FONT_LINESPACES[Text::Font::NUM_FONTS] =
+	{
+		14,	// A11M
+		14,	// A11B
+		17,	// A12M
+		17,	// A12B
+		18,	// A13M
+		18,	// A13B
+		18,	// A14M
+		18,	// A14B
+		19,	// A15M
+		21,	// A15B
+		23,	// A18M
+		23	// A18B
+	};
+
 	GraphicsGL::GraphicsGL()
 	{
 		locked = false;
@@ -28,6 +135,17 @@ namespace ms
 		VWIDTH = Constants::Constants::get().get_viewwidth();
 		VHEIGHT = Constants::Constants::get().get_viewheight();
 		SCREEN = Rectangle<int16_t>(0, VWIDTH, 0, VHEIGHT);
+
+		for (size_t i = 0; i < Text::Font::NUM_FONTS; i++)
+		{
+			faces[i] = nullptr;
+			cjkfaces[i] = nullptr;
+		}
+
+		glyphborder = Point<GLshort>(0, 0);
+		glyphrowheight = 0;
+		glyphbandbottom = 0;
+		glyphspacefull = false;
 	}
 
 	Error GraphicsGL::init()
@@ -190,27 +308,40 @@ namespace ms
 
 		const std::string FONT_NORMAL = Setting<FontPathNormal>().get().load();
 		const std::string FONT_BOLD = Setting<FontPathBold>().get().load();
+		const std::string FONT_CJK_NORMAL = Setting<FontPathCJKNormal>().get().load();
+		const std::string FONT_CJK_BOLD = Setting<FontPathCJKBold>().get().load();
 
 		if (FONT_NORMAL.empty() || FONT_BOLD.empty())
 			return Error::Code::FONT_PATH;
 
 		const char* FONT_NORMAL_STR = FONT_NORMAL.c_str();
 		const char* FONT_BOLD_STR = FONT_BOLD.c_str();
+		const char* FONT_CJK_NORMAL_STR = FONT_CJK_NORMAL.c_str();
+		const char* FONT_CJK_BOLD_STR = FONT_CJK_BOLD.c_str();
 
-		addfont(FONT_NORMAL_STR, Text::Font::A11M, 0, 11);
-		addfont(FONT_BOLD_STR, Text::Font::A11B, 0, 11);
-		addfont(FONT_NORMAL_STR, Text::Font::A12M, 0, 12);
-		addfont(FONT_BOLD_STR, Text::Font::A12B, 0, 12);
-		addfont(FONT_NORMAL_STR, Text::Font::A13M, 0, 13);
-		addfont(FONT_BOLD_STR, Text::Font::A13B, 0, 13);
-		addfont(FONT_NORMAL_STR, Text::Font::A14M, 0, 14);
-		addfont(FONT_BOLD_STR, Text::Font::A14B, 0, 14);
-		addfont(FONT_NORMAL_STR, Text::Font::A15M, 0, 15);
-		addfont(FONT_BOLD_STR, Text::Font::A15B, 0, 15);
-		addfont(FONT_NORMAL_STR, Text::Font::A18M, 0, 18);
-		addfont(FONT_BOLD_STR, Text::Font::A18B, 0, 18);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A11M, 0, 11);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A11B, 0, 11);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A12M, 0, 12);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A12B, 0, 12);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A13M, 0, 13);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A13B, 0, 13);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A14M, 0, 14);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A14B, 0, 14);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A15M, 0, 15);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A15B, 0, 15);
+		addfont(FONT_NORMAL_STR, FONT_CJK_NORMAL_STR, Text::Font::A18M, 0, 18);
+		addfont(FONT_BOLD_STR, FONT_CJK_BOLD_STR, Text::Font::A18B, 0, 18);
 
 		fontymax += fontborder.y();
+
+		// Reserve space below the fixed ASCII glyph strips for glyphs which are
+		// loaded on demand (any codepoint the font provides, e.g. Chinese
+		// characters). The area stays inside the font region of the atlas, so the
+		// shader keeps sampling it as single channel glyph data.
+		glyphborder = Point<GLshort>(0, fontymax);
+		glyphrowheight = 0;
+		glyphbandbottom = fontymax + GLYPHBANDHEIGHT;
+		fontymax = glyphbandbottom;
 
 		leftovers = QuadTree<size_t, Leftover>(
 			[](const Leftover& first, const Leftover& second)
@@ -232,15 +363,62 @@ namespace ms
 		return Error::Code::NONE;
 	}
 
-	bool GraphicsGL::addfont(const char* name, Text::Font id, FT_UInt pixelw, FT_UInt pixelh)
+	bool GraphicsGL::addfont(const char* name, const char* cjkname, Text::Font id, FT_UInt pixelw, FT_UInt pixelh)
 	{
 		FT_Face face;
 
+		// A font which cannot be loaded leaves the caller with an empty glyph table,
+		// i.e. with blank text, so say it instead of failing silently
 		if (FT_New_Face(ftlibrary, name, 0, &face))
+		{
+			LOG(LOG_ERROR, "Font [" << name << "] could not be loaded, all text is blank");
+
 			return false;
+		}
 
 		if (FT_Set_Pixel_Sizes(face, pixelw, pixelh))
+		{
+			LOG(LOG_ERROR, "Font [" << name << "] size " << pixelh << " could not be set, all text is blank");
+
+			FT_Done_Face(face);
+
 			return false;
+		}
+
+		// The face is kept to load non-ASCII glyphs on demand
+		faces[id] = face;
+
+		// Characters the main font does not provide (Chinese on a zh-CN service) are
+		// taken from this face. Only such characters use its metrics, so the glyphs of
+		// the main font keep the layouts they had before. An empty or unresolvable
+		// path simply leaves the client without a fallback.
+		cjkfaces[id] = nullptr;
+
+		if (cjkname && *cjkname)
+		{
+			FT_Int cjkh = static_cast<FT_Int>(pixelh) + CJK_PIXEL_ADJUST;
+
+			if (cjkh < 1)
+				cjkh = 1;
+
+			FT_Face cjkface;
+
+			if (FT_New_Face(ftlibrary, cjkname, 0, &cjkface) == 0)
+			{
+				if (FT_Set_Pixel_Sizes(cjkface, 0, static_cast<FT_UInt>(cjkh)) == 0)
+				{
+					cjkfaces[id] = cjkface;
+				}
+				else
+				{
+					FT_Done_Face(cjkface);
+				}
+			}
+			else if (log_once(cjkname))
+			{
+				LOG(LOG_ERROR, "Fallback font [" << cjkname << "] could not be loaded, characters the main font lacks cannot be rendered");
+			}
+		}
 
 		FT_GlyphSlot g = face->glyph;
 
@@ -276,7 +454,11 @@ namespace ms
 		if (height > fontymax)
 			fontymax = height;
 
-		fonts[id] = Font(width, height);
+		// The pitch is frozen (FONT_LINESPACES), the ink height is kept for the log below
+		fonts[id] = Font(width, height, FONT_LINESPACES[id]);
+
+		LOG(LOG_DEBUG, "Font [" << name << "] size " << pixelh << ": ink rows " << height
+			<< ", line pitch " << FONT_LINESPACES[id]);
 
 		GLshort ox = x;
 		GLshort oy = y;
@@ -296,12 +478,114 @@ namespace ms
 			glTexSubImage2D(GL_TEXTURE_2D, 0, ox, oy, w, h, GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
 
 			Offset offset = Offset(ox, oy, w, h);
-			fonts[id].chars[c] = { ax, ay, w, h, l, t, offset };
+			fonts[id].chars.emplace(static_cast<uint32_t>(c), Font::Char{ ax, ay, w, h, l, t, offset });
 
 			ox += w;
 		}
 
+		// The server sends Chinese text on a zh-CN service, so report fonts which
+		// cannot provide glyphs beyond ASCII instead of substituting another one.
+		if (log_once(name))
+		{
+			if (FT_Get_Char_Index(face, 0x4E2D) == 0)
+				LOG(LOG_WARN, "Font [" << name << "] has no CJK glyphs, non-ASCII text from the server cannot be rendered");
+			else
+				LOG(LOG_INFO, "Font [" << name << "] provides CJK glyphs");
+		}
+
+		if (cjkfaces[id] && log_once(cjkname))
+		{
+			if (FT_Get_Char_Index(cjkfaces[id], 0x4E2D) == 0)
+				LOG(LOG_WARN, "Fallback font [" << cjkname << "] has no CJK glyphs");
+			else
+				LOG(LOG_INFO, "Fallback font [" << cjkname << "] provides the characters the main font lacks");
+		}
+
 		return true;
+	}
+
+	const GraphicsGL::Font::Char& GraphicsGL::getchar(Text::Font id, uint32_t codepoint)
+	{
+		Font& font = fonts[id];
+		auto iter = font.chars.find(codepoint);
+
+		if (iter != font.chars.end())
+			return iter->second;
+
+		// Glyph used for codepoints the font does not provide: no metrics and no
+		// atlas entry, so such characters are skipped instead of showing a wrong
+		// glyph. The cache entry keeps the font from being asked again.
+		static const Font::Char blank = {};
+
+		FT_Face face = faces[id];
+
+		if (!face || FT_Get_Char_Index(face, codepoint) == 0)
+		{
+			// Characters the main font does not provide come from the fallback face,
+			// so its metrics only ever affect text the main font cannot render
+			FT_Face fallback = cjkfaces[id];
+
+			if (fallback && FT_Get_Char_Index(fallback, codepoint) != 0)
+			{
+				face = fallback;
+			}
+			else
+			{
+				LOG(LOG_DEBUG, "Font [" << id << "] has no glyph for codepoint [" << codepoint << "]");
+
+				return font.chars.emplace(codepoint, blank).first->second;
+			}
+		}
+
+		if (FT_Load_Char(face, codepoint, FT_LOAD_RENDER))
+		{
+			LOG(LOG_WARN, "Font [" << id << "] failed to load codepoint [" << codepoint << "]");
+
+			return font.chars.emplace(codepoint, blank).first->second;
+		}
+
+		FT_GlyphSlot g = face->glyph;
+		GLshort ax = static_cast<GLshort>(g->advance.x >> 6);
+		GLshort ay = static_cast<GLshort>(g->advance.y >> 6);
+		GLshort l = static_cast<GLshort>(g->bitmap_left);
+		GLshort t = static_cast<GLshort>(g->bitmap_top);
+		GLshort w = static_cast<GLshort>(g->bitmap.width);
+		GLshort h = static_cast<GLshort>(g->bitmap.rows);
+		Font::Char ch = { ax, ay, w, h, l, t, Offset() };
+
+		if (w > 0 && h > 0)
+		{
+			if (glyphborder.x() + w > ATLASW)
+			{
+				glyphborder.set_x(0);
+				glyphborder.shift_y(glyphrowheight);
+				glyphrowheight = 0;
+			}
+
+			if (glyphborder.y() + h > glyphbandbottom)
+			{
+				if (!glyphspacefull)
+				{
+					glyphspacefull = true;
+
+					LOG(LOG_WARN, "Glyph area of the atlas is full, further glyphs cannot be rendered");
+				}
+
+				return font.chars.emplace(codepoint, blank).first->second;
+			}
+
+			glBindTexture(GL_TEXTURE_2D, atlas);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, glyphborder.x(), glyphborder.y(), w, h, GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
+
+			ch.offset = Offset(glyphborder.x(), glyphborder.y(), w, h);
+
+			glyphborder.shift_x(w);
+
+			if (h > glyphrowheight)
+				glyphrowheight = h;
+		}
+
+		return font.chars.emplace(codepoint, ch).first->second;
 	}
 
 	void GraphicsGL::reinit()
@@ -524,9 +808,7 @@ namespace ms
 		if (length == 0)
 			return Text::Layout();
 
-		LayoutBuilder builder(id, fonts[id], alignment, color, maxwidth, formatted, line_adj);
-
-		const char* p_text = text.c_str();
+		LayoutBuilder builder(*this, id, alignment, color, maxwidth, formatted, line_adj);
 
 		size_t first = 0;
 		size_t offset = 0;
@@ -538,14 +820,14 @@ namespace ms
 			if (last == std::string::npos)
 				last = length;
 
-			first = builder.add(p_text, first, offset, last);
+			first = builder.add(text, first, offset, last);
 			offset = last;
 		}
 
 		return builder.finish(first, offset);
 	}
 
-	GraphicsGL::LayoutBuilder::LayoutBuilder(Text::Font id, const Font& f, Text::Alignment a, Color::Name c, int16_t mw, bool fm, int16_t la) : fontid(id), font(f), alignment(a), color(c), maxwidth(mw), formatted(fm), line_adj(la)
+	GraphicsGL::LayoutBuilder::LayoutBuilder(GraphicsGL& g, Text::Font id, Text::Alignment a, Color::Name c, int16_t mw, bool fm, int16_t la) : graphics(g), font(g.fonts[id]), fontid(id), baseid(id), alignment(a), color(c), maxwidth(mw), formatted(fm), line_adj(la)
 	{
 		ax = 0;
 		ay = font.linespace();
@@ -556,7 +838,7 @@ namespace ms
 			maxwidth = 800;
 	}
 
-	size_t GraphicsGL::LayoutBuilder::add(const char* text, size_t prev, size_t first, size_t last)
+	size_t GraphicsGL::LayoutBuilder::add(const std::string& text, size_t prev, size_t first, size_t last)
 	{
 		if (first == last)
 			return prev;
@@ -837,7 +1119,7 @@ namespace ms
 				// \t - Tab (4 spaces)
 				case '\t':
 				{
-					ax = font.chars[' '].ax * 4;
+					ax = graphics.getchar(baseid, ' ').ax * 4;
 					skip++;
 					break;
 				}
@@ -848,27 +1130,28 @@ namespace ms
 
 		if (!linebreak)
 		{
-			for (size_t i = first; i < last; i++)
+			for (size_t i = first; i < last;)
 			{
-				char c = text[i];
+				size_t charlen = 0;
+				uint32_t codepoint = utf8_decode(text, i, charlen);
 
-				if (c == '\t')
+				if (codepoint == '\t')
 					wordwidth += ax;
 				else
-					wordwidth += font.chars[c].ax;
+					wordwidth += graphics.getchar(baseid, codepoint).ax;
 
 				if (wordwidth > maxwidth)
 				{
-					if (last - first == 1)
-					{
+					// The overflowing character starts the range, so the range cannot
+					// be split and stays on this line
+					if (i == first)
 						return last;
-					}
-					else
-					{
-						prev = add(text, prev, first, i);
-						return add(text, prev, i, last);
-					}
+
+					prev = add(text, prev, first, i);
+					return add(text, prev, i, last);
 				}
+
+				i += charlen;
 			}
 		}
 
@@ -890,20 +1173,26 @@ namespace ms
 				ay -= line_adj;
 		}
 
-		for (size_t pos = first; pos < last; pos++)
+		for (size_t pos = first; pos < last;)
 		{
-			char c = text[pos];
-			const Font::Char& ch = font.chars[c];
+			size_t charlen = 0;
+			uint32_t codepoint = utf8_decode(text, pos, charlen);
+			const Font::Char& ch = graphics.getchar(baseid, codepoint);
 
-			advances.push_back(ax);
+			// An offset is recorded for every byte of the character, so the
+			// byte-indexed lookups (Text::advance, Layout::advance) keep working
+			for (size_t i = 0; i < charlen; i++)
+				advances.push_back(ax);
 
-			if (pos < first + skip || newline && c == ' ')
-				continue;
+			if (pos >= first + skip && !(newline && codepoint == ' '))
+			{
+				ax += ch.ax;
 
-			ax += ch.ax;
+				if (width < ax)
+					width = ax;
+			}
 
-			if (width < ax)
-				width = ax;
+			pos += charlen;
 		}
 
 		if (newword || newline)
@@ -1005,11 +1294,13 @@ namespace ms
 
 				Color abscolor = color * Color(wordcolor[0], wordcolor[1], wordcolor[2], 1.0f);
 
-				for (size_t pos = word.first; pos < word.last; ++pos)
+				for (size_t pos = word.first; pos < word.last;)
 				{
-					const char c = text[pos];
-					const Font& word_font = fonts[word.font];
-					const Font::Char& ch = word_font.chars[c];
+					size_t charlen = 0;
+					uint32_t codepoint = utf8_decode(text, pos, charlen);
+					const Font::Char& ch = getchar(word.font, codepoint);
+
+					pos += charlen;
 
 					GLshort char_x = x + ax + ch.bl;
 					GLshort char_y = y + ay - ch.bt;
@@ -1037,7 +1328,7 @@ namespace ms
 					if (char_y < minheight)
 						continue;
 
-					if (ax == 0 && c == ' ')
+					if (ax == 0 && codepoint == ' ')
 						continue;
 
 					ax += ch.ax;

@@ -74,7 +74,7 @@ namespace ms
 
 	private:
 		void clearinternal();
-		bool addfont(const char* name, Text::Font id, FT_UInt width, FT_UInt height);
+		bool addfont(const char* name, const char* cjkname, Text::Font id, FT_UInt width, FT_UInt height);
 
 		struct Offset
 		{
@@ -197,42 +197,57 @@ namespace ms
 
 			GLshort width;
 			GLshort height;
-			Char chars[128];
+			// Text origin offset and line pitch. Frozen per font instead of derived
+			// from the loaded face: a face with taller ink would otherwise move the
+			// origin and the pitch of every text (see FONT_LINESPACES).
+			GLshort linespace_;
+			// Glyphs are loaded from the font on first use and cached per Unicode
+			// codepoint (see GraphicsGL::getchar).
+			std::unordered_map<uint32_t, Char> chars;
 
-			Font(GLshort w, GLshort h)
+			Font(GLshort w, GLshort h, GLshort ls)
 			{
 				width = w;
 				height = h;
+				linespace_ = ls;
 			}
 
 			Font()
 			{
 				width = 0;
 				height = 0;
+				linespace_ = 0;
 			}
 
 			int16_t linespace() const
 			{
-				return static_cast<int16_t>(height * 1.35 + 1);
+				return linespace_;
 			}
 		};
+
+		// Look up the glyph of a codepoint. Glyphs the font provides are loaded into
+		// the atlas on first use, codepoints the font does not provide return a
+		// blank glyph.
+		const Font::Char& getchar(Text::Font id, uint32_t codepoint);
 
 		class LayoutBuilder
 		{
 		public:
-			LayoutBuilder(Text::Font id, const Font& font, Text::Alignment alignment, Color::Name color, int16_t maxwidth, bool formatted, int16_t line_adj);
+			LayoutBuilder(GraphicsGL& graphics, Text::Font id, Text::Alignment alignment, Color::Name color, int16_t maxwidth, bool formatted, int16_t line_adj);
 
-			size_t add(const char* text, size_t prev, size_t first, size_t last);
+			size_t add(const std::string& text, size_t prev, size_t first, size_t last);
 			Text::Layout finish(size_t first, size_t last);
 
 		private:
 			void add_word(size_t first, size_t last, Text::Font font, Color::Name color);
 			void add_line();
 
+			GraphicsGL& graphics;
 			const Font& font;
 
-			Text::Alignment alignment;
 			Text::Font fontid;
+			Text::Font baseid;
+			Text::Alignment alignment;
 			Color::Name color;
 			int16_t maxwidth;
 			bool formatted;
@@ -255,6 +270,8 @@ namespace ms
 		static const GLshort ATLASW = 8192;
 		static const GLshort ATLASH = 8192;
 		static const GLshort MINLOSIZE = 32;
+		// Rows of the atlas reserved for glyphs which are loaded on demand
+		static const GLshort GLYPHBANDHEIGHT = 1024;
 
 		bool locked;
 
@@ -281,8 +298,18 @@ namespace ms
 		Range<GLshort> yrange;
 
 		FT_Library ftlibrary;
+		FT_Face faces[Text::Font::NUM_FONTS];
+		// Faces for the characters the main fonts do not provide, one per font size
+		FT_Face cjkfaces[Text::Font::NUM_FONTS];
 		Font fonts[Text::Font::NUM_FONTS];
 		Point<GLshort> fontborder;
 		GLshort fontymax;
+
+		// Area of the atlas below the fixed ASCII glyph strips which is used for
+		// glyphs loaded on demand, and the cursor into it.
+		Point<GLshort> glyphborder;
+		GLshort glyphrowheight;
+		GLshort glyphbandbottom;
+		bool glyphspacefull;
 	};
 }

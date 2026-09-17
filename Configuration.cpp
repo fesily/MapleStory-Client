@@ -61,6 +61,8 @@ namespace ms
 		settings.emplace<VSync>();
 		settings.emplace<FontPathNormal>();
 		settings.emplace<FontPathBold>();
+		settings.emplace<FontPathCJKNormal>();
+		settings.emplace<FontPathCJKBold>();
 		settings.emplace<BGMVolume>();
 		settings.emplace<SFXVolume>();
 		settings.emplace<SaveLogin>();

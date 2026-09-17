@@ -346,6 +346,20 @@ namespace ms
 		FontPathBold() : StringEntry("FontPathBold", "fonts/Arial/Arial-Bold.ttf") {}
 	};
 
+	// Font which provides the characters the two fonts above do not have, e.g.
+	// Chinese. Only such characters use it, so the metrics of the fonts above stay
+	// untouched and the existing layouts do not move.
+	struct FontPathCJKNormal : public Configuration::StringEntry
+	{
+		FontPathCJKNormal() : StringEntry("FontPathCJKNormal", "fonts/noto/NotoSansCJKsc-Regular.otf") {}
+	};
+
+	// The bold variant of the fallback font
+	struct FontPathCJKBold : public Configuration::StringEntry
+	{
+		FontPathCJKBold() : StringEntry("FontPathCJKBold", "fonts/noto/NotoSansCJKsc-Bold.otf") {}
+	};
+
 	// Music Volume
 	// Number from 0 to 100
 	struct BGMVolume : public Configuration::ByteEntry
