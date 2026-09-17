@@ -231,7 +231,10 @@ namespace ms
 			return;
 		}
 
-		if (password_text.length() <= 4)
+		// Servers which do not use passwords need an empty one to be sent
+		bool allow_empty_password = password_text.empty() && Setting<AllowEmptyPassword>::get().load();
+
+		if (password_text.length() <= 4 && !allow_empty_password)
 		{
 			UI::get().emplace<UILoginNotice>(UILoginNotice::Message::WRONG_PASSWORD, okhandler);
 			return;

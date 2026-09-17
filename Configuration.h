@@ -366,6 +366,13 @@ namespace ms
 		SaveLogin() : BoolEntry("SaveLogin", "false") {}
 	};
 
+	// Whether the client lets the user login with an empty password
+	// Meant for servers which do not use passwords
+	struct AllowEmptyPassword : public Configuration::BoolEntry
+	{
+		AllowEmptyPassword() : BoolEntry("AllowEmptyPassword", "false") {}
+	};
+
 	// The last used account name
 	struct DefaultAccount : public Configuration::StringEntry
 	{
