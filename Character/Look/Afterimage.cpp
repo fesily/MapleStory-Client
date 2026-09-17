@@ -44,7 +44,7 @@ namespace ms
 
 		for (nl::node sub : src)
 		{
-			uint8_t frame = string_conversion::or_default<uint8_t>(sub.name(), 255);
+			uint8_t frame = string_conversion::or_default_normal<uint8_t>(sub.name(), 255);
 
 			if (frame < 255)
 			{

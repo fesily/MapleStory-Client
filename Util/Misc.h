@@ -27,6 +27,24 @@ namespace ms
 	namespace string_conversion
 	{
 		template<typename T>
+		inline T or_default_normal(const std::string& str, T def)
+		{
+			int& errno_ref = errno; // Nonzero cost, pay it once
+			const char* ptr = str.c_str();
+			char* end;
+			errno_ref = 0;
+			const long val = std::strtol(ptr, &end, 10);
+			if (ptr == end) {
+				return def;
+			}
+
+			if (errno_ref == ERANGE) {
+				return def;
+			}
+			return static_cast<T>(val);
+		}
+
+		template<typename T>
 		inline T or_default(const std::string& str, T def)
 		{
 			try
@@ -41,7 +59,7 @@ namespace ms
 				return def;
 			}
 		}
-
+		
 		template<typename T>
 		inline T or_zero(const std::string& str)
 		{
