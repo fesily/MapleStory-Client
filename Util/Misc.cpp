@@ -47,36 +47,50 @@ namespace ms
 			return str;
 		}
 
+		namespace
+		{
+			// Offset at which the last UTF-8 character of the text begins, 0 for an
+			// empty string. Continuation bytes belong to the character in front of
+			// them, so the scan stops on the first non-continuation byte.
+			size_t last_character_offset(const std::string& text)
+			{
+				size_t offset = text.size();
+
+				while (offset > 0)
+				{
+					offset--;
+
+					if ((static_cast<unsigned char>(text[offset]) & 0xC0) != 0x80)
+						break;
+				}
+
+				return offset;
+			}
+		}
+
 		void format_with_ellipsis(Text& input, int16_t width, uint16_t ellipsis_width, bool word_break)
 		{
 			if (input.get_text().empty() || width == 0 || input.width() <= width)
 				return;
 
-			uint16_t i = 0;
-			std::string ellipsis;
+			std::string ellipsis(ellipsis_width, '.');
 			std::string text = input.get_text();
 
-			while (i < ellipsis_width)
-			{
-				ellipsis += ".";
-				i++;
-			}
-
-			while (input.width() > width)
+			// The text is shortened one whole character at a time: the width is
+			// measured per glyph, so removing single bytes of a multi-byte character
+			// would leave a broken sequence behind and could cut off more than the
+			// width requires.
+			while (!text.empty() && input.width() > width)
 			{
 				if (word_break)
 				{
 					size_t space = text.find_last_of(' ');
 
-					if (space != std::string::npos)
-						text = text.substr(0, space + 1);
-
-					if (text.back() == ' ')
-						text.pop_back();
+					text.resize(space != std::string::npos ? space : last_character_offset(text));
 				}
 				else
 				{
-					text.pop_back();
+					text.resize(last_character_offset(text));
 				}
 
 				input.change_text(text + ' ' + ellipsis);
