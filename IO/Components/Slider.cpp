@@ -21,6 +21,8 @@
 #include <nlnx/nx.hpp>
 #endif
 
+#include <cmath>
+
 namespace ms
 {
 	Slider::Slider(int32_t t, Range<int16_t> ver, int16_t xp, int16_t ur, int16_t rm, std::function<void(bool)> om) : type(t), vertical(ver), x(xp), onmoved(om)

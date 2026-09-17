@@ -22,6 +22,8 @@
 #include "../../Template/Interpolated.h"
 #include "../../Template/Point.h"
 
+#include <cmath>
+
 namespace ms
 {
 	// Structure that contains all properties for movement calculations

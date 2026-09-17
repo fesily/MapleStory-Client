@@ -20,6 +20,7 @@
 #include "../Character/MapleStat.h"
 
 #include <map>
+#include <string>
 #include <vector>
 
 namespace ms

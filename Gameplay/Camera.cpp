@@ -19,6 +19,8 @@
 
 #include "../Constants.h"
 
+#include <cmath>
+
 namespace ms
 {
 	Camera::Camera()

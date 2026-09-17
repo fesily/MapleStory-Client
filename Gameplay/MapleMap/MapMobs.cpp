@@ -131,7 +131,7 @@ namespace ms
 		Rectangle<int16_t> player_rect = {
 			horizontal.smaller(),
 			horizontal.greater(),
-			vertical.smaller() - 50,
+			static_cast<int16_t>(vertical.smaller() - 50),
 			vertical.greater()
 		};
 

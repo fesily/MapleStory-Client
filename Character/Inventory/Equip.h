@@ -19,6 +19,9 @@
 
 #include "EquipQuality.h"
 
+#include <cstdint>
+#include <string>
+
 namespace ms
 {
 	class Equip
