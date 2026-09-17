@@ -65,6 +65,7 @@ namespace ms
 		settings.emplace<SFXVolume>();
 		settings.emplace<SaveLogin>();
 		settings.emplace<AllowEmptyPassword>();
+		settings.emplace<SkipLogo>();
 		settings.emplace<DefaultAccount>();
 		settings.emplace<DefaultWorld>();
 		settings.emplace<DefaultChannel>();

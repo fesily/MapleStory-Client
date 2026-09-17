@@ -373,6 +373,12 @@ namespace ms
 		AllowEmptyPassword() : BoolEntry("AllowEmptyPassword", "false") {}
 	};
 
+	// Whether to go straight to the login screen instead of playing the logo
+	struct SkipLogo : public Configuration::BoolEntry
+	{
+		SkipLogo() : BoolEntry("SkipLogo", "true") {}
+	};
+
 	// The last used account name
 	struct DefaultAccount : public Configuration::StringEntry
 	{

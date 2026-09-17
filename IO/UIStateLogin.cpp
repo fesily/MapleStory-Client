@@ -31,7 +31,8 @@ namespace ms
 	{
 		focused = UIElement::Type::NONE;
 
-		bool start_shown = Configuration::get().get_start_shown();
+		// The logo is skipped when it has been played before or when the setting asks for it
+		bool start_shown = Configuration::get().get_start_shown() || Setting<SkipLogo>::get().load();
 
 		if (!start_shown)
 			emplace<UILogo>();
