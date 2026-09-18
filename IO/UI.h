@@ -56,7 +56,7 @@ namespace ms
 		void send_close();
 		void rightclick();
 		void doubleclick();
-		void send_key(int32_t keycode, bool pressed);
+		void send_key(int32_t keycode, bool pressed, bool repeat = false);
 
 		void set_scrollnotice(const std::string& notice);
 		void focus_textfield(Textfield* textfield);

@@ -281,8 +281,9 @@ namespace ms
 		bool start_shown = false;
 		std::string MACS;
 		std::string HWID;
-		int16_t MAXWIDTH;
-		int16_t MAXHEIGHT;
+		// Size of the desktop, 0 until ScreenResolution has read it
+		int16_t MAXWIDTH = 0;
+		int16_t MAXHEIGHT = 0;
 		std::string VolumeSerialNumber;
 		uint8_t worldid;
 		uint8_t channelid;

@@ -21,6 +21,7 @@
 
 #include "../Configuration.h"
 #include "../Timer.h"
+#include "../Util/ScreenResolution.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -50,7 +51,7 @@ namespace ms
 
 	void key_callback(GLFWwindow*, int key, int, int action, int)
 	{
-		UI::get().send_key(key, action != GLFW_RELEASE);
+		UI::get().send_key(key, action != GLFW_RELEASE, action == GLFW_REPEAT);
 	}
 
 	std::chrono::time_point<std::chrono::steady_clock> start = ContinuousTimer::get().start();
@@ -138,6 +139,13 @@ namespace ms
 
 		if (!glfwInit())
 			return Error::Code::GLFW;
+
+		// Read the desktop size here and not before glfwInit: glfwInit makes the
+		// process DPI aware, before that Windows reports the size with the
+		// display scaling applied
+		ScreenResolution();
+
+		LOG(LOG_INFO, "Desktop size: " << Configuration::get().get_max_width() << 'x' << Configuration::get().get_max_height());
 
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 		context = glfwCreateWindow(1, 1, "", nullptr, nullptr);
@@ -256,8 +264,12 @@ namespace ms
 			width = new_width;
 			height = new_height;
 
-			if (new_width >= max_width || new_height >= max_height)
+			if (max_width > 0 && max_height > 0 && (new_width >= max_width || new_height >= max_height))
+			{
 				fullscreen = true;
+
+				LOG(LOG_INFO, "Full screen: on, " << new_width << 'x' << new_height << " is at or above the desktop size");
+			}
 
 			initwindow();
 		}
@@ -299,13 +311,21 @@ namespace ms
 		int16_t max_width = Configuration::get().get_max_width();
 		int16_t max_height = Configuration::get().get_max_height();
 
-		if (width < max_width && height < max_height)
+		// Leaving full screen is always allowed, entering it only while the
+		// window is smaller than the desktop
+		if (fullscreen || (width < max_width && height < max_height))
 		{
 			fullscreen = !fullscreen;
 			Setting<Fullscreen>::get().save(fullscreen);
 
+			LOG(LOG_INFO, "Full screen: " << (fullscreen ? "on" : "off"));
+
 			initwindow();
 			glfwPollEvents();
+		}
+		else
+		{
+			LOG(LOG_INFO, "Full screen: not toggled, " << width << 'x' << height << " is not below the desktop size " << max_width << 'x' << max_height);
 		}
 	}
 }

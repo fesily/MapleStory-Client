@@ -182,12 +182,20 @@ namespace ms
 		state->doubleclick(pos);
 	}
 
-	void UI::send_key(int32_t keycode, bool pressed)
+	void UI::send_key(int32_t keycode, bool pressed, bool repeat)
 	{
-		if ((is_key_down[GLFW_KEY_LEFT_ALT] || is_key_down[GLFW_KEY_RIGHT_ALT]) && (is_key_down[GLFW_KEY_ENTER] || is_key_down[GLFW_KEY_KP_ENTER]))
+		// Full screen is toggled by the press of enter while alt is held. The
+		// alt flags are the state the previous events left behind, which is the
+		// state of the key as long as it is still held.
+		bool alt = is_key_down[GLFW_KEY_LEFT_ALT] || is_key_down[GLFW_KEY_RIGHT_ALT];
+		bool enter_key = keycode == GLFW_KEY_ENTER || keycode == GLFW_KEY_KP_ENTER;
+
+		if (pressed && !repeat && enter_key && alt)
 		{
 			Window::get().toggle_fullscreen();
 
+			// The window is recreated by the toggle, so the release of keys held
+			// across it can be lost: do not keep state we cannot trust
 			is_key_down[GLFW_KEY_LEFT_ALT] = false;
 			is_key_down[GLFW_KEY_RIGHT_ALT] = false;
 			is_key_down[GLFW_KEY_ENTER] = false;

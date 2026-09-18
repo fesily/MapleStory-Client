@@ -19,8 +19,7 @@
 
 #include "../Configuration.h"
 
-#include <windef.h>
-#include <WinUser.h>
+#include <Windows.h>
 
 namespace ms
 {
@@ -38,8 +37,8 @@ namespace ms
 			GetWindowRect(hDesktop, &desktop);
 
 			// The top left corner will have coordinates (0, 0) and the bottom right corner will have coordinates (horizontal, vertical)
-			Configuration::get().set_max_width(desktop.right);
-			Configuration::get().set_max_height(desktop.bottom);
+			Configuration::get().set_max_width(static_cast<int16_t>(desktop.right));
+			Configuration::get().set_max_height(static_cast<int16_t>(desktop.bottom));
 
 			// Get the state of the Caps Lock key
 			int nVirtKey = GetKeyState(20);

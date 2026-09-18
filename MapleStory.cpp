@@ -27,7 +27,6 @@
 #include "Util/DebugConsole.h"
 #include "Util/HardwareInfo.h"
 #include "Util/Misc.h"
-#include "Util/ScreenResolution.h"
 
 #include <cstdlib>
 
@@ -336,7 +335,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 #endif
 {
 	ms::HardwareInfo();
-	ms::ScreenResolution();
 	ms::start();
 
 	return 0;
