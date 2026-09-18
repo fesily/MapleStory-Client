@@ -16,11 +16,20 @@
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
 //////////////////////////////////////////////////////////////////////////////////
 #include "Gameplay/Stage.h"
+#include "Gameplay/MapleMap/MapObjects.h"
+#include "Gameplay/MapleMap/Npc.h"
 #include "IO/UI.h"
 #include "IO/Window.h"
+#include "Net/Packets/GameplayPackets.h"
+#include "Net/Packets/MessagingPackets.h"
+#include "Net/Packets/NpcInteractionPackets.h"
 #include "Net/Session.h"
+#include "Util/DebugConsole.h"
 #include "Util/HardwareInfo.h"
+#include "Util/Misc.h"
 #include "Util/ScreenResolution.h"
+
+#include <cstdlib>
 
 #ifdef USE_NX
 #include "Util/NxFiles.h"
@@ -30,6 +39,161 @@
 
 namespace ms
 {
+	namespace
+	{
+		// ---- commands of the debug console ----
+
+		// The NPCs the server spawned on this map
+		MapObjects& map_npcs()
+		{
+			return *Stage::get().get_npcs().get_npcs();
+		}
+
+		int32_t distance_to_player(const Npc& npc)
+		{
+			Point<int16_t> diff = npc.get_position() - Stage::get().get_player().get_position();
+
+			return std::abs(static_cast<int32_t>(diff.x())) + std::abs(static_cast<int32_t>(diff.y()));
+		}
+
+		void command_npcs(const std::string&)
+		{
+			size_t count = 0;
+
+			for (auto& entry : map_npcs())
+			{
+				Npc* npc = static_cast<Npc*>(entry.second.get());
+
+				if (!npc)
+					continue;
+
+				// 'script' tells the NPCs the server would open a script for apart
+				// from the ones which only have a tag to show
+				std::cout << "oid=" << entry.first << " id=" << npc->get_npcid()
+					<< " name=\"" << npc->get_name() << "\""
+					<< " script=" << (npc->isscripted() ? "yes" : "no")
+					<< " dist=" << distance_to_player(*npc) << std::endl;
+
+				count++;
+			}
+
+			if (count == 0)
+				std::cout << "npcs: no NPC on this map" << std::endl;
+		}
+
+		// The NPC the argument refers to: the object id first, then the nearest of the
+		// NPCs which carry the id as their template id
+		Npc* find_npc(int32_t id)
+		{
+			Npc* nearest = nullptr;
+			int32_t nearestdistance = 0;
+
+			for (auto& entry : map_npcs())
+			{
+				Npc* npc = static_cast<Npc*>(entry.second.get());
+
+				if (!npc)
+					continue;
+
+				if (entry.first == id)
+					return npc;
+
+				if (npc->get_npcid() != id)
+					continue;
+
+				int32_t distance = distance_to_player(*npc);
+
+				if (!nearest || distance < nearestdistance)
+				{
+					nearest = npc;
+					nearestdistance = distance;
+				}
+			}
+
+			return nearest;
+		}
+
+		void command_talk(const std::string& args)
+		{
+			if (args.empty())
+			{
+				std::cout << "Usage: talk <npcid|oid>" << std::endl;
+				return;
+			}
+
+			int32_t id = string_conversion::or_default<int32_t>(args, 0);
+
+			if (id == 0)
+			{
+				std::cout << "talk: not a number: " << args << std::endl;
+				return;
+			}
+
+			Npc* npc = find_npc(id);
+
+			if (!npc)
+			{
+				// The server looks the object id up on the map the player is in
+				// (NPCTalkHandler), so this request is dropped unless the NPC is
+				// spawned here; send it anyway and tell what happened
+				std::cout << "talk: no NPC " << id << " on this map, sending it as an object id" << std::endl;
+
+				TalkToNPCPacket(id).dispatch();
+
+				return;
+			}
+
+			std::cout << "talk: TALK_TO_NPC oid=" << npc->get_oid()
+				<< " id=" << npc->get_npcid()
+				<< " name=\"" << npc->get_name() << "\""
+				<< " dist=" << distance_to_player(*npc) << std::endl;
+
+			TalkToNPCPacket(npc->get_oid()).dispatch();
+		}
+
+		void command_center(const std::string&)
+		{
+			// The server reads no arguments and answers with the script of NPC
+			// 9900001 (EnterMTSHandler.openCenterScript)
+			EnterMTSPacket().dispatch();
+
+			std::cout << "center: ENTER_MTS sent" << std::endl;
+		}
+
+		void command_chat(const std::string& args)
+		{
+			if (args.empty())
+			{
+				std::cout << "Usage: chat <text>" << std::endl;
+				return;
+			}
+
+			// The line the chat bar sends; a line the server reads as a command
+			// starts with '!' ('@' for the ones every player can use)
+			GeneralChatPacket(args, true).dispatch();
+
+			std::cout << "chat: " << args << std::endl;
+		}
+
+		void command_quit(const std::string&)
+		{
+			std::cout << "Closing the client." << std::endl;
+
+			UI::get().quit();
+		}
+
+		void register_commands()
+		{
+			debug_console::add({
+				{ "center", "", "open the server's center UI (NPC 9900001)", command_center },
+				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
+				{ "npcs", "", "list the NPCs on this map", command_npcs },
+				{ "quit", "", "close the client", command_quit },
+				{ "talk", "<npcid|oid>", "ask the server for that NPC's dialog", command_talk },
+			});
+		}
+	}
+
 	Error init()
 	{
 		if (Error error = Session::get().init())
@@ -99,6 +263,8 @@ namespace ms
 
 		while (running())
 		{
+			debug_console::poll();
+
 			int64_t elapsed = Timer::get().stop();
 
 			// Update game with constant timestep as many times as possible.
@@ -156,6 +322,8 @@ namespace ms
 		}
 		else
 		{
+			debug_console::start();
+			register_commands();
 			loop();
 		}
 	}

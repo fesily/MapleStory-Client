@@ -552,6 +552,9 @@
     <ClCompile Include="Net\SocketWinsock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Util\DebugConsole.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Util\Misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1257,6 +1260,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Template\TypeMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\DebugConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util\HardwareInfo.h">

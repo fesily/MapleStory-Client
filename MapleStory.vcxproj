@@ -368,6 +368,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Net\Session.cpp" />
     <ClCompile Include="Net\SocketAsio.cpp" />
     <ClCompile Include="Net\SocketWinsock.cpp" />
+    <ClCompile Include="Util\DebugConsole.cpp" />
     <ClCompile Include="Util\Misc.cpp" />
     <ClCompile Include="Util\NxFiles.cpp" />
     <ClCompile Include="Util\WzFiles.cpp" />
@@ -604,6 +605,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Template\TimedQueue.h" />
     <ClInclude Include="Template\TypeMap.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Util\DebugConsole.h" />
     <ClInclude Include="Util\HardwareInfo.h" />
     <ClInclude Include="Util\Lerp.h" />
     <ClInclude Include="Util\Misc.h" />
