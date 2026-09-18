@@ -120,7 +120,5 @@ namespace ms
 	namespace single_console
 	{
 		void log_message(std::string message);
-
-		static std::list<std::string> log_history;
 	}
 }

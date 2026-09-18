@@ -230,6 +230,8 @@ namespace ms
 
 	namespace single_console
 	{
+		static std::list<std::string> log_history;
+
 		void log_message(std::string message)
 		{
 			if (std::find(std::begin(log_history), std::end(log_history), message) == std::end(log_history))
