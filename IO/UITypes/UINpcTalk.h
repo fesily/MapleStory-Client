@@ -22,6 +22,7 @@
 #include "../Components/Slider.h"
 #include "../Components/Textfield.h"
 
+#include "../../Graphics/FormatText.h"
 #include "../../Graphics/Text.h"
 
 #include <vector>
@@ -86,6 +87,8 @@ namespace ms
 
 		Cursor::State send_cursor(bool clicked, Point<int16_t> cursorpos) override;
 		void send_key(int32_t keycode, bool pressed, bool escape) override;
+		void send_scroll(double yoffset) override;
+		void remove_cursor() override;
 
 		UIElement::Type get_type() const override;
 
@@ -96,15 +99,31 @@ namespace ms
 
 	private:
 		TalkType get_by_value(int8_t value);
-		std::string format_text(const std::string& tx, const int32_t& npcid);
-		// Splits the selectable entries (#L<id>#label#l) out of a sendSimple text
-		std::string parse_options(const std::string& tx);
-		int8_t option_at(Point<int16_t> cursorpos) const;
+		// Where the text of the dialog starts, which is also where its area is clipped
+		int16_t text_top() const;
+		// The y of the text inside the window, moved by the rows the dialog is
+		// scrolled by
 		int16_t content_offset() const;
 		void submit_input();
 		void close_dialogue();
 
-		static constexpr int16_t MAX_HEIGHT = 248;
+		// The text area of a dialog, taken from the official client: for the dialog an
+		// NPC talks through, CUtilDlgEx::GetBasicCTWidth (0x57ADD0) returns 0x155 and
+		// GetCTHeight_Min and GetCTHeight_Max (0x57AE90, 0x57AE40) return 0x6E and
+		// 0xF0. The window itself is 519 pixels wide, which is the width of the
+		// UtilDlgEx textures of UIWindow2.img
+		static constexpr int16_t TEXT_WIDTH = 341;
+		static constexpr int16_t TEXT_MIN_HEIGHT = 110;
+		static constexpr int16_t TEXT_MAX_HEIGHT = 240;
+		// Where the text starts: the speaker column takes this much of the window, so
+		// the text ends where its scrollbar begins
+		static constexpr int16_t TEXT_LEFT = 166;
+		// How far below the top frame of the window the text starts
+		static constexpr int16_t TEXT_MARGIN = 4;
+		// How far one row of the scrollbar moves the text. The official dialog keeps
+		// its scroll in pixels and the scrollbar reports a row which
+		// CUtilDlgEx::OnChildNotify turns into row * 8 (0x57AFB0).
+		static constexpr int16_t SCROLL_STEP = 8;
 
 		enum Buttons
 		{
@@ -125,27 +144,23 @@ namespace ms
 			YES
 		};
 
-		// A selectable entry of a sendSimple dialog
-		struct Option
-		{
-			int32_t id;
-			int16_t y;
-			Text label;
-		};
-
 		Texture top;
 		Texture fill;
 		Texture bottom;
 		Texture nametag;
 		Texture speaker;
 
-		Text text;
+		FormatText text;
 		Text name;
 
 		int16_t height;
 		int16_t offset;
 		int16_t unitrows;
 		int16_t rowmax;
+		// The entry of the dialog the cursor is on, -1 outside of one
+		int16_t hovered;
+		// How far the text can be scrolled at most, in pixels
+		int16_t scrollable;
 		int16_t min_height;
 
 		bool show_slider;
@@ -158,8 +173,6 @@ namespace ms
 
 		int8_t msgtype;
 		int16_t text_y;
-		std::vector<Option> options;
-		int8_t hovered_option;
 		Textfield input;
 		bool input_enabled;
 		int32_t nummin;

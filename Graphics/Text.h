@@ -57,6 +57,11 @@ namespace ms
 			NAMETAG
 		};
 
+		// The bold and the normal counterpart of a font, which the #e and #n codes
+		// switch to; a font without a counterpart is returned unchanged
+		static Font bold(Font font);
+		static Font normal(Font font);
+
 		class Layout
 		{
 		public:

@@ -135,6 +135,9 @@
     <ClCompile Include="Data\ItemData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Data\TextResolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Data\JobData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -267,6 +270,9 @@
     <ClCompile Include="Graphics\Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\FormatText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Graphics\GraphicsGL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -274,6 +280,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\Text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TextAnalyzer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\TextFormat.cpp">
@@ -713,6 +722,9 @@
     <ClInclude Include="Data\ItemData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Data\TextResolver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Data\JobData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -866,6 +878,9 @@
     <ClInclude Include="Graphics\Geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\FormatText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Graphics\GraphicsGL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -876,6 +891,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TextAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TextFormat.h">

@@ -227,6 +227,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Data\BulletData.cpp" />
     <ClCompile Include="Data\EquipData.cpp" />
     <ClCompile Include="Data\ItemData.cpp" />
+    <ClCompile Include="Data\TextResolver.cpp" />
     <ClCompile Include="Data\JobData.cpp" />
     <ClCompile Include="Data\SkillData.cpp" />
     <ClCompile Include="Data\WeaponData.cpp" />
@@ -271,9 +272,11 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Graphics\Color.cpp" />
     <ClCompile Include="Graphics\EffectLayer.cpp" />
     <ClCompile Include="Graphics\Geometry.cpp" />
+    <ClCompile Include="Graphics\FormatText.cpp" />
     <ClCompile Include="Graphics\GraphicsGL.cpp" />
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\Text.cpp" />
+    <ClCompile Include="Graphics\TextAnalyzer.cpp" />
     <ClCompile Include="Graphics\TextFormat.cpp" />
     <ClCompile Include="Graphics\Texture.cpp" />
     <ClCompile Include="IO\Components\AreaButton.cpp" />
@@ -417,6 +420,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Data\BulletData.h" />
     <ClInclude Include="Data\EquipData.h" />
     <ClInclude Include="Data\ItemData.h" />
+    <ClInclude Include="Data\TextResolver.h" />
     <ClInclude Include="Data\JobData.h" />
     <ClInclude Include="Data\SkillData.h" />
     <ClInclude Include="Data\WeaponData.h" />
@@ -469,10 +473,12 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Graphics\DrawArgument.h" />
     <ClInclude Include="Graphics\EffectLayer.h" />
     <ClInclude Include="Graphics\Geometry.h" />
+    <ClInclude Include="Graphics\FormatText.h" />
     <ClInclude Include="Graphics\GraphicsGL.h" />
     <ClInclude Include="Graphics\SpecialText.h" />
     <ClInclude Include="Graphics\Sprite.h" />
     <ClInclude Include="Graphics\Text.h" />
+    <ClInclude Include="Graphics\TextAnalyzer.h" />
     <ClInclude Include="Graphics\TextFormat.h" />
     <ClInclude Include="Graphics\Texture.h" />
     <ClInclude Include="IO\Components\AreaButton.h" />

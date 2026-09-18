@@ -29,6 +29,40 @@ namespace ms
 	Text::Text(Font f, Alignment a, Color::Name c, const std::string& t, uint16_t mw, bool fm, int16_t la) : Text(f, a, c, Background::NONE, t, mw, fm, la) {}
 	Text::Text() : Text(Font::A11M, Alignment::LEFT, Color::BLACK) {}
 
+	Text::Font Text::bold(Font font)
+	{
+		switch (font)
+		{
+			case A11M:
+				return A11B;
+			case A12M:
+				return A12B;
+			case A13M:
+				return A13B;
+			case A18M:
+				return A18B;
+			default:
+				return font;
+		}
+	}
+
+	Text::Font Text::normal(Font font)
+	{
+		switch (font)
+		{
+			case A11B:
+				return A11M;
+			case A12B:
+				return A12M;
+			case A13B:
+				return A13M;
+			case A18B:
+				return A18M;
+			default:
+				return font;
+		}
+	}
+
 	void Text::reset_layout()
 	{
 		if (text.empty())

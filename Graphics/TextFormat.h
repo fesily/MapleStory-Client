@@ -65,6 +65,18 @@ namespace ms
 	// treats it.
 	namespace textformat
 	{
+		// The two dialects the client's texts are written in. The official client has
+		// one parser for each: CTextAnalyzer::AnalyzeText reads dialog and quest texts,
+		// while CUIToolTip draws descriptions with the simpler rules below.
+		enum class Mode
+		{
+			DIALOG,			// The rules documented above
+			DESCRIPTION		// A '#' or '#c' is a two byte prefix which is not drawn, a
+							// '\' any character drops both, a '\\' is one backslash,
+							// a '\n' and a real LF start a new line, and the text may
+							// also break behind a space or one of ' . , ; :'
+		};
+
 		enum class Unit
 		{
 			PLAIN,		// Characters up to the next delimiter, drawn as they are
@@ -77,7 +89,12 @@ namespace ms
 
 		// The kind of the unit which starts at [index] and its byte length there
 		// (at least one)
-		Unit classify(const std::string& text, size_t index, size_t& length);
+		Unit classify(const std::string& text, size_t index, size_t& length, Mode mode = Mode::DIALOG);
+
+		// The payload of the code which starts at [index], without the code itself and
+		// without the terminator the scanner consumed. Only meaningful when classify()
+		// reported the unit as PAYLOAD with the given [length].
+		std::string payload(const std::string& text, size_t index, size_t length);
 
 		// Decode the UTF-8 codepoint which starts at the given index and report how
 		// many bytes it took. Invalid sequences decode to U+FFFD and consume one byte,

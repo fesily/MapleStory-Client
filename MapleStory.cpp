@@ -19,6 +19,7 @@
 #include "Gameplay/MapleMap/MapObjects.h"
 #include "Gameplay/MapleMap/Npc.h"
 #include "IO/UI.h"
+#include "IO/UITypes/UINpcTalk.h"
 #include "IO/Window.h"
 #include "Net/Packets/GameplayPackets.h"
 #include "Net/Packets/MessagingPackets.h"
@@ -29,6 +30,8 @@
 #include "Util/Misc.h"
 
 #include <cstdlib>
+#include <fstream>
+#include <sstream>
 
 #ifdef USE_NX
 #include "Util/NxFiles.h"
@@ -174,6 +177,48 @@ namespace ms
 			std::cout << "chat: " << args << std::endl;
 		}
 
+		void command_npctalk(const std::string& args)
+		{
+			if (args.empty())
+			{
+				std::cout << "Usage: npctalk <file|text>" << std::endl;
+				return;
+			}
+
+			// The text of a dialog is read from a file when the argument names one, so
+			// a dialog can be looked at without rebuilding the client
+			std::string text = args;
+			std::ifstream file(args, std::ios::binary);
+			bool fromfile = file.is_open();
+
+			if (fromfile)
+			{
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+
+				text = buffer.str();
+			}
+
+			NpcTalkDialogue dialogue;
+			dialogue.npcid = 9010000;
+			// The entries of the dialog are part of its text (#L<id>#<label>#l), which
+			// is what the server's center script sends
+			dialogue.msgtype = 4;
+			dialogue.speaker = 0;
+			dialogue.text = text;
+
+			UI::get().emplace<UINpcTalk>();
+			UI::get().enable();
+
+			if (auto npctalk = UI::get().get_element<UINpcTalk>())
+				npctalk->change_text(dialogue);
+			else
+				std::cout << "npctalk: no game state to show the dialog in" << std::endl;
+
+			std::cout << "npctalk: " << text.size() << " bytes"
+				<< (fromfile ? " from " + args : std::string()) << std::endl;
+		}
+
 		void command_quit(const std::string&)
 		{
 			std::cout << "Closing the client." << std::endl;
@@ -187,6 +232,7 @@ namespace ms
 				{ "center", "", "open the server's center UI (NPC 9900001)", command_center },
 				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
+				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
 				{ "quit", "", "close the client", command_quit },
 				{ "talk", "<npcid|oid>", "ask the server for that NPC's dialog", command_talk },
 			});

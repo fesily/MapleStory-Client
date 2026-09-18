@@ -394,6 +394,13 @@ namespace ms
 		SkipLogo() : BoolEntry("SkipLogo", "true") {}
 	};
 
+	// How thick the line under the entry the cursor is on in a dialog is drawn, in
+	// pixels; 0 leaves it out. The texture it is drawn from is two pixels tall
+	struct UnderlineThickness : public Configuration::ByteEntry
+	{
+		UnderlineThickness() : ByteEntry("UnderlineThickness", "1") {}
+	};
+
 	// The last used account name
 	struct DefaultAccount : public Configuration::StringEntry
 	{

@@ -866,6 +866,11 @@ namespace ms
 		);
 	}
 
+	int16_t GraphicsGL::linespace(Text::Font id) const
+	{
+		return fonts[id].linespace();
+	}
+
 	Text::Layout GraphicsGL::createlayout(const std::string& text, Text::Font id, Text::Alignment alignment, Color::Name color, int16_t maxwidth, bool formatted, int16_t line_adj)
 	{
 		size_t length = text.length();
@@ -941,24 +946,12 @@ namespace ms
 							// #e - Bold text
 							case 'e':
 							{
-								switch (last_font)
-								{
-									case Text::Font::A11M:
-										fontid = Text::Font::A11B;
-										break;
-									case Text::Font::A12M:
-										fontid = Text::Font::A12B;
-										break;
-									case Text::Font::A13M:
-										fontid = Text::Font::A13B;
-										break;
-									case Text::Font::A18M:
-										fontid = Text::Font::A18B;
-										break;
-									default:
-										single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown Text::Font: [" + std::to_string(last_font) + "]");
-										break;
-								}
+								Text::Font boldfont = Text::bold(last_font);
+
+								if (boldfont == last_font)
+									single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown Text::Font: [" + std::to_string(last_font) + "]");
+								else
+									fontid = boldfont;
 
 								break;
 							}
@@ -977,24 +970,12 @@ namespace ms
 							// #n - Normal text (Removes bold)
 							case 'n':
 							{
-								switch (last_font)
-								{
-									case Text::Font::A11B:
-										fontid = Text::Font::A11M;
-										break;
-									case Text::Font::A12B:
-										fontid = Text::Font::A12M;
-										break;
-									case Text::Font::A13B:
-										fontid = Text::Font::A13M;
-										break;
-									case Text::Font::A18B:
-										fontid = Text::Font::A18M;
-										break;
-									default:
-										single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown Text::Font: [" + std::to_string(last_font) + "]");
-										break;
-								}
+								Text::Font normalfont = Text::normal(last_font);
+
+								if (normalfont == last_font)
+									single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown Text::Font: [" + std::to_string(last_font) + "]");
+								else
+									fontid = normalfont;
 
 								break;
 							}

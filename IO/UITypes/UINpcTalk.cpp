@@ -19,6 +19,8 @@
 
 #include "../UI.h"
 
+#include "../../Data/TextResolver.h"
+#include "../../Configuration.h"
 #include "../../MapleStory.h"
 
 #include "../Components/MapleButton.h"
@@ -37,8 +39,8 @@
 
 namespace ms
 {
-	UINpcTalk::UINpcTalk() : offset(0), unitrows(0), rowmax(0), show_slider(false), draw_text(false), formatted_text(""), formatted_text_pos(0), timestep(0),
-		msgtype(0), text_y(0), hovered_option(-1), input(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::DARKGREY, Rectangle<int16_t>(Point<int16_t>(166, 0), Point<int16_t>(460, 20)), 40), input_enabled(false), nummin(0), nummax(0)
+	UINpcTalk::UINpcTalk() : offset(0), unitrows(0), rowmax(0), scrollable(0), hovered(-1), show_slider(false), draw_text(false), formatted_text(""), formatted_text_pos(0), timestep(0),
+		msgtype(0), text_y(0), input(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::DARKGREY, Rectangle<int16_t>(Point<int16_t>(166, 0), Point<int16_t>(460, 20)), 40), input_enabled(false), nummin(0), nummax(0)
 	{
 		nl::node UtilDlgEx = nl::nx::UI["UIWindow2.img"]["UtilDlgEx"];
 
@@ -47,7 +49,7 @@ namespace ms
 		bottom = UtilDlgEx["s"];
 		nametag = UtilDlgEx["bar"];
 
-		min_height = 8 * fill.height() + 14;
+		min_height = TEXT_MIN_HEIGHT + TEXT_MARGIN;
 
 		buttons[Buttons::ALLLEVEL] = std::make_unique<MapleButton>(UtilDlgEx["BtAllLevel"]);
 		buttons[Buttons::CLOSE] = std::make_unique<MapleButton>(UtilDlgEx["BtClose"]);
@@ -119,32 +121,16 @@ namespace ms
 
 		if (show_slider)
 		{
-			int16_t text_min_height = position.y() + top.height() - 1;
-			text.draw(position + Point<int16_t>(162, content_y), Range<int16_t>(text_min_height, text_min_height + height - 18));
+			// The clip hides the lines which were scrolled over the top of the text
+			// area; it has to sit where that area begins, not where the texture
+			// behind it does, or the first line loses its tallest glyphs
+			int16_t text_min_height = position.y() + text_top();
+			text.draw(position + Point<int16_t>(162, content_y), Range<int16_t>(text_min_height, position.y() + top.height() + height), hovered);
 			slider.draw(position);
 		}
 		else
 		{
-			text.draw(position + Point<int16_t>(166, content_y));
-		}
-
-		// The entries of a sendSimple dialog are listed below the text and are clickable
-		if (!draw_text)
-		{
-			for (const Option& option : options)
-			{
-				Point<int16_t> option_pos = position + Point<int16_t>(166, content_y + option.y);
-
-				if (show_slider)
-				{
-					int16_t text_min_height = position.y() + top.height() - 1;
-					option.label.draw(DrawArgument(option_pos), Range<int16_t>(text_min_height, text_min_height + height - 18));
-				}
-				else
-				{
-					option.label.draw(option_pos);
-				}
-			}
+			text.draw(position + Point<int16_t>(166, content_y), hovered);
 		}
 
 		if (input_enabled)
@@ -161,12 +147,14 @@ namespace ms
 			{
 				if (formatted_text_pos < formatted_text.size())
 				{
-					std::string t = text.get_text();
-					char c = formatted_text[formatted_text_pos];
+					// One unit at a time: a code which is only half written would
+					// swallow the text behind it until it arrives
+					size_t length = 1;
+					textformat::classify(formatted_text, formatted_text_pos, length);
 
-					text.change_text(t + c);
+					formatted_text_pos = std::min(formatted_text.size(), formatted_text_pos + length);
 
-					formatted_text_pos++;
+					text.change_text(formatted_text.substr(0, formatted_text_pos));
 					timestep = 0;
 				}
 				else
@@ -294,6 +282,10 @@ namespace ms
 	{
 		Point<int16_t> cursor_relative = cursorpos - position;
 
+		// The entry the cursor is on: its marker turns red and its text is underlined
+		if (!draw_text)
+			hovered = text.select_at(cursor_relative - Point<int16_t>(show_slider ? 162 : 166, content_offset()));
+
 		if (show_slider && slider.isenabled())
 			if (Cursor::State sstate = slider.send_cursor(cursor_relative, clicked))
 				return sstate;
@@ -301,29 +293,19 @@ namespace ms
 		if (input_enabled && input.send_cursor(cursorpos, clicked) == Cursor::State::CLICKING)
 			return Cursor::State::CLICKING;
 
-		if (!draw_text && !options.empty())
+		if (!draw_text)
 		{
-			int8_t option = option_at(cursor_relative);
+			// An entry of the dialog is answered with its id, the way the official
+			// client answers the row a player clicked on. The server reads it as an
+			// int selection (NPCMoreTalkHandler.java:50-53), which
+			// NpcTalkMorePacket(int32_t) sends as the answer to a sendSimple dialog.
+			int16_t selection = hovered;
 
-			if (option != hovered_option)
-			{
-				if (hovered_option >= 0)
-					options[static_cast<size_t>(hovered_option)].label.change_color(Color::Name::MEDIUMBLUE);
-
-				if (option >= 0)
-					options[static_cast<size_t>(option)].label.change_color(Color::Name::BLUE);
-			}
-
-			hovered_option = option;
-
-			if (option >= 0)
+			if (selection >= 0)
 			{
 				if (clicked)
 				{
-					// The server reads the chosen entry as an int selection
-					// (NPCMoreTalkHandler.java:50-53), which NpcTalkMorePacket(int32_t)
-					// sends as the answer to a sendSimple dialog
-					NpcTalkMorePacket(options[static_cast<size_t>(option)].id).dispatch();
+					NpcTalkMorePacket(static_cast<int32_t>(selection)).dispatch();
 					deactivate();
 
 					return Cursor::State::CLICKING;
@@ -342,6 +324,19 @@ namespace ms
 		}
 
 		return estate;
+	}
+
+	void UINpcTalk::remove_cursor()
+	{
+		hovered = -1;
+	}
+
+	void UINpcTalk::send_scroll(double yoffset)
+	{
+		// The wheel scrolls the dialog one row at a time, the way the thumb and the
+		// arrows of its scrollbar do
+		if (show_slider)
+			slider.send_scroll(yoffset);
 	}
 
 	void UINpcTalk::send_key(int32_t keycode, bool pressed, bool escape)
@@ -392,57 +387,6 @@ namespace ms
 		return TalkType::NONE;
 	}
 
-	// TODO: Move this to GraphicsGL?
-	std::string UINpcTalk::format_text(const std::string& tx, const int32_t& npcid)
-	{
-		// The closing '#' belongs to the code, so it is replaced with it: leaving it
-		// behind puts a stray '#' the layout draws into the text
-		std::string formatted_text = tx;
-		size_t begin = formatted_text.find("#p");
-
-		if (begin != std::string::npos)
-		{
-			size_t end = formatted_text.find("#", begin + 1);
-
-			if (end != std::string::npos)
-			{
-				std::string namestr = nl::nx::String["Npc.img"][std::to_string(npcid)]["name"];
-				formatted_text.replace(begin, end - begin + 1, namestr);
-			}
-		}
-
-		begin = formatted_text.find("#h");
-
-		if (begin != std::string::npos)
-		{
-			size_t end = formatted_text.find("#", begin + 1);
-
-			if (end != std::string::npos)
-			{
-				std::string charstr = Stage::get().get_player().get_name();
-				formatted_text.replace(begin, end - begin + 1, charstr);
-			}
-		}
-
-		begin = formatted_text.find("#t");
-
-		if (begin != std::string::npos)
-		{
-			size_t end = formatted_text.find("#", begin + 1);
-
-			if (end != std::string::npos)
-			{
-				size_t b = begin + 2;
-				int32_t itemid = std::stoi(formatted_text.substr(b, end - b));
-				std::string itemname = nl::nx::String["Consume.img"][itemid]["name"];
-
-				formatted_text.replace(begin, end - begin + 1, itemname);
-			}
-		}
-
-		return formatted_text;
-	}
-
 	void UINpcTalk::change_text(const NpcTalkDialogue& dialogue)
 	{
 		msgtype = dialogue.msgtype;
@@ -464,21 +408,21 @@ namespace ms
 		timestep = 0;
 		draw_text = true;
 		formatted_text_pos = 0;
-		hovered_option = -1;
-		options.clear();
 
-		std::string bodytext = dialogue.text;
+		// The entries a dialog can be answered with are part of its text and stay
+		// there (#L<id>#<label>#l marks them, NPCConversationManager.sendSimple and
+		// the npc scripts): FormatText draws and resolves them like the rest, and
+		// select_at tells a click on one of them from a click on the body
+		formatted_text = dialogue.text;
 
-		// The entries a sendSimple dialog can be answered with are part of its text
-		// (NPCConversationManager.sendSimple, NPCConversationManager.java:188-191)
-		if (type == TalkType::SENDSIMPLE)
-			bodytext = parse_options(dialogue.text);
-
-		formatted_text = format_text(bodytext, dialogue.npcid);
-
-		text = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::DARKGREY, formatted_text, 320);
+		text = FormatText(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::DARKGREY, formatted_text, TEXT_WIDTH, TextResolver::get());
+		text.set_underline_thickness(Setting<UnderlineThickness>::get().load());
 
 		int16_t text_height = text.height();
+		// The descent has to be read before the text is cleared for the reveal: the
+		// scroll below sizes the content with the room the last row takes below its
+		// baseline, and that room is gone once the layout is empty
+		int16_t text_descent = text.descent();
 
 		text.change_text("");
 
@@ -499,29 +443,42 @@ namespace ms
 			name.change_text("");
 		}
 
-		// The entries are listed below the text, so they add to the dialog height
-		int16_t content_height = text_height;
+		// The text sits just below the frame of the window, the way the official client
+		// places it, and the window is TEXT_MARGIN taller than the text for it
+		text_y = static_cast<int16_t>(top.height() + TEXT_MARGIN);
 
-		for (Option& option : options)
-		{
-			option.y = content_height;
-			content_height += option.label.height();
-		}
+		int16_t content_height = text_height + text_descent + TEXT_MARGIN;
 
 		height = min_height;
 		show_slider = false;
+		scrollable = 0;
 
 		if (content_height > height)
 		{
-			if (content_height > MAX_HEIGHT)
+			if (content_height > TEXT_MAX_HEIGHT + TEXT_MARGIN)
 			{
-				height = MAX_HEIGHT;
+				height = TEXT_MAX_HEIGHT + TEXT_MARGIN;
 				show_slider = true;
-				rowmax = content_height / 400 + 1;
+
+				// The rows of the scrollbar are steps of SCROLL_STEP pixels and the last
+				// one brings the bottom of the content to the bottom of the view:
+				// CUtilDlgEx::SetUtilDlgEx sets the range to (content - view) / 8 + 1.
+				// That range rounds the last step down, which leaves up to seven pixels
+				// of the last row below the view, so the steps are rounded up here and
+				// content_offset stops the last one at scrollable: the bottom of the
+				// text lands exactly on the bottom of the view
+				// The height of the layout is the baseline of its last row, so the room
+				// the glyphs of that row take below its baseline belongs to the content
+				// as well: without it the bottom of the last row stays below the view
+				int16_t view_height = height - TEXT_MARGIN;
+				scrollable = std::max<int16_t>(0, text_height + text_descent - view_height);
+
+				rowmax = (scrollable + SCROLL_STEP - 1) / SCROLL_STEP + 1;
 				unitrows = 1;
+				offset = 0;
 
 				int16_t slider_y = top.height() - 7;
-				slider = Slider(Slider::Type::DEFAULT_SILVER, Range<int16_t>(slider_y, slider_y + height - 20), top.width() - 26, unitrows, rowmax, onmoved);
+				slider = Slider(Slider::Type::DEFAULT_SILVER, Range<int16_t>(slider_y, slider_y + height - 20), TEXT_LEFT + TEXT_WIDTH - 2, unitrows, rowmax, onmoved);
 			}
 			else
 			{
@@ -529,7 +486,6 @@ namespace ms
 			}
 		}
 
-		text_y = 48 - (height - min_height);
 
 		for (auto& button : buttons)
 		{
@@ -631,110 +587,21 @@ namespace ms
 		}
 	}
 
-	// The selectable entries of a sendSimple text are marked as #L<id>#<label>#l
-	// (NPCConversationManager.sendSimple and the npc scripts); they are listed below
-	// the remaining text and answered with their id
-	std::string UINpcTalk::parse_options(const std::string& tx)
+	int16_t UINpcTalk::text_top() const
 	{
-		std::string bodytext;
-		size_t pos = 0;
-
-		while (pos < tx.size())
-		{
-			size_t begin = tx.find("#L", pos);
-
-			if (begin == std::string::npos)
-			{
-				bodytext.append(tx, pos, std::string::npos);
-				break;
-			}
-
-			bodytext.append(tx, pos, begin - pos);
-
-			size_t idend = tx.find('#', begin + 2);
-
-			if (idend == std::string::npos)
-			{
-				bodytext.append(tx, begin, std::string::npos);
-				break;
-			}
-
-			std::string idstr = tx.substr(begin + 2, idend - begin - 2);
-
-			if (idstr.empty() || idstr.find_first_not_of("0123456789") != std::string::npos)
-			{
-				// Not an entry after all
-				bodytext.append(tx, begin, idend + 1 - begin);
-				pos = idend + 1;
-				continue;
-			}
-
-			// Some texts do not close an entry with #l, in which case it ends at the next
-			// entry or at the end of its line
-			size_t labelend = std::min(tx.find("#l", idend + 1), tx.find("#L", idend + 1));
-			size_t lineend = tx.find("\n", idend + 1);
-
-			if (lineend < labelend)
-			{
-				// The line break itself stays out of the entry
-				labelend = lineend;
-				pos = lineend + 1;
-
-				if (labelend > idend + 1 && tx[labelend - 1] == '\r')
-					labelend--;
-			}
-			else if (labelend != std::string::npos)
-			{
-				pos = labelend + 2;
-			}
-			else
-			{
-				labelend = tx.size();
-				pos = tx.size();
-			}
-
-			Option option;
-			option.id = std::stoi(idstr);
-			option.y = 0;
-			option.label = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::MEDIUMBLUE, tx.substr(idend + 1, labelend - idend - 1), 320);
-
-			options.push_back(option);
-		}
-
-		return bodytext;
-	}
-
-	int8_t UINpcTalk::option_at(Point<int16_t> cursorpos) const
-	{
-		int16_t content_y = content_offset();
-
-		for (size_t i = 0; i < options.size(); i++)
-		{
-			Point<int16_t> left_top = Point<int16_t>(166, content_y + options[i].y);
-			Point<int16_t> right_bottom = left_top + Point<int16_t>(options[i].label.width(), options[i].label.height());
-
-			if (show_slider)
-			{
-				// Entries scrolled out of the window cannot be clicked
-				int16_t text_min_height = top.height() - 1;
-
-				if (left_top.y() < text_min_height || right_bottom.y() > text_min_height + height - 18)
-					continue;
-			}
-
-			Rectangle<int16_t> bounds(left_top, right_bottom);
-
-			if (bounds.contains(cursorpos))
-				return static_cast<int8_t>(i);
-		}
-
-		return -1;
+		// The text keeps its place inside the window whether it is scrolled or not: the
+		// window itself is centered on the screen (see [position]), so a taller text
+		// moves the whole window instead of pushing the first lines out of it
+		return text_y;
 	}
 
 	int16_t UINpcTalk::content_offset() const
 	{
-		// A dialog whose content does not fit is scrolled instead of moved down
-		return show_slider ? 19 - offset * 400 : text_y;
+		// The rows are steps of SCROLL_STEP pixels, and the last one stops where the
+		// bottom of the text reaches the bottom of the view: the range of the
+		// scrollbar rounds down to whole rows, so without the clamp the last row of a
+		// text would stay half hidden
+		return text_top() - std::min<int16_t>(offset * SCROLL_STEP, scrollable);
 	}
 
 	void UINpcTalk::submit_input()

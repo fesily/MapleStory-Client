@@ -258,11 +258,16 @@ namespace ms
 			}
 		};
 
+	public:
 		// Look up the glyph of a codepoint. Glyphs the font provides are loaded into
-		// the atlas on first use, codepoints the font does not provide return a
-		// blank glyph.
+		// the atlas on first use, codepoints the font does not provide return a blank
+		// glyph. Callers which lay a text out themselves (FormatText) measure with
+		// this, the layout builder reads it from the same place.
 		const Font::Char& getchar(Text::Font id, uint32_t codepoint);
+		// The line pitch of a font (the frozen table the layout builder uses as well)
+		int16_t linespace(Text::Font font) const;
 
+	private:
 		class LayoutBuilder
 		{
 		public:
