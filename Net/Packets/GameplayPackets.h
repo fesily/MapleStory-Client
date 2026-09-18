@@ -47,6 +47,15 @@ namespace ms
 		EnterCashShopPacket() : OutPacket(OutPacket::Opcode::ENTER_CASHSHOP) {}
 	};
 
+	// Opcode: ENTER_MTS(156)
+	class EnterMTSPacket : public OutPacket
+	{
+	public:
+		// Requests the server to open its shop/center UI; the packet carries no
+		// arguments (EnterMTSHandler reads none)
+		EnterMTSPacket() : OutPacket(OutPacket::Opcode::ENTER_MTS) {}
+	};
+
 	// Opcode: MOVE_PLAYER(41)
 	class MovePlayerPacket : public MovementPacket
 	{

@@ -32,6 +32,14 @@ namespace ms
 		}
 	};
 
+	// Packet which asks for the dialog of the server's guide NPC
+	// Opcode: CLICK_GUIDE(162)
+	class ClickGuidePacket : public OutPacket
+	{
+	public:
+		ClickGuidePacket() : OutPacket(OutPacket::Opcode::CLICK_GUIDE) {}
+	};
+
 	// Packet which sends a response to an NPC dialog to the server
 	// Opcode: NPC_TALK_MORE(60)
 	class NpcTalkMorePacket : public OutPacket

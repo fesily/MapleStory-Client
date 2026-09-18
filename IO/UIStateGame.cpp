@@ -40,6 +40,7 @@
 #include "UITypes/UIWorldMap.h"
 
 #include "../Net/Packets/GameplayPackets.h"
+#include "../Net/Packets/NpcInteractionPackets.h"
 
 namespace ms
 {
@@ -360,6 +361,12 @@ namespace ms
 							case KeyAction::Id::CHANGECHANNEL:
 							{
 								emplace<UIChannel>();
+								break;
+							}
+							case KeyAction::Id::GUIDE:
+							{
+								// Same request the help button of the status bar sends
+								ClickGuidePacket().dispatch();
 								break;
 							}
 							case KeyAction::Id::MAINMENU:

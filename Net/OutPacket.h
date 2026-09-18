@@ -71,6 +71,10 @@ namespace ms
 			TALK_TO_NPC = 58,
 			NPC_TALK_MORE = 60,
 			NPC_SHOP_ACTION = 61,
+			// Asks for the dialog of the guide NPC the server picks by job. The packet
+			// carries no target, so the dialog opens on every map
+			// (ClickGuideHandler.java:36-43)
+			CLICK_GUIDE = 162,
 
 			/// Player Interaction
 			CHAR_INFO_REQUEST = 97,
@@ -93,6 +97,10 @@ namespace ms
 			/// Gameplay 2
 			PARTY_OPERATION = 124,
 			ADMIN_COMMAND = 128,
+			// Asks the server to open its shop/center UI. This server answers it with
+			// the script of NPC 9900001, which needs no target to run
+			// (EnterMTSHandler.openCenterScript, RecvOpcode.ENTER_MTS)
+			ENTER_MTS = 156,
 			MOVE_MONSTER = 188,
 			PICKUP_ITEM = 202,
 			DAMAGE_REACTOR = 205,

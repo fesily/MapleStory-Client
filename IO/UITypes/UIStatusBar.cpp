@@ -618,9 +618,18 @@ namespace ms
 			case Buttons::BT_MENU_BATTLE:
 			case Buttons::BT_MENU_ACHIEVEMENT:
 			case Buttons::BT_MENU_FISHING:
-			case Buttons::BT_MENU_HELP:
 			case Buttons::BT_MENU_CLAIM:
 			{
+				remove_menus();
+				break;
+			}
+			case Buttons::BT_MENU_HELP:
+			{
+				// The button opens the server's center UI: the server answers the
+				// request with the script of NPC 9900001, so it needs no target and
+				// works on every map (EnterMTSHandler.openCenterScript)
+				EnterMTSPacket().dispatch();
+
 				remove_menus();
 				break;
 			}
