@@ -274,6 +274,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Graphics\GraphicsGL.cpp" />
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\Text.cpp" />
+    <ClCompile Include="Graphics\TextFormat.cpp" />
     <ClCompile Include="Graphics\Texture.cpp" />
     <ClCompile Include="IO\Components\AreaButton.cpp" />
     <ClCompile Include="IO\Components\Button.cpp" />
@@ -471,6 +472,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Graphics\SpecialText.h" />
     <ClInclude Include="Graphics\Sprite.h" />
     <ClInclude Include="Graphics\Text.h" />
+    <ClInclude Include="Graphics\TextFormat.h" />
     <ClInclude Include="Graphics\Texture.h" />
     <ClInclude Include="IO\Components\AreaButton.h" />
     <ClInclude Include="IO\Components\Button.h" />

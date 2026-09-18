@@ -32,4 +32,10 @@ namespace ms
 	{
 		void handle(InPacket& recv) const override;
 	};
+
+	// Confirms the result of an NPC shop transaction
+	class ConfirmShopTransactionHandler : public PacketHandler
+	{
+		void handle(InPacket& recv) const override;
+	};
 }

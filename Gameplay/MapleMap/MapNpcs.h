@@ -52,5 +52,7 @@ namespace ms
 		MapObjects npcs;
 
 		std::queue<NpcSpawn> spawns;
+		// Whether the cursor was pressed the last time the mouse input was sent
+		bool clicked_last = false;
 	};
 }

@@ -17,78 +17,11 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "GraphicsGL.h"
 
+#include "TextFormat.h"
+
 #include <set>
 
 #include "../Configuration.h"
-
-namespace
-{
-	// Decode the UTF-8 codepoint which starts at the given index and report how
-	// many bytes it took. Invalid sequences decode to U+FFFD and consume one byte,
-	// so the decoder always makes progress. All text the client renders is UTF-8:
-	// the server encodes strings in its client charset (see InPacket).
-	uint32_t utf8_decode(const std::string& text, size_t index, size_t& length)
-	{
-		uint8_t lead = static_cast<uint8_t>(text[index]);
-
-		if (lead < 0x80)
-		{
-			length = 1;
-
-			return lead;
-		}
-
-		size_t count;
-		uint32_t codepoint;
-
-		if ((lead & 0xE0) == 0xC0)
-		{
-			count = 2;
-			codepoint = lead & 0x1F;
-		}
-		else if ((lead & 0xF0) == 0xE0)
-		{
-			count = 3;
-			codepoint = lead & 0x0F;
-		}
-		else if ((lead & 0xF8) == 0xF0)
-		{
-			count = 4;
-			codepoint = lead & 0x07;
-		}
-		else
-		{
-			length = 1;
-
-			return 0xFFFD;
-		}
-
-		if (index + count > text.size())
-		{
-			length = 1;
-
-			return 0xFFFD;
-		}
-
-		for (size_t i = 1; i < count; i++)
-		{
-			uint8_t next = static_cast<uint8_t>(text[index + i]);
-
-			if ((next & 0xC0) != 0x80)
-			{
-				length = 1;
-
-				return 0xFFFD;
-			}
-
-			codepoint = (codepoint << 6) | (next & 0x3F);
-		}
-
-		length = count;
-
-		return codepoint;
-	}
-}
 
 namespace ms
 {
@@ -815,10 +748,11 @@ namespace ms
 
 		while (offset < length)
 		{
-			size_t last = text.find_first_of(" \\#\t", offset + 1);
+			// Every iteration takes one unit: a format code, an escape or a word
+			size_t unitlen = 1;
+			textformat::classify(text, offset, unitlen);
 
-			if (last == std::string::npos)
-				last = length;
+			size_t last = offset + unitlen;
 
 			first = builder.add(text, first, offset, last);
 			offset = last;
@@ -850,96 +784,30 @@ namespace ms
 
 		if (formatted)
 		{
-			size_t next_char = first + 1;
-			char c = text[next_char];
+			size_t unitlen = 1;
+			textformat::Unit unit = textformat::classify(text, first, unitlen);
 
-			switch (text[first])
+			if (unit != textformat::Unit::PLAIN)
 			{
-				case '\\':
-				{
-					if (next_char < last)
-					{
-						switch (c)
-						{
-							// \r\n - Moves down a line
-							case 'rn':
-							case 'RN':
-							{
-								// TODO: How is this treated differently than the single versions?
-								skip += 4;
-								break;
-							}
-							// \n - New line
-							case 'n':
-							case 'N':
-							{
-								linebreak = true;
-								skip += 2;
-								break;
-							}
-							// \r - Return carriage
-							case 'r':
-							case 'R':
-							{
-								linebreak = ax > 0;
-								skip += 2;
-								break;
-							}
-							// \b - Backwards
-							case 'b':
-							{
-								// TODO: What is this?
-								skip += 2;
-								break;
-							}
-							default:
-							{
-								single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown format: [" + std::to_string(c) + "]");
-								break;
-							}
-						}
-					}
+				// createlayout hands whole units over, a unit is therefore hidden as a whole
+				skip = unitlen;
 
-					break;
-				}
-				case '#':
+				switch (unit)
 				{
-					if (next_char < last)
+					case textformat::Unit::STYLE:
 					{
-						switch (c)
+						switch (text[first + 1])
 						{
 							// #b - Blue text
 							case 'b':
-							{
 								color = Color::Name::PERSIANGREEN;
-								skip += 2;
 								break;
-							}
-							// #B[%]# - Shows a progress bar
-							case 'B':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #c[id]# - Show how many of a given item are in the player's inventory in an orange color
-							case 'c':
-							{
-								// TODO: Show the number of items
-								color = Color::Name::ORANGE;
-								skip += 2;
-								break;
-							}
 							// #d - Purple text
 							case 'd':
-							{
-								// TODO: Need to get the proper color
-								skip += 2;
+								// TODO: Needs the proper purple
 								break;
-							}
 							// #e - Bold text
 							case 'e':
-							case 'E':
 							{
 								switch (last_font)
 								{
@@ -960,69 +828,22 @@ namespace ms
 										break;
 								}
 
-								skip += 2;
-								break;
-							}
-							// #f[path]# - Shows an image within the WZ file
-							case 'f':
-							{
-								// TODO: Needs implemented
-								skip += 2;
 								break;
 							}
 							// #g - Green text
 							case 'g':
-							{
-								// TODO: Need to get the proper color
-								skip += 2;
+								// TODO: Needs the proper green
 								break;
-							}
-							// TODO: Is there a space between the h and ending # or not?
-							// #h # - Shows the name of the player
-							case 'h':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #i[id]# - Shows a picture of the given item
-							case 'i':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
 							// #k - Black text
 							case 'k':
-							{
 								color = Color::Name::DARKGREY;
-								skip += 2;
 								break;
-							}
 							// #l - Ends the list of items in the selection
 							case 'l':
-							{
-								// TODO: Needs implemented
-								skip += 2;
+								// TODO: The select range of the #L codes needs the element list
 								break;
-							}
-							// #L[number]# - Starts a selection for the number of items given
-							case 'L':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #m[id]# - Shows the name of the given map
-							case 'm':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
 							// #n - Normal text (Removes bold)
 							case 'n':
-							case 'N':
 							{
 								switch (last_font)
 								{
@@ -1043,86 +864,42 @@ namespace ms
 										break;
 								}
 
-								skip += 2;
-								break;
-							}
-							// #o[id]# - Shows the name of the given monster
-							case 'o':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #p[id]# - Shows the name of the given NPC
-							case 'p':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #q[id]# - Shows the name of the given skill
-							case 'q':
-							{
-								// TODO: Needs implemented
-								skip += 2;
 								break;
 							}
 							// #r - Red text
 							case 'r':
-							{
 								color = Color::Name::RED;
-								skip += 2;
 								break;
-							}
-							// #s[id]# - Shows the image of the given skill
-							case 's':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #t[id]#
-							// #z[id]#
-							// Shows the name of the given item
-							// TODO: Are these the same?
-							case 't':
-							case 'z':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #v[id]# - Shows a picture of the given item
-							case 'v':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							// #x - Returns "0%" (Need more information on this)
-							case 'x':
-							{
-								// TODO: Needs implemented
-								skip += 2;
-								break;
-							}
-							default:
-							{
-								single_console::log_message("[GraphicsGL::LayoutBuilder::add] Unknown format: [" + std::to_string(c) + "]");
-								break;
-							}
 						}
-					}
 
-					break;
+						break;
+					}
+					case textformat::Unit::MARKER:
+						// #E #I #S #K mark quest entries, #w toggles the reward mark and ## is a
+						// pair the official parser swallows; none of them draws text
+						break;
+					case textformat::Unit::PAYLOAD:
+						// TODO: Resolve the payload like the official analyzer does - the names of
+						// items, monsters, NPCs, maps, quests and skills, the icons, the #B progress
+						// bar and the #L entries - until then the code stays hidden, so that no id
+						// leaks into the text
+						break;
+					case textformat::Unit::BREAK:
+						// A '\' escape and a CR start a new line
+						linebreak = true;
+						break;
+					case textformat::Unit::LITERAL:
+					case textformat::Unit::PLAIN:
+						// A '#' which no code follows is text and is drawn as it is
+						skip = 0;
+						break;
 				}
+			}
+			else if (text[first] == '\t')
+			{
 				// \t - Tab (4 spaces)
-				case '\t':
-				{
-					ax = graphics.getchar(baseid, ' ').ax * 4;
-					skip++;
-					break;
-				}
+				ax = graphics.getchar(baseid, ' ').ax * 4;
+				skip = 1;
 			}
 		}
 
@@ -1130,10 +907,11 @@ namespace ms
 
 		if (!linebreak)
 		{
-			for (size_t i = first; i < last;)
+			// Hidden bytes never take part in the wrapping decision
+			for (size_t i = first + skip; i < last;)
 			{
 				size_t charlen = 0;
-				uint32_t codepoint = utf8_decode(text, i, charlen);
+				uint32_t codepoint = textformat::utf8_decode(text, i, charlen);
 
 				if (codepoint == '\t')
 					wordwidth += ax;
@@ -1176,7 +954,7 @@ namespace ms
 		for (size_t pos = first; pos < last;)
 		{
 			size_t charlen = 0;
-			uint32_t codepoint = utf8_decode(text, pos, charlen);
+			uint32_t codepoint = textformat::utf8_decode(text, pos, charlen);
 			const Font::Char& ch = graphics.getchar(baseid, codepoint);
 
 			// An offset is recorded for every byte of the character, so the
@@ -1297,7 +1075,7 @@ namespace ms
 				for (size_t pos = word.first; pos < word.last;)
 				{
 					size_t charlen = 0;
-					uint32_t codepoint = utf8_decode(text, pos, charlen);
+					uint32_t codepoint = textformat::utf8_decode(text, pos, charlen);
 					const Font::Char& ch = getchar(word.font, codepoint);
 
 					pos += charlen;

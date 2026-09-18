@@ -52,6 +52,16 @@ namespace ms
 		{
 			write_int(selection);
 		}
+
+		// Response to a number input dialog (msgType 3)
+		// The server reads the entered number as an int selection
+		// (NPCMoreTalkHandler.java:50-53)
+		NpcTalkMorePacket(int8_t lastmsg, int8_t response, int32_t selection) : OutPacket(OutPacket::Opcode::NPC_TALK_MORE)
+		{
+			write_byte(lastmsg);
+			write_byte(response);
+			write_int(selection);
+		}
 	};
 
 	// Packet which tells the server of an interaction with an NPC shop

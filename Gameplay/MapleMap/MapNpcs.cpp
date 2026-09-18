@@ -21,6 +21,10 @@
 
 #include "../../Net/Packets/NpcInteractionPackets.h"
 
+#include "../../MapleStory.h"
+
+#include <iostream>
+
 namespace ms
 {
 	void MapNpcs::draw(Layer::Id layer, double viewx, double viewy, float alpha) const
@@ -60,6 +64,7 @@ namespace ms
 	void MapNpcs::clear()
 	{
 		npcs.clear();
+		clicked_last = false;
 	}
 
 	MapObjects * MapNpcs::get_npcs()
@@ -69,6 +74,12 @@ namespace ms
 
 	Cursor::State MapNpcs::send_cursor(bool pressed, Point<int16_t> position, Point<int16_t> viewpos)
 	{
+		// The cursor stays pressed while the button is held, and the server starts a
+		// conversation for every request it gets (NPCTalkHandler, NPCScriptManager),
+		// so only the press itself is answered
+		bool was_pressed = clicked_last;
+		clicked_last = pressed;
+
 		for (auto& map_object : npcs)
 		{
 			Npc* npc = static_cast<Npc*>(map_object.second.get());
@@ -77,8 +88,12 @@ namespace ms
 			{
 				if (pressed)
 				{
-					// TODO: Try finding dialog first
-					TalkToNPCPacket(npc->get_oid()).dispatch();
+					if (!was_pressed)
+					{
+						LOG(LOG_NETWORK, "[MapNpcs] TALK_TO_NPC oid=[" << npc->get_oid() << "]");
+
+						TalkToNPCPacket(npc->get_oid()).dispatch();
+					}
 
 					return Cursor::State::IDLE;
 				}
