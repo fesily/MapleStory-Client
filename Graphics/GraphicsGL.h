@@ -103,6 +103,33 @@ namespace ms
 		// Add a bitmap to the available resources
 		const Offset& getoffset(const nl::bitmap& bmp);
 
+		// A texture holding a single bitmap which is too large for the atlas; they are
+		// tracked per canvas so that they can be deleted again when memory runs short
+		struct DirectTexture
+		{
+			GLuint texture;
+			GLshort width;
+			GLshort height;
+			size_t bytes;
+			size_t lastframe;
+
+			DirectTexture(GLuint tex, GLshort w, GLshort h, size_t size, size_t frame)
+			{
+				texture = tex;
+				width = w;
+				height = h;
+				bytes = size;
+				lastframe = frame;
+			}
+		};
+
+		// Upload a bitmap to a texture of its own, or find the one it is already in
+		GLuint gettexture(const nl::bitmap& bmp);
+		// Find the texture with the given OpenGL name
+		DirectTexture* findtexture(GLuint name);
+		// Delete the least recently used textures until they fit the budget again
+		void evicttextures();
+
 		struct Leftover
 		{
 			GLshort left;
@@ -155,12 +182,18 @@ namespace ms
 			static const size_t LENGTH = 4;
 			Vertex vertices[LENGTH];
 
-			Quad(GLshort left, GLshort right, GLshort top, GLshort bottom, const Offset& offset, const Color& color, GLfloat rotation)
+			// The texture the quad is drawn from, 0 is the atlas. It stays out of the
+			// vertex layout: quads sharing one texture are drawn together by flush()
+			GLuint texture;
+
+			Quad(GLshort left, GLshort right, GLshort top, GLshort bottom, const Offset& offset, const Color& color, GLfloat rotation, GLuint tex = 0)
 			{
 				vertices[0] = { left, top, offset.left, offset.top, color };
 				vertices[1] = { left, bottom, offset.left, offset.bottom, color };
 				vertices[2] = { right, bottom, offset.right, offset.bottom, color };
 				vertices[3] = { right, top, offset.right, offset.top, color };
+
+				texture = tex;
 
 				if (rotation != 0.0f)
 				{
@@ -273,9 +306,27 @@ namespace ms
 		// Rows of the atlas reserved for glyphs which are loaded on demand
 		static const GLshort GLYPHBANDHEIGHT = 1024;
 
+		// A bitmap which is larger than this in either dimension is not packed into the
+		// atlas: a canvas of that size takes up a large part of it, and every rebuild of
+		// the atlas would upload it again
+		static const GLshort DIRECTMAXSIZE = 256;
+
+		// Budget of the textures holding those bitmaps, in bytes and in number; the ones
+		// which have not been drawn for the longest time are deleted once it is exceeded
+		static const size_t DIRECTMAXBYTES = 192 * 1024 * 1024;
+		static const size_t DIRECTMAXCOUNT = 160;
+
+		// Number of frames between two statistics logs
+		static const size_t STATSINTERVAL = 300;
+
 		bool locked;
 
 		std::vector<Quad> quads;
+
+		// The vertices of the quads, packed for the buffer: a quad carries its texture
+		// next to its vertices, which the attribute pointers (stride of one vertex)
+		// would not skip, so the quads are copied out without it when they are drawn
+		std::vector<Quad::Vertex> vertexdata;
 		GLuint VBO;
 		GLuint atlas;
 
@@ -290,6 +341,14 @@ namespace ms
 
 		std::unordered_map<size_t, Offset> offsets;
 		Offset nulloffset;
+
+		std::map<size_t, DirectTexture> directtextures;
+		size_t directbytes;
+
+		size_t framecount;
+		size_t atlasuploads;
+		size_t directuploads;
+		size_t directevictions;
 
 		QuadTree<size_t, Leftover> leftovers;
 		size_t rlid;

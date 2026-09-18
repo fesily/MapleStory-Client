@@ -65,6 +65,13 @@ namespace ms
 	{
 		locked = false;
 
+		directbytes = 0;
+
+		framecount = 0;
+		atlasuploads = 0;
+		directuploads = 0;
+		directevictions = 0;
+
 		VWIDTH = Constants::Constants::get().get_viewwidth();
 		VHEIGHT = Constants::Constants::get().get_viewheight();
 		SCREEN = Rectangle<int16_t>(0, VWIDTH, 0, VHEIGHT);
@@ -551,6 +558,16 @@ namespace ms
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+		// The textures of the large canvases belong to no atlas band, so they survive the
+		// rebuild of the atlas; only the per frame bookkeeping starts over
+		framecount = 0;
+		atlasuploads = 0;
+		directuploads = 0;
+		directevictions = 0;
+
+		for (auto& entry : directtextures)
+			entry.second.lastframe = 0;
+
 		clearinternal();
 	}
 
@@ -576,7 +593,13 @@ namespace ms
 
 	void GraphicsGL::addbitmap(const nl::bitmap& bmp)
 	{
-		getoffset(bmp);
+		// Textures hand in their bitmap when they are created, which uploads it before
+		// it is drawn for the first time; the large canvases go to a texture of their
+		// own so that they never take up room in the atlas
+		if (bmp.width() > DIRECTMAXSIZE || bmp.height() > DIRECTMAXSIZE)
+			gettexture(bmp);
+		else
+			getoffset(bmp);
 	}
 
 	const GraphicsGL::Offset& GraphicsGL::getoffset(const nl::bitmap& bmp)
@@ -592,6 +615,8 @@ namespace ms
 		GLshort width = bmp.width();
 		GLshort height = bmp.height();
 
+		// Bitmaps which are too large for the atlas are uploaded to a texture of their
+		// own by gettexture(), so only the empty ones are left without an offset here
 		if (width <= 0 || height <= 0)
 			return nulloffset;
 
@@ -649,15 +674,20 @@ namespace ms
 		}
 		else
 		{
-			if (border.x() + width > ATLASW)
+			// A bitmap that does not fit into the rest of the current band starts a
+			// new one; when even that leaves no room below, the atlas has to be
+			// rebuilt. The vertical test is required here as well: without it a band
+			// which reached the bottom of the atlas keeps placing bitmaps outside of
+			// the texture, their upload is dropped and they draw whatever the texture
+			// clamps to, which is the pixels of unrelated bitmaps uploaded before.
+			if (border.x() + width > ATLASW || border.y() + height > ATLASH)
 			{
 				border.set_x(0);
 				border.shift_y(yrange.second());
+				yrange = Range<GLshort>();
 
 				if (border.y() + height > ATLASH)
 					clearinternal();
-				else
-					yrange = Range<GLshort>();
 			}
 
 			x = border.x();
@@ -698,13 +728,104 @@ namespace ms
 		LOG(LOG_TRACE, "Used: [" << usedpercent << "] Wasted: [" << wastedpercent << "]");
 #endif
 
+		// The atlas has to be the bound texture here: flush() leaves the texture of the
+		// last run of the previous frame bound, and a large canvas' texture is not the
+		// atlas, so without this the upload lands in the wrong texture
+		glBindTexture(GL_TEXTURE_2D, atlas);
+
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, width, height, GL_BGRA, GL_UNSIGNED_BYTE, bmp.data());
+
+		atlasuploads++;
 
 		return offsets.emplace(
 			std::piecewise_construct,
 			std::forward_as_tuple(id),
 			std::forward_as_tuple(x, y, width, height)
 		).first->second;
+	}
+
+	GLuint GraphicsGL::gettexture(const nl::bitmap& bmp)
+	{
+		size_t id = bmp.id();
+		auto texiter = directtextures.find(id);
+
+		if (texiter != directtextures.end())
+		{
+			texiter->second.lastframe = framecount;
+
+			return texiter->second.texture;
+		}
+
+		GLshort width = static_cast<GLshort>(bmp.width());
+		GLshort height = static_cast<GLshort>(bmp.height());
+
+		if (width <= 0 || height <= 0)
+			return 0;
+
+		GLuint texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bmp.data());
+
+		size_t bytes = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
+
+		directbytes += bytes;
+		directuploads++;
+
+		directtextures.emplace(
+			std::piecewise_construct,
+			std::forward_as_tuple(id),
+			std::forward_as_tuple(texture, width, height, bytes, framecount)
+		);
+
+		return texture;
+	}
+
+	GraphicsGL::DirectTexture* GraphicsGL::findtexture(GLuint name)
+	{
+		// There are never more textures in here than DIRECTMAXCOUNT, which keeps this
+		// linear walk short
+		for (auto& entry : directtextures)
+		{
+			if (entry.second.texture == name)
+				return &entry.second;
+		}
+
+		return nullptr;
+	}
+
+	void GraphicsGL::evicttextures()
+	{
+		while (directbytes > DIRECTMAXBYTES || directtextures.size() > DIRECTMAXCOUNT)
+		{
+			auto lru = directtextures.end();
+
+			for (auto iter = directtextures.begin(); iter != directtextures.end(); ++iter)
+			{
+				// A texture drawn in the current or the previous frame may still be read
+				// by a command which was not executed yet
+				if (iter->second.lastframe + 1 >= framecount)
+					continue;
+
+				if (lru == directtextures.end() || iter->second.lastframe < lru->second.lastframe)
+					lru = iter;
+			}
+
+			// Everything that is left over is still in use and can be freed later
+			if (lru == directtextures.end())
+				break;
+
+			directbytes -= lru->second.bytes;
+
+			glDeleteTextures(1, &lru->second.texture);
+
+			directtextures.erase(lru);
+			directevictions++;
+		}
 	}
 
 	void GraphicsGL::draw(const nl::bitmap& bmp, const Rectangle<int16_t>& rect, const Range<int16_t>& vertical, const Range<int16_t>& horizontal, const Color& color, float angle)
@@ -718,7 +839,18 @@ namespace ms
 		if (!rect.overlaps(SCREEN))
 			return;
 
-		Offset offset = getoffset(bmp);
+		// The large canvases are drawn from a texture of their own, everything else
+		// keeps sharing the atlas
+		GLuint texture = 0;
+		Offset offset;
+
+		if (bmp.width() > DIRECTMAXSIZE || bmp.height() > DIRECTMAXSIZE)
+			texture = gettexture(bmp);
+
+		if (texture == 0)
+			offset = getoffset(bmp);
+		else
+			offset = Offset(0, 0, static_cast<GLshort>(bmp.width()), static_cast<GLshort>(bmp.height()));
 
 		offset.top += vertical.first();
 		offset.bottom -= vertical.second();
@@ -730,7 +862,7 @@ namespace ms
 			rect.right() - horizontal.second(),
 			rect.top() + vertical.first(),
 			rect.bottom() - vertical.second(),
-			offset, color, angle
+			offset, color, angle, texture
 		);
 	}
 
@@ -1158,15 +1290,61 @@ namespace ms
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		GLsizeiptr csize = quads.size() * sizeof(Quad);
-		GLsizeiptr fsize = quads.size() * Quad::LENGTH;
+		vertexdata.clear();
+		vertexdata.reserve(quads.size() * Quad::LENGTH);
+
+		for (const Quad& quad : quads)
+			for (size_t i = 0; i < Quad::LENGTH; i++)
+				vertexdata.emplace_back(quad.vertices[i]);
+
+		GLsizeiptr csize = static_cast<GLsizeiptr>(vertexdata.size() * sizeof(Quad::Vertex));
 
 		glEnableVertexAttribArray(attribute_coord);
 		glEnableVertexAttribArray(attribute_color);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, csize, quads.data(), GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, csize, vertexdata.data(), GL_STREAM_DRAW);
 
-		glDrawArrays(GL_QUADS, 0, fsize);
+		// The quads are drawn in the order they were added, but one call is made for each
+		// run of them sharing a texture: the atlas and the textures of the large canvases
+		// need their own uniforms, and splitting the quads up anywhere but between two
+		// neighbouring runs would break the order in which they overlap
+		size_t first = 0;
+
+		while (first < quads.size())
+		{
+			GLuint texture = quads[first].texture;
+			size_t next = first + 1;
+
+			while (next < quads.size() && quads[next].texture == texture)
+				next++;
+
+			if (texture == 0)
+			{
+				glBindTexture(GL_TEXTURE_2D, atlas);
+				glUniform2f(uniform_atlassize, ATLASW, ATLASH);
+				glUniform1i(uniform_fontregion, fontymax);
+			}
+			else
+			{
+				// Such a texture is normalized by its own size, which is what the quads
+				// of the large canvases carry as their coordinates, and none of its rows
+				// is part of the font region
+				DirectTexture& direct = *findtexture(texture);
+
+				// The quads of a locked scene are drawn again in the frames after they
+				// were added, so the texture counts as used until they are drawn for the
+				// last time
+				direct.lastframe = framecount;
+
+				glBindTexture(GL_TEXTURE_2D, texture);
+				glUniform2f(uniform_atlassize, direct.width, direct.height);
+				glUniform1i(uniform_fontregion, 0);
+			}
+
+			glDrawArrays(GL_QUADS, static_cast<GLint>(first * Quad::LENGTH), static_cast<GLsizei>((next - first) * Quad::LENGTH));
+
+			first = next;
+		}
 
 		glDisableVertexAttribArray(attribute_coord);
 		glDisableVertexAttribArray(attribute_color);
@@ -1174,6 +1352,29 @@ namespace ms
 
 		if (coverscene)
 			quads.pop_back();
+
+		// Textures of the large canvases which fell out of use are freed once per frame
+		evicttextures();
+
+		framecount++;
+
+#if LOG_LEVEL >= LOG_DEBUG
+		// The share of the atlas and the memory used by the large canvases are reported
+		// every few frames, next to how much was uploaded and dropped since the last log
+		if (framecount % STATSINTERVAL == 0)
+		{
+			size_t used = ATLASW * border.y() + border.x() * yrange.second();
+			double usedpercent = static_cast<double>(used) / (ATLASW * ATLASH) * 100.0;
+
+			LOG(LOG_DEBUG, "Atlas: [" << usedpercent << "%], direct textures: " << directtextures.size()
+				<< " [" << directbytes / (1024 * 1024) << " MB], atlas uploads: " << atlasuploads
+				<< ", direct uploads: " << directuploads << ", direct evictions: " << directevictions);
+
+			atlasuploads = 0;
+			directuploads = 0;
+			directevictions = 0;
+		}
+#endif
 	}
 
 	void GraphicsGL::clearscene()
