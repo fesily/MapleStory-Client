@@ -17,6 +17,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "ItemTooltip.h"
 
+#include "../../Data/TextResolver.h"
+
 #include "../../Constants.h"
 
 #include "../../Data/ItemData.h"
@@ -72,7 +74,10 @@ namespace ms
 			quality = "";
 
 		name = Text(Text::Font::A12B, Text::Alignment::LEFT, Color::Name::WHITE, idata.get_name(), 240);
-		desc = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, idata.get_desc(), 185);
+		// An item description is written in the tooltip dialect of the game (see
+		// textformat::Mode::DESCRIPTION): '#c' is a prefix which is not drawn, a
+		// '\\n' starts a line
+		desc = FormatText(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, idata.get_desc(), 185, TextResolver::get(), textformat::Mode::DESCRIPTION);
 		qual = Text(Text::Font::A12M, Text::Alignment::CENTER, Color::Name::ORANGE, quality, 185);
 
 		fillwidth = 264;

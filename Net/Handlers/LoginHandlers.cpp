@@ -47,48 +47,75 @@ namespace ms
 
 			std::function<void()> okhandler = loginwait->get_handler();
 
-			// The packet should contain a 'reason' integer which can signify various things
+			// The packet should contain a 'reason' byte which can signify various
+			// things (PacketCreator.java:629-634 writes it as a single byte); the
+			// 32-bit read below covers the rest of the empty status packet.
 			if (int32_t reason = recv.read_int())
 			{
 				// Login unsuccessful
 				// The LoginNotice displayed will contain the specific information
 				switch (reason)
 				{
-					case 2:
+					case 2: // account banned or temp banned, PacketCreator.java:675-691
+					case 3: // banned IP or MAC, LoginPasswordHandler.java:98-101
 					{
 						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::BLOCKED_ID, okhandler);
 						break;
 					}
-					case 5:
+					case 4: // incorrect password, Client.java:700-702
+					{
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::WRONG_PASSWORD, okhandler);
+						break;
+					}
+					case 5: // id is not registered, Client.java:653-654
 					{
 						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::NOT_REGISTERED, okhandler);
 						break;
 					}
-					case 7:
+					case 6: // too many login attempts, Client.java:656-660
+					case 10: // a login is already being processed, Client.java:724
+					{
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::TOO_MANY_REQUESTS, okhandler);
+						break;
+					}
+					case 7: // already logged in, Client.java:691-692, LoginPasswordHandler.java:116-120
+					case 17: // session is logged in elsewhere, Client.java:722
 					{
 						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::ALREADY_LOGGED_IN, okhandler);
 						break;
 					}
-					case 13:
+					case 8: // multi-client check failed, Client.java:719-726
+					case 9: // invalid terms of service accept, AcceptToSHandler.java:26-27
+					case 16: // too many accounts used from this host, Client.java:725
+					{
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::TROUBLE_LOGGING_IN, okhandler);
+						break;
+					}
+					case 13: // multi-client limit reached, Client.java:723
 					{
 						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::UNABLE_TO_LOGIN_WITH_IP, okhandler);
 						break;
 					}
-					case 23:
+					case 14: // remote address could not be resolved, LoginPasswordHandler.java:50-51
+					{
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::WRONG_GATEWAY, okhandler);
+						break;
+					}
+					case 15: // account id from the database is invalid, Client.java:671-673
+					{
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::CANNOT_ACCESS_ACCOUNT, okhandler);
+						break;
+					}
+					case 23: // terms of service were not accepted, Client.java:695-696
 					{
 						UI::get().emplace<UITermsOfService>(okhandler);
 						break;
 					}
 					default:
 					{
-						// Other reasons
-						if (reason > 0)
-						{
-							auto reasonbyte = static_cast<int8_t>(reason - 1);
-
-							UI::get().emplace<UILoginNotice>(reasonbyte, okhandler);
-						}
-
+						// Reason 1 aborts a pending request (CreateCharHandler.java:120-121);
+						// all other reasons have no notice of their own
+						UI::get().emplace<UILoginNotice>(UILoginNotice::Message::UNKNOWN_ERROR, okhandler);
 						break;
 					}
 				}
@@ -120,61 +147,86 @@ namespace ms
 
 	void ServerStatusHandler::handle(InPacket& recv) const
 	{
-		// Possible values for status:
+		// Possible values for status (PacketCreator.java:823-833, World.java:639-656):
 		// 0 - Normal
-		// 1 - Highly populated
+		// 1 - Highly populated (at least 80% of the world capacity is in use)
 		// 2 - Full
-		recv.read_short(); // status
+		int16_t status = recv.read_short();
 
-		// TODO: I believe it shows a warning message if it's 1 and blocks enter into the world if it's 2. Need to find those messages.
+		if (status == 0)
+			return;
+
+		// This client has no UI for the world status yet
+		LOG(LOG_NETWORK, "[ServerStatusHandler] World status: [" << status << "]");
+
+		if (status == 2)
+		{
+			// A full world or an unknown channel answers a character list request with
+			// this packet instead of CHARLIST (CharlistRequestHandler.java:38-50), so the
+			// 'entering world' wait has to be dropped to return to the world selection.
+			UI::get().remove(UIElement::Type::LOGINWAIT);
+		}
 	}
 
 	void SelectCharacterHandler::handle(InPacket& recv) const
 	{
 		std::function<void()> okhandler = []() {};
 
-		// The packet should contain a 'reason' integer which can signify various things
+		// The packet should contain a 'reason' short which can signify various
+		// things (PacketCreator.java:657-661). Reasons 7, 8, 9, 10 and 17 are the
+		// ones this server sends (CharSelectedHandler.java:43-49,64,91,97 and the
+		// other *CharSelected* handlers); those numbers do not carry the meaning
+		// the LOGIN_STATUS table at PacketCreator.java:636-656 gives them.
 		if (int16_t reason = recv.read_short())
 		{
 			// Select character unsuccessful
 			// The LoginNotice displayed will contain the specific information
 			switch (reason)
 			{
-				case 2:
+				case 2: // id deleted or blocked, PacketCreator.java:636-656, not sent here
 				{
 					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::BLOCKED_ID, okhandler);
 					break;
 				}
-				case 5:
+				case 5: // id is not registered, PacketCreator.java:636-656, not sent here
 				{
 					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::NOT_REGISTERED, okhandler);
 					break;
 				}
-				case 7:
+				case 7: // another session is logged in, CharSelectedHandler.java:45
 				{
 					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::ALREADY_LOGGED_IN, okhandler);
 					break;
 				}
-				case 13:
+				case 8: // coordinator error, CharSelectedHandler.java:47
+				case 9: // no session matched, CharSelectedHandler.java:48
+				{
+					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::TROUBLE_LOGGING_IN, okhandler);
+					break;
+				}
+				case 10: // another session is being processed / world is full, CharSelectedHandler.java:44,91,97
+				{
+					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::TOO_MANY_REQUESTS, okhandler);
+					break;
+				}
+				case 13: // unable to log on as master at this ip, PacketCreator.java:636-656, not sent here
 				{
 					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::UNABLE_TO_LOGIN_WITH_IP, okhandler);
 					break;
 				}
-				case 23:
+				case 17: // host or hwid does not match, CharSelectedHandler.java:46,64
+				{
+					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::WRONG_GATEWAY, okhandler);
+					break;
+				}
+				case 23: // crashes, PacketCreator.java:636-656, not sent here
 				{
 					UI::get().emplace<UITermsOfService>(okhandler);
 					break;
 				}
 				default:
 				{
-					// Other reasons
-					if (reason > 0)
-					{
-						auto reasonbyte = static_cast<int8_t>(reason - 1);
-
-						UI::get().emplace<UILoginNotice>(reasonbyte, okhandler);
-					}
-
+					UI::get().emplace<UILoginNotice>(UILoginNotice::Message::UNKNOWN_ERROR, okhandler);
 					break;
 				}
 			}
@@ -282,17 +334,44 @@ namespace ms
 		uint8_t state = recv.read_byte();
 
 		// Extract information from the state byte
+		// The states the server can send are documented at PacketCreator.java:2667-2682:
+		// 0x00 success, 0x06 trouble logging in, 0x09 unknown error, 0x0A too many
+		// connection requests, 0x12 invalid birthday, 0x14 incorrect pic, 0x16 guild
+		// master, 0x18 pending wedding, 0x1A pending world transfer, 0x1D has a family.
+		// DeleteCharHandler.java:62,67,77,83,88,90,93 sends 0x16, 0x1D, 0x1A, 0x09,
+		// 0x00, 0x09 and 0x14, CreateCharHandler.java:57-123 sends 0x09 when the
+		// creation request contains illegal parameters.
 		if (state)
 		{
 			UILoginNotice::Message message;
 
 			switch (state)
 			{
-				case 10:
+				case 0x06:
+					message = UILoginNotice::Message::TROUBLE_LOGGING_IN;
+					break;
+				case 0x0A:
+					message = UILoginNotice::Message::TOO_MANY_REQUESTS;
+					break;
+				case 0x12:
 					message = UILoginNotice::Message::BIRTHDAY_INCORRECT;
 					break;
-				case 20:
+				case 0x14:
 					message = UILoginNotice::Message::INCORRECT_PIC;
+					break;
+				case 0x16:
+					message = UILoginNotice::Message::CANNOT_DELETE_GUILD_LEADER;
+					break;
+				case 0x18:
+					message = UILoginNotice::Message::CANNOT_DELETE_ENGAGED;
+					break;
+				case 0x1A:
+					// The client has no message of its own for a pending world
+					// transfer, 106 follows CHAR_TRANS_SUCCESS (105) in UILoginNotice.h
+					message = UILoginNotice::Message::CHAR_DEL_FAIL_MAX_LIMIT_REACHED;
+					break;
+				case 0x1D:
+					message = UILoginNotice::Message::CANNOT_DELETE_FAMILY_LEADER;
 					break;
 				default:
 					message = UILoginNotice::Message::UNKNOWN_ERROR;

@@ -21,6 +21,7 @@
 #include "Tooltip.h"
 
 #include "../../Character/MapleStat.h"
+#include "../../Graphics/FormatText.h"
 #include "../../Graphics/Text.h"
 #include "../../Template/BoolPair.h"
 
@@ -55,8 +56,8 @@ namespace ms
 
 		Text name;
 		Text name_preview;
-		Text desc;
-		Text desc_preview;
+		FormatText desc;
+		FormatText desc_preview;
 		Text potflag;
 		Text potflag_preview;
 		Text category;

@@ -439,7 +439,9 @@ namespace ms
 			if (i == channelid)
 				buttons[Buttons::BtChannel0 + i]->set_state(Button::State::PRESSED);
 
-			channel_gauge[i].update(selectedWorld.channel_capacities[i]);
+			// The server sends the load of a channel scaled to 0..800 (PacketCreator.java:799,
+			// Channel.java:293-295); the gauge expects a 0..1 fill fraction
+			channel_gauge[i].update(static_cast<float>(selectedWorld.channel_capacities[i]) / 800.0f);
 		}
 
 		buttons[Buttons::BtGoWorld]->set_active(true);

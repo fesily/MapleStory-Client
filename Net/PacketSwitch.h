@@ -49,8 +49,9 @@ namespace ms
 		static constexpr const char* MSG_OUTOFBOUNDS = "Large opcode detected";
 		// Message when a packet with a larger opcode than the array size is received
 		static constexpr const char* MSG_REREGISTER = "Handler was registered twice";
-		// Maximum number of handlers needed
-		static constexpr const size_t NUM_HANDLERS = 500;
+		// Maximum number of handlers needed. The server uses opcode 0x1000 for its
+		// HP/MP alert packet, so the table has to reach past it.
+		static constexpr const size_t NUM_HANDLERS = 0x1001;
 
 		std::unique_ptr<PacketHandler> handlers[NUM_HANDLERS];
 

@@ -17,6 +17,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "MovementParser.h"
 
+#include "../../../MapleStory.h"
+
+#include <iostream>
+
 namespace ms
 {
 	std::vector<Movement> MovementParser::parse_movements(InPacket& recv)
@@ -29,6 +33,11 @@ namespace ms
 			Movement fragment;
 			fragment.command = recv.read_byte();
 
+			// The widths below are the ones the server consumes in
+			// AbstractMovementPacketHandler.updatePosition
+			// (AbstractMovementPacketHandler.java:159-258). The server relays exactly
+			// the bytes it read, so a fragment of a different width would shift every
+			// following fragment of the blob.
 			switch (fragment.command)
 			{
 			case 0:
@@ -49,11 +58,31 @@ namespace ms
 			case 12:
 			case 13:
 			case 16:
+			case 18:
+			case 19:
+			case 20:
+			case 22:
 				fragment.type = Movement::RELATIVE;
 				fragment.xpos = recv.read_short();
 				fragment.ypos = recv.read_short();
 				fragment.newstate = recv.read_byte();
 				fragment.duration = recv.read_short();
+				break;
+			case 3:
+			case 4:
+			case 7:
+			case 8:
+			case 9:
+				// Teleport and dash-like moves carry the position they end on
+				// (AbstractMovementPacketHandler.java:265-286)
+				fragment.type = Movement::ABSOLUTE;
+				fragment.xpos = recv.read_short();
+				fragment.ypos = recv.read_short();
+				fragment.lastx = fragment.xpos;
+				fragment.lasty = fragment.ypos;
+				recv.skip(4);	// xwobble, ywobble
+				fragment.newstate = recv.read_byte();
+				fragment.duration = 0;
 				break;
 			case 11:
 				fragment.type = Movement::CHAIR;
@@ -74,18 +103,29 @@ namespace ms
 				fragment.newstate = recv.read_byte();
 				fragment.duration = recv.read_short();
 				break;
-			case 3:
-			case 4:
-			case 7:
-			case 8:
-			case 9:
-			case 14:
-				fragment.type = Movement::NONE;
-				break;
 			case 10:
 				fragment.type = Movement::NONE;
 				// Change equip
+				recv.skip(1);
 				break;
+			case 14:
+				fragment.type = Movement::NONE;
+				recv.skip(9);	// jump down
+				break;
+			case 21:
+				fragment.type = Movement::NONE;
+				recv.skip(3);
+				break;
+			default:
+				// The server drops movement packets with an unknown command
+				// (AbstractMovementPacketHandler.java:255-257), so a relayed blob
+				// cannot contain one.
+				LOG(LOG_NETWORK, "[MovementParser] Unknown movement command "
+					<< static_cast<uint16_t>(fragment.command) << ", "
+					<< recv.length() << " bytes left unparsed");
+
+				movements.push_back(fragment);
+				return movements;
 			}
 
 			movements.push_back(fragment);

@@ -552,6 +552,33 @@
     <ClCompile Include="Net\PacketSwitch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Net\UnsupportedPackets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Net\Session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1233,6 +1260,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Net\PacketSwitch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ServerOpcodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UnsupportedPackets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Net\Session.h">

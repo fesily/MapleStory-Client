@@ -20,6 +20,7 @@
 #include "Tooltip.h"
 #include "MapleFrame.h"
 
+#include "../../Graphics/FormatText.h"
 #include "../../Graphics/Geometry.h"
 
 namespace ms
@@ -43,7 +44,7 @@ namespace ms
 		Texture required_icon;
 
 		Text name;
-		Text desc;
+		FormatText desc;
 		Text leveldesc;
 		MapleFrame frame;
 		ColorLine line;

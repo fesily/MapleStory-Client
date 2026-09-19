@@ -16,6 +16,7 @@
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
 //////////////////////////////////////////////////////////////////////////////////
 #include "CashShopParser.h"
+#include "LoginParser.h"
 
 #include "CharacterParser.h"
 
@@ -79,7 +80,10 @@ namespace ms
 			for (size_t i = 0; i < 3; i++)
 				statsentry.petids.push_back(recv.read_long());
 
-			statsentry.stats[MapleStat::Id::LEVEL] = recv.read_short();
+			// The level is a single byte here; reading a short eats the job's low byte
+			// (PacketCreator.addCharStats, PacketCreator.java:191). The byte is unsigned,
+			// so that a level above 127 does not come out negative.
+			statsentry.stats[MapleStat::Id::LEVEL] = static_cast<uint8_t>(recv.read_byte());
 
 			auto job = recv.read_short();
 
@@ -94,8 +98,10 @@ namespace ms
 			statsentry.stats[MapleStat::Id::MAXMP] = recv.read_short();
 			statsentry.stats[MapleStat::Id::AP] = recv.read_short();
 
-			if (hasSPTable(job))
-				parseRemainingSkillInfo(recv);
+			// The SP block is job-dependent (Evan-family skill books); the reader is shared with
+			// the login parser, which owns the mirror of GameConstants.hasSPTable
+			if (LoginParser::has_sp_table(job))
+				LoginParser::parse_remaining_skill_info(recv);
 			else
 				recv.read_short(); // remaining sp
 
@@ -110,38 +116,6 @@ namespace ms
 			recv.skip(4); // timestamp
 
 			return statsentry;
-		}
-
-		bool hasSPTable(int16_t job)
-		{
-			switch (job)
-			{
-				case Jobs::EVAN:
-				case Jobs::EVAN1:
-				case Jobs::EVAN2:
-				case Jobs::EVAN3:
-				case Jobs::EVAN4:
-				case Jobs::EVAN5:
-				case Jobs::EVAN6:
-				case Jobs::EVAN7:
-				case Jobs::EVAN8:
-				case Jobs::EVAN9:
-				case Jobs::EVAN10:
-					return true;
-				default:
-					return false;
-			}
-		}
-
-		void parseRemainingSkillInfo(InPacket& recv)
-		{
-			int count = recv.read_byte();
-
-			for (int i = 0; i < count; i++)
-			{
-				recv.read_byte(); // Remaining SP index for job 
-				recv.read_byte(); // The actual SP for that class
-			}
 		}
 	}
 }

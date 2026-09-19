@@ -62,9 +62,12 @@ namespace ms
 
 		std::vector<Mod> mods;
 
-		int8_t size = recv.read_byte();
+		// The server writes the mod count as one truncated byte (PacketCreator.java:2448,
+		// ByteBufOutPacket.java:48-49), so it must be read unsigned: a signed read turns
+		// counts of 128-255 into negative values and drops every mod of the packet.
+		uint8_t size = static_cast<uint8_t>(recv.read_byte());
 
-		for (int8_t i = 0; i < size; i++)
+		for (uint8_t i = 0; i < size; i++)
 		{
 			Mod mod;
 			mod.mode = recv.read_byte();

@@ -24,24 +24,7 @@ namespace ms
 {
 	namespace CashShopParser
 	{
-		enum Jobs : uint16_t
-		{
-			EVAN = 2001,
-			EVAN1 = 2200,
-			EVAN2 = 2210,
-			EVAN3 = 2211,
-			EVAN4 = 2212,
-			EVAN5 = 2213,
-			EVAN6 = 2214,
-			EVAN7 = 2215,
-			EVAN8 = 2216,
-			EVAN9 = 2217,
-			EVAN10 = 2218
-		};
-
 		StatsEntry parseCharacterInfo(InPacket& recv);
 		StatsEntry parseCharStats(InPacket& recv);
-		bool hasSPTable(int16_t job);
-		void parseRemainingSkillInfo(InPacket& recv);
 	}
 }

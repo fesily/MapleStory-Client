@@ -31,6 +31,7 @@
 #include "Handlers/TestingHandlers.h"
 
 #include "../Configuration.h"
+#include "UnsupportedPackets.h"
 
 namespace ms
 {
@@ -202,6 +203,7 @@ namespace ms
 		// NPC Interaction Handlers
 		emplace<NPC_DIALOGUE, NpcDialogueHandler>();
 		emplace<OPEN_NPC_SHOP, OpenNpcShopHandler>();
+		emplace<CONFIRM_SHOP_TRANSACTION, ConfirmShopTransactionHandler>();
 
 		// Player Interaction
 		emplace<CHAR_INFO, CharInfoHandler>();
@@ -243,9 +245,24 @@ namespace ms
 			}
 			else
 			{
-				// Warn about an unhandled packet
-				warn(MSG_UNHANDLED, opcode);
-				opcode_error = true;
+				// No handler: parse the payload when its layout is known, so a
+				// server-side change shows up as a parse error, and log that the
+				// capability itself is not wired up yet
+				try
+				{
+					if (!Unsupported::forward(opcode, OpcodeName(opcode), recv))
+					{
+						// Warn about a packet whose layout is unknown too
+						warn(MSG_UNHANDLED, opcode);
+						opcode_error = true;
+					}
+				}
+				catch (const PacketError& err)
+				{
+					// Notice about an error
+					warn(err.what(), opcode);
+					opcode_error = true;
+				}
 			}
 		}
 		else
@@ -577,6 +594,9 @@ namespace ms
 			case 350: opcode_msg = "MAPLELIFE_ERROR"; break;
 			case 354: opcode_msg = "VICIOUS_HAMMER"; break;
 			case 358: opcode_msg = "VEGA_SCROLL"; break;
+			// The client has no constant for this one: the server sends its HP/MP
+			// alert packet on 0x1000.
+			case 0x1000: opcode_msg = "UPDATE_HPMPAALERT"; break;
 			default: break;
 		}
 

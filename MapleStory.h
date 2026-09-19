@@ -26,6 +26,17 @@
 // If defined use NX, otherwise use WZ.
 #define USE_NX
 
+// If defined, the single-package *.nx set of a pre-split client is accepted as well.
+// Those clients (v83, and v95 as well) ship one *.wz per category, so an NX conversion of
+// them has Base.nx, Character.nx, ..., Map.nx, Mob.nx, Morph.nx, Skill.nx, Sound.nx, UI.nx
+// and none of the split files (Map001.nx, Mob001.nx, Skill001.nx, Sound001.nx, ...).
+// With this defined the split files are optional and NxFiles::init() points their roots at
+// the single package the data actually lives in, which keeps the readers that address the
+// roots by name working (Map001 for Back/, Map002 for Map/ and Effect.img, Sound002 for
+// music). The UI.nx version test is reported instead of being fatal, because a v83 UI.nx
+// predates the layout those screens need. Comment out to require the 28-file split set.
+#define USE_NX_V83
+
 // Debug options
 #define LOG_ERROR	1
 #define LOG_WARN	2

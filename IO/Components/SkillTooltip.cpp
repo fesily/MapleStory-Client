@@ -17,6 +17,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "SkillTooltip.h"
 
+#include "../../Data/TextResolver.h"
+
 #include "../../Data/SkillData.h"
 
 #ifdef USE_NX
@@ -121,7 +123,8 @@ namespace ms
 
 		icon = data.get_icon(SkillData::Icon::NORMAL);
 		name = Text(Text::Font::A12B, Text::Alignment::LEFT, Color::Name::WHITE, data.get_name(), 320);
-		desc = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, descstr, 210);
+		// A skill description is written in the tooltip dialect of the game
+		desc = FormatText(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, descstr, 210, TextResolver::get(), textformat::Mode::DESCRIPTION);
 		leveldesc = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, levelstr, 290);
 
 		int16_t desc_height = desc.height() + 11;

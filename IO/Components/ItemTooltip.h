@@ -21,6 +21,7 @@
 
 #include "../Components/MapleFrame.h"
 
+#include "../../Graphics/FormatText.h"
 #include "../../Graphics/Text.h"
 #include "../../Template/BoolPair.h"
 
@@ -43,7 +44,7 @@ namespace ms
 		Texture itemicon;
 
 		Text name;
-		Text desc;
+		FormatText desc;
 		Text qual;
 		MapleFrame frame;
 		Texture cover;
