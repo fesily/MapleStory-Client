@@ -70,6 +70,52 @@ namespace ms
 		}
 	}
 
+	Point<int16_t> UIElement::get_position() const
+	{
+		return position;
+	}
+
+	Point<int16_t> UIElement::get_dimension() const
+	{
+		return dimension;
+	}
+
+	namespace
+	{
+		// The word a button is in with the state it takes, so that a layout report
+		// says why one does not answer, e.g. because it is disabled
+		const char* button_state_name(Button::State state)
+		{
+			switch (state)
+			{
+				case Button::State::NORMAL:
+					return "normal";
+				case Button::State::DISABLED:
+					return "disabled";
+				case Button::State::MOUSEOVER:
+					return "mouseover";
+				case Button::State::PRESSED:
+					return "pressed";
+				case Button::State::IDENTITY:
+					return "identity";
+				default:
+					return "?";
+			}
+		}
+	}
+
+	void UIElement::describe_layout(std::vector<Part>& out) const
+	{
+		// The sprites are drawn in the order they were added, one over the other,
+		// which is the order a layout report lists them in
+		for (size_t i = 0; i < sprites.size(); i++)
+			out.push_back(Part{ "sprite " + std::to_string(i), std::string(), sprites[i].get_rectangle(position) });
+
+		for (const auto& iter : buttons)
+			if (const Button* button = iter.second.get())
+				out.push_back(Part{ "button " + std::to_string(iter.first), button_state_name(button->get_state()), button->bounds(position) });
+	}
+
 	bool UIElement::press_button(uint16_t id)
 	{
 		// Some elements answer an id they do not have with a button state of their own,

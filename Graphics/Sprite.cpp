@@ -59,4 +59,9 @@ namespace ms
 	{
 		return animation.get_dimensions();
 	}
+
+	Rectangle<int16_t> Sprite::get_rectangle(Point<int16_t> parentpos) const
+	{
+		return (stateargs + parentpos).get_rectangle(animation.get_origin(), animation.get_dimensions());
+	}
 }

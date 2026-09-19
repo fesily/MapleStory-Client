@@ -21,6 +21,7 @@
 #include "Components/Icon.h"
 
 #include "../Graphics/Sprite.h"
+#include "../Template/Rectangle.h"
 
 #include <string>
 #include <vector>
@@ -98,6 +99,16 @@ namespace ms
 			std::string hint;
 		};
 
+		// One thing an element is drawn from: what it is and the rectangle it covers
+		// on the screen. 'detail' is what the piece reports about itself besides its
+		// place, e.g. the state of a button; a sprite leaves it empty.
+		struct Part
+		{
+			std::string name;
+			std::string detail;
+			Rectangle<int16_t> bounds;
+		};
+
 		// The two calls an element answers to when it is driven, e.g. by a console
 		// command or a script. A name the element does not have is answered with false,
 		// which is what the default says: most elements take neither a value nor an
@@ -109,6 +120,18 @@ namespace ms
 		// with the screen in front. The default lists the buttons, which is every
 		// screen that has nothing but buttons.
 		virtual void describe(std::vector<Offer>& out) const;
+
+		// Where the element says it sits and how large it is, for a caller which
+		// reports the layout of the screen (the console command 'ui layout'). What it
+		// is really drawn from is what describe_layout() lists.
+		Point<int16_t> get_position() const;
+		Point<int16_t> get_dimension() const;
+		// Lists what the element is drawn from and where each piece sits on the
+		// screen. The default lists the sprites and the buttons, which is what every
+		// element is built from; an element whose own widgets sit between those adds
+		// them by overriding this, the way describe() adds what it takes besides its
+		// buttons.
+		virtual void describe_layout(std::vector<Part>& out) const;
 
 		// Press the button with that id, the way a click on it would. False when the
 		// element answered that it has no such button.

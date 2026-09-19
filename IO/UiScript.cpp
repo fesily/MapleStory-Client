@@ -125,21 +125,45 @@ namespace ms
 				}
 			}
 
-			// The element in front, which is the last active one in the order the state
-			// keeps them: the same one the cursor is handed to (UIStateLogin::get_front)
-			UIElement* front()
+			// The elements the state keeps, in the order it keeps them, which is the
+			// order they are drawn in and the cursor is handed to them
+			std::vector<UIElement*> elements()
 			{
-				UIElement* result = nullptr;
+				std::vector<UIElement*> result;
 
 				for (int32_t type = UIElement::Type::NONE + 1; type < UIElement::Type::NUM_TYPES; type++)
 				{
 					UIElement* element = UI::get().get_element(static_cast<UIElement::Type>(type));
 
-					if (element && element->is_active())
-						result = element;
+					if (element)
+						result.push_back(element);
 				}
 
 				return result;
+			}
+
+			// The element in front, which is the last active one of them: the same one
+			// the cursor is handed to (UIStateLogin::get_front)
+			UIElement* front()
+			{
+				UIElement* result = nullptr;
+
+				for (UIElement* element : elements())
+					if (element->is_active())
+						result = element;
+
+				return result;
+			}
+
+			// The element which answers to that name, whether it is up or not: a layout
+			// report of a screen which is not in front asks for one which is down too
+			UIElement* find(const std::string& name)
+			{
+				for (UIElement* element : elements())
+					if (name == type_name(element->get_type()))
+						return element;
+
+				return nullptr;
 			}
 
 			// Split off the first word of a line; what follows keeps its own spaces, so
@@ -214,13 +238,71 @@ namespace ms
 				}
 			}
 
-			// ui [list|set <field> <value>|do <action>|click <id>]
+			// Where an element sits and what it is drawn from, which is what a screen
+			// looks like when its drawing is in question: the rectangle every piece it
+			// draws covers on the screen, in the order it draws them
+			void layout(UIElement* element)
+			{
+				Point<int16_t> position = element->get_position();
+				Point<int16_t> dimension = element->get_dimension();
+
+				std::vector<UIElement::Part> parts;
+				element->describe_layout(parts);
+
+				std::cout << type_name(element->get_type())
+					<< (element->is_active() ? " active" : " inactive")
+					<< " (" << position.x() << ", " << position.y() << ") "
+					<< dimension.x() << "x" << dimension.y()
+					<< ", " << parts.size() << " parts:" << std::endl;
+
+				for (const UIElement::Part& part : parts)
+				{
+					std::cout << "  " << part.name
+						<< " (" << part.bounds.left() << ", " << part.bounds.top() << ") "
+						<< part.bounds.width() << "x" << part.bounds.height();
+
+					if (!part.detail.empty())
+						std::cout << ", " << part.detail;
+
+					std::cout << std::endl;
+				}
+			}
+
+			// ui [list|layout [<type>|all]|set <field> <value>|do <action>|click <id>]
 			void command_ui(const std::string& args)
 			{
 				std::string command;
 				std::string rest;
 
 				split(args, command, rest);
+
+				// A layout report says which screen it is about or takes the one in
+				// front, so it does not need one which is up: the state keeps screens
+				// which are down as well
+				if (command == "layout")
+				{
+					if (rest == "all")
+					{
+						// The screens which are up, in the order they are drawn in: the
+						// front one is the last of them
+						for (UIElement* candidate : elements())
+							if (candidate->is_active())
+								layout(candidate);
+
+						return;
+					}
+
+					UIElement* target = rest.empty() ? front() : find(rest);
+
+					if (target)
+						layout(target);
+					else if (rest.empty())
+						std::cout << "no element is in front" << std::endl;
+					else
+						std::cout << "no element of type " << rest << "; 'ui layout all' reports the screens which are up" << std::endl;
+
+					return;
+				}
 
 				UIElement* element = front();
 
@@ -306,15 +388,15 @@ namespace ms
 					return;
 				}
 
-				std::cout << "usage: ui [list|set <field> <value>|do <action>|click <id>]" << std::endl;
+				std::cout << "usage: ui [list|layout [<type>|all]|set <field> <value>|do <action>|click <id>]" << std::endl;
 			}
 		}
 
 		void register_commands()
 		{
 			debug_console::add({
-				{ "ui", "[list|set <field> <value>|do <action>|click <id>]",
-					"work the element in front: list what it takes, set a field, run an action", command_ui },
+				{ "ui", "[list|layout [<type>|all]|set <field> <value>|do <action>|click <id>]",
+					"work the element in front: list what it takes, set a field, run an action, report its layout", command_ui },
 			});
 		}
 	}

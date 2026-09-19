@@ -38,6 +38,10 @@ namespace ms
 		int16_t height() const;
 		Point<int16_t> get_origin() const;
 		Point<int16_t> get_dimensions() const;
+		// The rectangle the sprite covers when it is drawn at that parent position,
+		// which is where a layout report places it: the frame it is in, at the place
+		// and size its draw arguments and the parent position give it
+		Rectangle<int16_t> get_rectangle(Point<int16_t> parentpos) const;
 
 	private:
 		Animation animation;
