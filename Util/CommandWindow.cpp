@@ -205,6 +205,116 @@ namespace
 			ImGui::SetScrollY(ImGui::GetScrollMaxY());
 	}
 
+	// The hint under the field: the commands the typed name is the beginning of, with
+	// the arguments they take and what they do. The name that is complete is the one
+	// that would run, so it is the one that is not dimmed. While a command waits for
+	// a line, the field answers that instead, and the hint says how to drop it. It is
+	// a tooltip, so it takes neither the mouse nor the keyboard from the field.
+	void draw_hint(const char* typed)
+	{
+		// The name is what was typed up to the first space; what follows it are the
+		// arguments of the command the name stands for
+		std::string name = typed;
+		size_t space = name.find_first_of(" \t");
+
+		if (space != std::string::npos)
+			name.erase(space);
+
+		// '?' is the shorthand the console runs as 'help', so it is that name the
+		// hint looks up and shows
+		if (name == "?")
+			name = "help";
+
+		// While a command waits for a line the field answers it rather than naming a
+		// command, and an empty field names nothing a hint could go on
+		bool awaiting = ms::debug_console::is_awaiting();
+
+		if (!awaiting && name.empty())
+			return;
+
+		// The hint hangs under the field it belongs to, wherever its window was put
+		const ImVec2 corner = ImGui::GetItemRectMin();
+		const float below = ImGui::GetItemRectMax().y + ImGui::GetStyle().ItemSpacing.y;
+
+		ImGui::SetNextWindowPos(ImVec2(corner.x, below));
+
+		if (!ImGui::BeginTooltip())
+			return;
+
+		if (awaiting)
+		{
+			ImGui::TextUnformatted("A command asked for this line; 'cancel' drops it.");
+
+			ImGui::EndTooltip();
+
+			return;
+		}
+
+		const std::vector<ms::debug_console::Command>& commands = ms::debug_console::command_list();
+
+		// Nothing begins with what was typed, which is the same the console itself
+		// says of the name when the line is entered
+		bool matched = false;
+
+		for (const ms::debug_console::Command& command : commands)
+		{
+			if (command.name.compare(0, name.size(), name) == 0)
+			{
+				matched = true;
+
+				break;
+			}
+		}
+
+		if (!matched)
+		{
+			ImGui::Text("Unknown command: %s (type 'help')", name.c_str());
+
+			ImGui::EndTooltip();
+
+			return;
+		}
+
+		// Two columns, so the descriptions line up under each other; the table takes
+		// its width from the longest signature, which is what sizes the tooltip
+		if (ImGui::BeginTable("hint", 2, ImGuiTableFlags_SizingFixedFit))
+		{
+			for (const ms::debug_console::Command& command : commands)
+			{
+				if (command.name.compare(0, name.size(), name) != 0)
+					continue;
+
+				// What the name could still become is dimmed; the one it stands for,
+				// which is the one that runs, is not
+				bool runs = command.name == name;
+
+				if (!runs)
+					ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+
+				std::string signature = command.name;
+
+				if (!command.args.empty())
+				{
+					signature += ' ';
+					signature += command.args;
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::TextUnformatted(signature.c_str());
+				ImGui::TableNextColumn();
+				ImGui::TextUnformatted(command.description.c_str());
+
+				if (!runs)
+					ImGui::PopStyleColor();
+			}
+
+			ImGui::EndTable();
+		}
+
+		ImGui::EndTooltip();
+	}
+
 	void draw_input()
 	{
 		static char line[256] = {};
@@ -219,6 +329,11 @@ namespace
 			ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory,
 			input_callback
 		);
+
+		// The field hints at what could be typed while it is used: focused, or under
+		// the mouse which is about to focus it
+		if (ImGui::IsItemActive() || ImGui::IsItemHovered())
+			draw_hint(line);
 
 		if (!submitted)
 			return;

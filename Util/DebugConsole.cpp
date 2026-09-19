@@ -54,7 +54,24 @@ namespace ms
 	{
 		namespace
 		{
-			std::vector<Command> commands;
+			void list();
+			void describe(const std::string& name);
+
+			void command_help(const std::string& args)
+			{
+				if (args.empty())
+					list();
+				else
+					describe(args);
+			}
+
+			// The commands in the order they are added; 'help' is one of the console
+			// itself, so it is in the list from the start and the console window hints
+			// at it like at the rest
+			std::vector<Command> commands =
+			{
+				{ "help", "[command]", "list the commands, or describe one", command_help },
+			};
 
 			// Set while the lines entered answer a prompt instead of naming a command
 			std::function<void(const std::string&)> awaiting;
@@ -155,13 +172,11 @@ namespace ms
 				if (name.empty())
 					return;
 
-				// 'help' is part of the console itself: it is what lists the commands
-				if (name == "help" || name == "?")
+				// '?' is the shorthand for 'help', which is a command of the console
+				// itself and a part of the list the loop below looks the name up in
+				if (name == "?")
 				{
-					if (args.empty())
-						list();
-					else
-						describe(args);
+					command_help(args);
 
 					return;
 				}
@@ -182,6 +197,11 @@ namespace ms
 		void add(std::initializer_list<Command> list)
 		{
 			commands.insert(commands.end(), list.begin(), list.end());
+		}
+
+		const std::vector<Command>& command_list()
+		{
+			return commands;
 		}
 
 		void await_line(std::function<void(const std::string&)> handler)

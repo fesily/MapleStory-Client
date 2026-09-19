@@ -23,10 +23,11 @@ namespace ms
 {
 	// The console: the lines the client writes to its output stream and the commands
 	// that were entered, in one transcript, with the field the next command is typed
-	// in. It is drawn with ImGui, so it can be dragged out of the game window into
-	// one of its own. The log window next to it shows the other stream (Util/Log.h,
-	// which writes to the error stream), so a session can be redirected into one file
-	// and its commands into another.
+	// in, which lists what could still be typed while one is. It is drawn with ImGui,
+	// so it can be dragged out of the game window into one of its own. The log window
+	// next to it shows the other stream (Util/Log.h, which writes to the error
+	// stream), so a session can be redirected into one file and its commands into
+	// another.
 	namespace console_window
 	{
 		// Collect what the client writes to std::cout: the text still reaches the

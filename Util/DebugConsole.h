@@ -20,6 +20,7 @@
 #include <functional>
 #include <initializer_list>
 #include <string>
+#include <vector>
 
 namespace ms
 {
@@ -47,6 +48,9 @@ namespace ms
 		void poll();
 		// Add commands, e.g. from a table in the file which owns the game loop
 		void add(std::initializer_list<Command> commands);
+		// The commands in the order they were added, which is what the console window
+		// hints at while one is typed (Util/CommandWindow.h)
+		const std::vector<Command>& command_list();
 		// Hand the next line entered to a handler instead of reading it as a command,
 		// which is how a command asks for the values it needs. The line arrives without
 		// the whitespace around it; an empty line is handed over like any other, so a
