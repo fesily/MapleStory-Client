@@ -615,4 +615,46 @@ namespace ms
 
 		return get_head_position(position);
 	}
+
+	int32_t Mob::get_mobid() const
+	{
+		return id;
+	}
+
+	const std::string& Mob::get_name() const
+	{
+		return name;
+	}
+
+	Mob::Stance Mob::get_stance() const
+	{
+		return stance;
+	}
+
+	uint16_t Mob::get_fh() const
+	{
+		return phobj.fhid;
+	}
+
+	bool Mob::is_onground() const
+	{
+		return phobj.onground;
+	}
+
+	bool Mob::is_controlled() const
+	{
+		return control;
+	}
+
+	int8_t Mob::get_hppercent() const
+	{
+		return hppercent;
+	}
+
+	Point<int16_t> Mob::get_dimensions() const
+	{
+		auto iter = animations.find(stance);
+
+		return iter == animations.end() ? Point<int16_t>() : iter->second.get_dimensions();
+	}
 }

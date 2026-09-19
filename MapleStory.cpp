@@ -17,6 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "Gameplay/Stage.h"
 #include "Gameplay/MapleMap/MapObjects.h"
+#include "Gameplay/MapleMap/Mob.h"
 #include "Gameplay/MapleMap/Npc.h"
 #include "IO/UI.h"
 #include "IO/LoginScript.h"
@@ -58,9 +59,9 @@ namespace ms
 			return *Stage::get().get_npcs().get_npcs();
 		}
 
-		int32_t distance_to_player(const Npc& npc)
+		int32_t distance_to_player(const MapObject& object)
 		{
-			Point<int16_t> diff = npc.get_position() - Stage::get().get_player().get_position();
+			Point<int16_t> diff = object.get_position() - Stage::get().get_player().get_position();
 
 			return std::abs(static_cast<int32_t>(diff.x())) + std::abs(static_cast<int32_t>(diff.y()));
 		}
@@ -88,6 +89,49 @@ namespace ms
 
 			if (count == 0)
 				std::cout << "npcs: no NPC on this map" << std::endl;
+		}
+
+		// The mobs the server spawned on this map
+		MapObjects& map_mobs()
+		{
+			return *Stage::get().get_mobs().get_mobs();
+		}
+
+		void command_mobs(const std::string&)
+		{
+			size_t count = 0;
+
+			for (auto& entry : map_mobs())
+			{
+				Mob* mob = static_cast<Mob*>(entry.second.get());
+
+				if (!mob)
+					continue;
+
+				// Everything a mob is drawn from: 'pos' is the position the spawn
+				// packet carried, 'fh'/'layer'/'ground' are what the physics made of
+				// it and 'size' is the sprite of the stance it is in
+				Point<int16_t> position = mob->get_position();
+				Point<int16_t> size = mob->get_dimensions();
+
+				std::cout << "oid=" << entry.first << " id=" << mob->get_mobid()
+					<< " name=\"" << mob->get_name() << "\""
+					<< " pos=(" << position.x() << "," << position.y() << ")"
+					<< " fh=" << mob->get_fh()
+					<< " layer=" << static_cast<int16_t>(mob->get_layer())
+					<< " ground=" << (mob->is_onground() ? "yes" : "no")
+					<< " stance=" << Mob::nameof(mob->get_stance())
+					<< " size=" << size.x() << "x" << size.y()
+					<< " hp=" << static_cast<int16_t>(mob->get_hppercent())
+					<< " control=" << (mob->is_controlled() ? "yes" : "no")
+					<< " alive=" << (mob->is_alive() ? "yes" : "no")
+					<< " dist=" << distance_to_player(*mob) << std::endl;
+
+				count++;
+			}
+
+			if (count == 0)
+				std::cout << "mobs: no mob on this map" << std::endl;
 		}
 
 		// The NPC the argument refers to: the object id first, then the nearest of the
@@ -301,6 +345,7 @@ namespace ms
 				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
 				{ "console", "[on|off|clear]", "show or hide the command window, or drop what it shows", command_console },
 				{ "log", "[on|off|clear]", "show or hide the log window, or clear the lines it keeps", command_log },
+				{ "mobs", "", "list the mobs on this map", command_mobs },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
 				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
 				{ "quit", "", "close the client", command_quit },

@@ -105,6 +105,23 @@ namespace ms
 		// Return the head position
 		Point<int16_t> get_head_position() const;
 
+		// Return the mob id of this mob
+		int32_t get_mobid() const;
+		// Return the name of this mob
+		const std::string& get_name() const;
+		// Return the stance this mob is in
+		Stance get_stance() const;
+		// Return the foothold this mob stands on
+		uint16_t get_fh() const;
+		// Return whether this mob stands on the ground
+		bool is_onground() const;
+		// Return whether this client controls this mob
+		bool is_controlled() const;
+		// Return the hp percentage shown above this mob
+		int8_t get_hppercent() const;
+		// Return the size of the sprite of the current stance
+		Point<int16_t> get_dimensions() const;
+
 	private:
 		enum FlyDirection
 		{
