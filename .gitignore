@@ -12,6 +12,8 @@
 *.nx
 *.wz
 Settings
+# where the debug windows remember where they were put
+debugui.ini
 
 /includes/WzLib
 # client run directory assembled by run_img.bat
