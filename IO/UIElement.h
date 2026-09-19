@@ -22,6 +22,9 @@
 
 #include "../Graphics/Sprite.h"
 
+#include <string>
+#include <vector>
+
 namespace ms
 {
 	// Base class for all types of user interfaces on screen.
@@ -71,10 +74,45 @@ namespace ms
 			QUIT,
 			CHARINFO,
 			CASHSHOP,
+			REVIVE,
 			NUM_TYPES
 		};
 
 		virtual ~UIElement() {}
+
+		// One thing an element offers to a caller which drives it instead of a player:
+		// the name of a value it takes, the name of an action it runs, or the id of one
+		// of its buttons. 'hint' tells what the values of a field look like where the
+		// element can, e.g. the worlds a 'world' field accepts.
+		struct Offer
+		{
+			enum class Kind
+			{
+				FIELD,
+				ACTION,
+				BUTTON
+			};
+
+			Kind kind;
+			std::string name;
+			std::string hint;
+		};
+
+		// The two calls an element answers to when it is driven, e.g. by a console
+		// command or a script. A name the element does not have is answered with false,
+		// which is what the default says: most elements take neither a value nor an
+		// action. The value a field takes is the element's own to check, so the rules
+		// (which names a character has, how long a PIC is) stay where the list is.
+		virtual bool set_field(const std::string& name, const std::string& value) { return false; }
+		virtual bool trigger(const std::string& action) { return false; }
+		// Lists what the element offers, for a caller which reports what can be done
+		// with the screen in front. The default lists the buttons, which is every
+		// screen that has nothing but buttons.
+		virtual void describe(std::vector<Offer>& out) const;
+
+		// Press the button with that id, the way a click on it would. False when the
+		// element answered that it has no such button.
+		bool press_button(uint16_t id);
 
 		virtual void draw(float inter) const;
 		virtual void update();

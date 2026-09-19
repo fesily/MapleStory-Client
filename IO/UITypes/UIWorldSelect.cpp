@@ -31,6 +31,8 @@
 
 #include "../../Net/Packets/LoginPackets.h"
 
+#include <cstdlib>
+
 #ifdef USE_NX
 #include <nlnx/nx.hpp>
 #endif
@@ -558,6 +560,115 @@ namespace ms
 
 		if (loginwait && loginwait->is_active())
 			CharlistRequestPacket(worldid, channelid).dispatch();
+	}
+
+	bool UIWorldSelect::set_field(const std::string& name, const std::string& value)
+	{
+		if (name == "world")
+		{
+			uint8_t world = 0;
+
+			if (!find_world(value, world))
+				return false;
+
+			press_button(Buttons::BtWorld0 + world);
+
+			return true;
+		}
+
+		if (name == "channel")
+		{
+			// The channels belong to the world which is picked
+			if (!world_selected)
+				return false;
+
+			uint8_t channel = static_cast<uint8_t>(std::atoi(value.c_str()));
+
+			if (channel == 0 || channel > worlds[worldid].channel_count)
+				return false;
+
+			// A press on the channel the screen has picked already enters the world,
+			// so only a channel which differs is pressed and 'enter' does the entering
+			if (channel - 1 != channelid)
+				press_button(Buttons::BtChannel0 + channel - 1);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool UIWorldSelect::trigger(const std::string& action)
+	{
+		if (action != "enter")
+			return false;
+
+		// Without a world picked the go button would enter the first one of the list
+		if (!world_selected)
+			return false;
+
+		return press_button(Buttons::BtGoWorld);
+	}
+
+	void UIWorldSelect::describe(std::vector<Offer>& out) const
+	{
+		for (size_t i = 0; i < worlds.size(); i++)
+			out.emplace_back(Offer{ Offer::Kind::FIELD, "world",
+				std::to_string(i) + ": " + worlds[i].name
+				+ " (channels " + std::to_string(static_cast<int32_t>(worlds[i].channel_count)) + ")" });
+
+		if (world_selected)
+			out.emplace_back(Offer{ Offer::Kind::FIELD, "channel",
+				"1.." + std::to_string(static_cast<int32_t>(worlds[worldid].channel_count)) });
+		else
+			out.emplace_back(Offer{ Offer::Kind::FIELD, "channel", "after a world is picked" });
+
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "enter", std::string() });
+
+		UIElement::describe(out);
+	}
+
+	bool UIWorldSelect::find_world(const std::string& text, uint8_t& world) const
+	{
+		if (text.empty())
+			return false;
+
+		bool number = true;
+
+		for (char c : text)
+		{
+			if (c < '0' || c > '9')
+			{
+				number = false;
+				break;
+			}
+		}
+
+		// The number the screen shows, which is the one the packet carries as well
+		// (button_pressed assigns it to the world id)
+		if (number)
+		{
+			int32_t index = std::atoi(text.c_str());
+
+			if (index >= 0 && index < static_cast<int32_t>(worlds.size()))
+			{
+				world = static_cast<uint8_t>(index);
+
+				return true;
+			}
+		}
+
+		for (size_t i = 0; i < worlds.size(); i++)
+		{
+			if (worlds[i].name != text)
+				continue;
+
+			world = static_cast<uint8_t>(i);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void UIWorldSelect::clear_selected_world()

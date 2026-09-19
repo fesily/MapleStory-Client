@@ -303,7 +303,9 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="IO\Components\TwoSpriteButton.cpp" />
     <ClCompile Include="IO\Cursor.cpp" />
     <ClCompile Include="IO\Keyboard.cpp" />
+    <ClCompile Include="IO\LoginScript.cpp" />
     <ClCompile Include="IO\Messages.cpp" />
+    <ClCompile Include="IO\UiScript.cpp" />
     <ClCompile Include="IO\UI.cpp" />
     <ClCompile Include="IO\UIElement.cpp" />
     <ClCompile Include="IO\UIStateCashShop.cpp" />
@@ -333,6 +335,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="IO\UITypes\UIOptionMenu.cpp" />
     <ClCompile Include="IO\UITypes\UIQuestLog.cpp" />
     <ClCompile Include="IO\UITypes\UIQuit.cpp" />
+    <ClCompile Include="IO\UITypes\UIRevive.cpp" />
     <ClCompile Include="IO\UITypes\UIRaceSelect.cpp" />
     <ClCompile Include="IO\UITypes\UIRegion.cpp" />
     <ClCompile Include="IO\UITypes\UIShop.cpp" />
@@ -524,7 +527,9 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="IO\Keyboard.h" />
     <ClInclude Include="IO\KeyConfig.h" />
     <ClInclude Include="IO\KeyType.h" />
+    <ClInclude Include="IO\LoginScript.h" />
     <ClInclude Include="IO\Messages.h" />
+    <ClInclude Include="IO\UiScript.h" />
     <ClInclude Include="IO\UI.h" />
     <ClInclude Include="IO\UIDragElement.h" />
     <ClInclude Include="IO\UIElement.h" />
@@ -559,6 +564,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="IO\UITypes\UIOptionMenu.h" />
     <ClInclude Include="IO\UITypes\UIQuestLog.h" />
     <ClInclude Include="IO\UITypes\UIQuit.h" />
+    <ClInclude Include="IO\UITypes\UIRevive.h" />
     <ClInclude Include="IO\UITypes\UIRaceSelect.h" />
     <ClInclude Include="IO\UITypes\UIRegion.h" />
     <ClInclude Include="IO\UITypes\UIShop.h" />

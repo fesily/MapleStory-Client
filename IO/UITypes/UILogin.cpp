@@ -206,6 +206,43 @@ namespace ms
 		password.update();
 	}
 
+	bool UILogin::set_field(const std::string& name, const std::string& value)
+	{
+		if (name == "account")
+		{
+			account.change_text(value);
+
+			return true;
+		}
+
+		if (name == "password")
+		{
+			password.change_text(value);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool UILogin::trigger(const std::string& action)
+	{
+		if (action != "login")
+			return false;
+
+		return press_button(Buttons::BtLogin);
+	}
+
+	void UILogin::describe(std::vector<Offer>& out) const
+	{
+		out.emplace_back(Offer{ Offer::Kind::FIELD, "account", account.get_text() });
+		// What the password box holds is left out: the console echoed it once already
+		out.emplace_back(Offer{ Offer::Kind::FIELD, "password", std::string() });
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "login", std::string() });
+
+		UIElement::describe(out);
+	}
+
 	void UILogin::login()
 	{
 		account.set_state(Textfield::State::DISABLED);

@@ -44,5 +44,15 @@ namespace ms
 		void poll();
 		// Add commands, e.g. from a table in the file which owns the game loop
 		void add(std::initializer_list<Command> commands);
+		// Hand the next line entered to a handler instead of reading it as a command,
+		// which is how a command asks for the values it needs. The line arrives without
+		// the whitespace around it; an empty line is handed over like any other, so a
+		// prompt can repeat itself, and 'cancel' drops the handler instead of calling it
+		// (which is_awaiting() then reports to whoever asked).
+		void await_line(std::function<void(const std::string&)> handler);
+		// Stop handing the lines entered to the handler of await_line()
+		void cancel_await();
+		// Whether the lines entered still go to a handler
+		bool is_awaiting();
 	}
 }

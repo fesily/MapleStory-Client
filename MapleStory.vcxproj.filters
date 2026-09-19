@@ -426,6 +426,9 @@
     <ClCompile Include="IO\UITypes\UIQuit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IO\UITypes\UIRevive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IO\UITypes\UIRaceSelect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -468,7 +471,13 @@
     <ClCompile Include="IO\Keyboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IO\LoginScript.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IO\Messages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IO\UiScript.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IO\UI.cpp">
@@ -1094,6 +1103,9 @@
     <ClInclude Include="IO\UITypes\UIQuit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IO\UITypes\UIRevive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="IO\UITypes\UIRaceSelect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1145,7 +1157,13 @@
     <ClInclude Include="IO\KeyType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IO\LoginScript.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="IO\Messages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IO\UiScript.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IO\UI.h">
