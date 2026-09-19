@@ -10,9 +10,9 @@ rem so no files have to be copied around by hand.
 rem
 rem The client takes its configuration from the environment, so no Settings file
 rem is written any more: every setting can be passed as MAPLESTORY_<SETTING>,
-rem for example MAPLESTORY_UILAYOUT=classic or MAPLESTORY_SERVERIP=10.0.0.1.
+rem for example MAPLESTORY_SERVERIP=10.0.0.1 or MAPLESTORY_SKIPLOGO=false.
 rem The script only fills in the data folder (first parameter) and the defaults
-rem below; the short names WIDTH, HEIGHT and UILAYOUT still work.
+rem below; the short names WIDTH and HEIGHT still work.
 rem ---------------------------------------------------------------------------
 setlocal EnableExtensions
 set "REPO=%~dp0"
@@ -30,8 +30,6 @@ if not defined MAPLESTORY_WIDTH set "MAPLESTORY_WIDTH=1366"
 
 if not defined MAPLESTORY_HEIGHT if defined HEIGHT set "MAPLESTORY_HEIGHT=%HEIGHT%"
 if not defined MAPLESTORY_HEIGHT set "MAPLESTORY_HEIGHT=768"
-
-if not defined MAPLESTORY_UILAYOUT if defined UILAYOUT set "MAPLESTORY_UILAYOUT=%UILAYOUT%"
 
 if not exist "%BUILD%\MapleStory.exe" (
 	echo [ERROR] Build the client first:
@@ -61,7 +59,6 @@ if exist "%RUN%\Settings" del "%RUN%\Settings"
 
 echo Data folder: %MAPLESTORY_DATAPATH%
 echo Resolution:  %MAPLESTORY_WIDTH%x%MAPLESTORY_HEIGHT%
-if defined MAPLESTORY_UILAYOUT echo UI layout:   %MAPLESTORY_UILAYOUT%
 
 pushd "%RUN%"
 MapleStory.exe
