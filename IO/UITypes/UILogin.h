@@ -42,6 +42,11 @@ namespace ms
 
 		UIElement::Type get_type() const override;
 
+		// 'account' and 'password' fill the two boxes, 'login' presses the login button
+		bool set_field(const std::string& name, const std::string& value) override;
+		bool trigger(const std::string& action) override;
+		void describe(std::vector<Offer>& out) const override;
+
 	protected:
 		Button::State button_pressed(uint16_t id) override;
 

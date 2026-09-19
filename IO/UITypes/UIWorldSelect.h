@@ -49,6 +49,12 @@ namespace ms
 		void set_region(uint8_t value);
 		uint16_t get_worldbyid(uint16_t worldid);
 
+		// 'world' takes the number of a world on the screen or its name, 'channel' the
+		// number of one of its channels, 'enter' presses the go button
+		bool set_field(const std::string& name, const std::string& value) override;
+		bool trigger(const std::string& action) override;
+		void describe(std::vector<Offer>& out) const override;
+
 	protected:
 		Button::State button_pressed(uint16_t buttonid) override;
 
@@ -61,6 +67,8 @@ namespace ms
 		void enter_world();
 		void clear_selected_world();
 		uint16_t get_next_world(uint16_t id, bool upward);
+		// The world the number or name stands for, false when there is none
+		bool find_world(const std::string& text, uint8_t& world) const;
 
 		enum Buttons : uint16_t
 		{

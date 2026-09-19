@@ -265,6 +265,14 @@ namespace ms
 		UILoginNotice(uint16_t message, std::function<void()> okhandler);
 		UILoginNotice(uint16_t message);
 
+		// The message the notice was built with, so a caller which logs instead of
+		// drawing can name what it was told
+		uint16_t get_message() const;
+		// 'yes' presses the button that answers the notice, 'no' the second one of the
+		// notices which offer it
+		bool trigger(const std::string& action) override;
+		void describe(std::vector<Offer>& out) const override;
+
 		void send_key(int32_t keycode, bool pressed, bool escape) override;
 
 		UIElement::Type get_type() const override;
@@ -281,6 +289,7 @@ namespace ms
 
 		bool saveid;
 		bool multiple;
+		uint16_t message;
 		std::function<void()> okhandler;
 		std::function<void()> cancelhandler;
 	};

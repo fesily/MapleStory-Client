@@ -59,6 +59,27 @@ namespace ms
 		active = true;
 	}
 
+	void UIElement::describe(std::vector<Offer>& out) const
+	{
+		for (const auto& iter : buttons)
+		{
+			if (!iter.second)
+				continue;
+
+			out.emplace_back(Offer{ Offer::Kind::BUTTON, std::to_string(iter.first), std::string() });
+		}
+	}
+
+	bool UIElement::press_button(uint16_t id)
+	{
+		// Some elements answer an id they do not have with a button state of their own,
+		// so the map is what says whether the element has that button
+		if (buttons.find(id) == buttons.end())
+			return false;
+
+		return button_pressed(id) != Button::State::DISABLED;
+	}
+
 	void UIElement::deactivate()
 	{
 		active = false;

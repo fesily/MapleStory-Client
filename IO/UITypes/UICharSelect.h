@@ -51,6 +51,12 @@ namespace ms
 
 		const CharEntry& get_character(int32_t id);
 
+		// 'character' takes the slot number, the name or '#<id>', 'select' presses the
+		// select button of the chosen character
+		bool set_field(const std::string& name, const std::string& value) override;
+		bool trigger(const std::string& action) override;
+		void describe(std::vector<Offer>& out) const override;
+
 	protected:
 		Button::State button_pressed(uint16_t buttonid) override;
 
@@ -64,6 +70,9 @@ namespace ms
 		Point<int16_t> get_infolabel_pos(size_t index) const;
 		std::string get_infolabel(size_t index, StatsEntry character_stats) const;
 		void request_pic();
+
+		// The slot the number, the name or the '#<id>' stands for, false when there is none
+		bool find_character(const std::string& text, uint8_t& slot) const;
 
 		static constexpr uint8_t PAGESIZE = 12;
 		static constexpr int16_t CHARSLOT_Y_MAX = 24;
