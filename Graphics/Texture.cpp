@@ -21,6 +21,9 @@
 
 #ifdef USE_IMG
 #include "../includes/ImgLib/img_impl.hpp"
+#include "../MapleStory.h"
+
+#include <iostream>
 #endif
 
 #ifdef USE_NX
@@ -80,6 +83,14 @@ namespace ms
 
 			GraphicsGL::get().addbitmap(bitmap);
 		}
+#ifdef USE_IMG
+		else if (src)
+		{
+			// Not an image: the data holds something else at the path the caller
+			// wanted a canvas from
+			LOG(LOG_WARN, "[Texture] no image at " << nl::img_access::path(src));
+		}
+#endif
 	}
 
 	void Texture::draw(const DrawArgument& args) const

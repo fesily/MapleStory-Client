@@ -135,6 +135,9 @@ namespace nl
 	struct img_access
 	{
 		static node make(img_prop const* p, img_prop const* root);
+		// The path a node sits at ("Map/Obj/login.img/WorldSelect/default/0"), for
+		// diagnostics; empty for a node that is not in the tree
+		static std::string path(node const& n);
 	};
 
 	// ---- used by Util/ImgFiles -------------------------------------------------
@@ -150,6 +153,11 @@ namespace nl
 	// Whether a node can hold children: the containers of the loose folder, and
 	// any node a package gave children to (canvases carry origin/delay as well)
 	bool img_has_children(img_prop const* prop);
+	// The path of a property in the tree, see img_access::path
+	std::string img_prop_path(img_prop const* prop);
+	// Logs every lookup the data does not answer (TraceMissing), which is how a
+	// screen that comes up empty shows what it asked for
+	void img_set_trace_missing(bool on);
 	img_prop const* img_lookup(img_prop const* p, std::string const& name);
 	void img_ensure_loaded(img_prop const* p);
 	std::vector<uint8_t> const& img_keystream(size_t length);

@@ -95,6 +95,7 @@ namespace ms
 				return Error(Error::Code::MISSING_FILE, "data");
 
 			nl::img_set_data_dir(directory);
+			nl::img_set_trace_missing(Setting<TraceMissing>::get().load());
 			LOG(LOG_INFO, "[ImgLib] data folder: " << nl::img_data_dir());
 
 			try

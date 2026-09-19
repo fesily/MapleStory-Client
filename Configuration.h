@@ -311,6 +311,13 @@ namespace ms
 		DataPath() : StringEntry("DataPath", ".") {}
 	};
 
+	// Logs every node a screen asks the data for and does not get, which is how a
+	// screen that stays empty shows what it is missing
+	struct TraceMissing : public Configuration::BoolEntry
+	{
+		TraceMissing() : BoolEntry("TraceMissing", "false") {}
+	};
+
 	// Whether to start in full screen mode
 	struct Fullscreen : public Configuration::BoolEntry
 	{

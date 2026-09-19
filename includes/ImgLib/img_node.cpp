@@ -97,6 +97,21 @@ namespace
 
 namespace nl
 {
+	std::string img_prop_path(img_prop const* prop)
+	{
+		std::string path;
+
+		for (img_prop const* current = prop; current; current = current->parent)
+			path = path.empty() ? current->name : current->name + "/" + path;
+
+		return path;
+	}
+
+	std::string img_access::path(node const& n)
+	{
+		return (n.m_data && n.m_data->prop) ? img_prop_path(n.m_data->prop) : std::string();
+	}
+
 	node img_access::make(img_prop const* p, img_prop const* root)
 	{
 		img_prop const* effective_root = (p && p->kind >= IMG_DIR && p->root) ? p->root : root;

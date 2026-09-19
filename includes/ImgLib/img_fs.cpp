@@ -45,6 +45,9 @@ namespace
 	std::unordered_map<std::string, nl::img_prop*>& g_roots = nl::img_immortal<std::unordered_map<std::string, nl::img_prop*>>();
 	std::unordered_map<std::string, std::unique_ptr<nl::img_prop>>& g_nodes = nl::img_immortal<std::unordered_map<std::string, std::unique_ptr<nl::img_prop>>>();
 
+	// Logs every lookup that finds nothing (TraceMissing)
+	bool g_trace_missing = false;
+
 	std::string normalize(std::string path, bool directory)
 	{
 		std::replace(path.begin(), path.end(), '\\', '/');
@@ -383,6 +386,11 @@ namespace nl
 			}
 		}
 
+		// Nothing answered: with TraceMissing on this is the line that says which
+		// resource a screen asked for
+		if (g_trace_missing)
+			LOG(LOG_WARN, "[ImgLib] no node: " << img_prop_path(prop) << "/" << name);
+
 		return nullptr;
 	}
 
@@ -405,6 +413,14 @@ namespace nl
 	bool img_root_has_source(std::string const& name)
 	{
 		return g_roots.count(name) != 0;
+	}
+
+	void img_set_trace_missing(bool on)
+	{
+		g_trace_missing = on;
+
+		if (on)
+			LOG(LOG_INFO, "[ImgLib] tracing every lookup the data does not answer");
 	}
 
 	node img_root(std::string const& name)

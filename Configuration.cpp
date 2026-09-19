@@ -97,6 +97,7 @@ namespace ms
 		settings.emplace<MiniMapType>();
 		settings.emplace<MiniMapSimpleMode>();
 		settings.emplace<MiniMapDefaultHelpers>();
+		settings.emplace<TraceMissing>();
 
 		load();
 	}
