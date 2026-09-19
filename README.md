@@ -64,18 +64,23 @@ Edit **MapleStory.h** to toggle build-time features:
 
 Default settings are defined in **Configuration.h**. A **Settings** file is generated after a game session with the same options. Editing either file works the same way, but **Settings** will not persist if deleted.
 
-### Log window
+### Log and console windows
 
-The client draws a log window over the game (Dear ImGui, vendored in `includes/imgui`). Every line the `LOG` macro produces goes to the console, to that window and to a rotating file, so a session can be watched while it runs and read after it ended. A window dragged out of the game window becomes a window of its own, which is what lets it stay in sight next to a full screen client. A release build compiles the `LOG` macro out, so the window stays empty there.
+The client draws two windows over the game (Dear ImGui, vendored in `includes/imgui`), one per stream:
+
+- **Log** shows what the `LOG` macro produces. Those lines are written to the **error stream** as well and appended to a rotating file, so `2> log.txt` captures the log of a session and nothing else.
+- **Console** shows the commands that were entered and what they answered. That is the **input and output stream**, so `1> console.txt` captures the commands of a session and nothing else. The commands the window takes in go through the same reader as the ones typed into the terminal the client was started in (`Util/DebugConsole.h`), so prompts asking for a line work in either of them.
+
+Either window dragged out of the game window becomes a window of its own, which is what lets them stay in sight next to a full screen client. A release build compiles the `LOG` macro out, so the log window stays empty there; the console window works in both.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `LogLines` | `5000` | How many lines are kept in memory at most |
-| `LogSeconds` | `900` | How long a line is kept in memory, in seconds |
+| `LogLines` | `5000` | How many lines the log keeps in memory at most |
+| `LogSeconds` | `900` | How long the log keeps a line in memory, in seconds |
 | `LogFile` | `true` | Whether the log is written to a rotating file as well |
 | `LogFileMB` | `8` | Size at which the log file rolls over, in megabytes |
 
-The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. The debug console shows and hides the window with `log [on|off|clear]`, which also drops the lines kept in memory.
+The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. `log [on|off|clear]` shows, hides and clears the log window, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
 
 ---
 

@@ -17,33 +17,31 @@
 //////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-struct GLFWwindow;
+#include <string>
 
 namespace ms
 {
-	// The debug windows the client draws with Dear ImGui, and what the game asks
-	// about them: input a window of them takes must not reach the game.
-	namespace debugui
+	// The console: the lines the client writes to its output stream and the commands
+	// that were entered, in one transcript, with the field the next command is typed
+	// in. It is drawn with ImGui, so it can be dragged out of the game window into
+	// one of its own. The log window next to it shows the other stream (Util/Log.h,
+	// which writes to the error stream), so a session can be redirected into one file
+	// and its commands into another.
+	namespace console_window
 	{
-		// Create the ImGui context and load the font it prints with; no window is
-		// needed for it
-		void init();
-		// Bind the ImGui backends to the window the game draws in. The window is
-		// destroyed and created again whenever the screen mode changes, so this runs
-		// again for every window.
-		void attach(GLFWwindow* window);
-		// Build the windows of this frame and draw them; runs after the game has
-		// drawn and before the buffers are swapped
+		// Collect what the client writes to std::cout: the text still reaches the
+		// console the client was started in, and a copy of it is kept in lines for
+		// the window. Called before the client writes its first line.
+		void attach_output();
+		// Append a line to the transcript; the command reader echoes what it runs
+		void append(const std::string& line);
+		// Drop the transcript
+		void clear();
+		// Show or hide the window; the console command 'console' uses this
+		void set_visible(bool visible);
+		bool visible();
+
+		// Draw the window of the current ImGui frame
 		void draw();
-
-		// Whether a debug window takes the mouse or the keyboard this frame
-		bool captures_mouse();
-		bool captures_keyboard();
-
-		// Show or hide the log window; the console command 'log' uses this
-		void set_log_visible(bool visible);
-		void toggle_log();
-		// Show or hide the console window; the console command 'console' uses this
-		void set_console_visible(bool visible);
 	}
 }

@@ -23,6 +23,7 @@
 #include <glew.h>
 #include <glfw3.h>
 
+#include "CommandWindow.h"
 #include "LogWindow.h"
 
 #include "../Configuration.h"
@@ -130,8 +131,10 @@ namespace ms
 			ImGui::NewFrame();
 
 			log_window::draw();
+			console_window::draw();
 
 			ImGui::Render();
+
 			ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
 			if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -171,6 +174,11 @@ namespace ms
 		void toggle_log()
 		{
 			log_window::set_visible(!log_window::visible());
+		}
+
+		void set_console_visible(bool visible)
+		{
+			console_window::set_visible(visible);
 		}
 	}
 }

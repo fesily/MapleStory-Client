@@ -391,6 +391,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Util\Log.cpp" />
     <ClCompile Include="Util\LogWindow.cpp" />
     <ClCompile Include="Util\DebugUI.cpp" />
+    <ClCompile Include="Util\CommandWindow.cpp" />
     <ClCompile Include="includes\ImgLib\img_blit.cpp" />
     <ClCompile Include="includes\ImgLib\img_fs.cpp" />
     <ClCompile Include="includes\ImgLib\img_node.cpp" />
@@ -651,6 +652,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Util\Log.h" />
     <ClInclude Include="Util\LogWindow.h" />
     <ClInclude Include="Util\DebugUI.h" />
+    <ClInclude Include="Util\CommandWindow.h" />
     <ClInclude Include="Util\NxFiles.h" />
     <ClInclude Include="Util\ImgFiles.h" />
     <ClInclude Include="includes\ImgLib\img_impl.hpp" />

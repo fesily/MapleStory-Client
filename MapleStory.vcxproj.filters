@@ -624,6 +624,9 @@
     <ClCompile Include="Util\DebugUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Util\CommandWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="includes\ImgLib\img_blit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1419,6 +1422,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util\DebugUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\CommandWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="includes\ImgLib\img_impl.hpp">

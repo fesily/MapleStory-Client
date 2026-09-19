@@ -236,7 +236,10 @@ namespace ms
 		{
 			const Retention& kept_by = retention();
 
-			std::cout << "[" << level_name(level) << "]: " << message << std::endl;
+			// The log goes to the error stream: what the console carries (stdin and
+			// stdout) is the command channel, so redirecting one of the two streams
+			// does not capture the other and the console window only shows commands
+			std::cerr << "[" << level_name(level) << "]: " << message << std::endl;
 
 			int64_t stamp = wall_ms();
 			int64_t now = steady_ms();

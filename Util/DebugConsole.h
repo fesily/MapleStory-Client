@@ -40,6 +40,9 @@ namespace ms
 
 		// Start collecting the lines entered on standard input
 		void start();
+		// Hand a line over as if it had been entered on standard input, which is how
+		// the console window (Util/CommandWindow.h) enters one
+		void submit(const std::string& line);
 		// Run the commands entered since the last call
 		void poll();
 		// Add commands, e.g. from a table in the file which owns the game loop

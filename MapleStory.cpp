@@ -29,6 +29,7 @@
 #include "Net/Session.h"
 #include "Util/DebugConsole.h"
 #include "Util/DebugUI.h"
+#include "Util/CommandWindow.h"
 #include "Util/HardwareInfo.h"
 #include "Util/Log.h"
 #include "Util/Misc.h"
@@ -258,15 +259,52 @@ namespace ms
 			}
 		}
 
+		void command_console(const std::string& args)
+		{
+			if (args == "clear")
+			{
+				console_window::clear();
+
+				std::cout << "console: the transcript is dropped" << std::endl;
+			}
+			else if (args == "off")
+			{
+				debugui::set_console_visible(false);
+
+				std::cout << "console: window hidden, 'console on' shows it again" << std::endl;
+			}
+			else if (args == "on" || args.empty())
+			{
+				debugui::set_console_visible(true);
+
+				std::cout << "console: window shown" << std::endl;
+			}
+			else
+			{
+				std::cout << "Usage: console [on|off|clear]" << std::endl;
+			}
+		}
+
+		void command_shot(const std::string& args)
+		{
+			const std::string path = args.empty() ? "frame.bmp" : args;
+
+			Window::get().screenshot(path);
+
+			std::cout << "shot: the next frame is written to " << path << std::endl;
+		}
+
 		void register_commands()
 		{
 			debug_console::add({
 				{ "center", "", "open the server's center UI (NPC 9900001)", command_center },
 				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
+				{ "console", "[on|off|clear]", "show or hide the command window, or drop what it shows", command_console },
 				{ "log", "[on|off|clear]", "show or hide the log window, or clear the lines it keeps", command_log },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
 				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
 				{ "quit", "", "close the client", command_quit },
+				{ "shot", "[file]", "write the frame the client draws to a file (a bitmap)", command_shot },
 				{ "talk", "<npcid|oid>", "ask the server for that NPC's dialog", command_talk },
 			});
 
@@ -384,6 +422,10 @@ namespace ms
 
 	void start()
 	{
+		// The console collects what the client prints from here on, so its window
+		// shows the whole session, a start that ends in an error included
+		console_window::attach_output();
+
 		// Initialize and check for errors
 		if (Error error = init())
 		{
