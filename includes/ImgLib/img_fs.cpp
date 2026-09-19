@@ -294,10 +294,20 @@ namespace nl
 	img_prop const* img_root_for_path(std::string const& path)
 	{
 		std::string category = first_segment(path);
+		std::string rest = segment_after_first(path);
+
+		// A folder holding both the packages and the loose .img folder they were
+		// converted to keeps the latter in "data", which reads as a plain prefix
+		// on every path below it
+		if (category == "data")
+		{
+			category = first_segment(rest);
+			rest = segment_after_first(rest);
+		}
 
 		if (category == "Map")
 		{
-			std::string sub = first_segment(segment_after_first(path));
+			std::string sub = first_segment(rest);
 
 			if (sub == "Back")
 				return g_roots["Map001"];
@@ -413,8 +423,17 @@ namespace nl
 		for (char const* name : ROOT_NAMES)
 		{
 			std::string category = base_category(name);
+
+			// The loose side of a root: the categories directly inside the data
+			// folder, or in its "data" folder when the packages sit next to it
 			std::string stem = category + "/";
 			bool has_directory = is_directory(g_data_dir + stem);
+
+			if (!has_directory && is_directory(g_data_dir + "data/" + stem))
+			{
+				stem = "data/" + stem;
+				has_directory = true;
+			}
 
 			// The .nx side of a root: the file named after it, the package of its
 			// category (a pre-split set keeps Map001/Map002/Map2 in Map.nx) or the
@@ -483,7 +502,7 @@ namespace nl
 					prop->nx_kids = record.num;
 			}
 
-			LOG(LOG_INFO, "[ImgLib] " << name << ": " << (has_directory ? "img" : "") << (has_directory && nx_file >= 0 ? " + " : "") << (nx_file >= 0 ? ("nx(" + nx_path + ")") : ""));
+			LOG(LOG_INFO, "[ImgLib] " << name << ": " << (has_directory ? ("img(" + stem + ")") : "") << (has_directory && nx_file >= 0 ? " + " : "") << (nx_file >= 0 ? ("nx(" + nx_path + ")") : ""));
 
 			g_roots[name] = prop.get();
 			g_root_storage.emplace_back(std::move(prop));
