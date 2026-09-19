@@ -135,6 +135,10 @@ namespace nl {
         data const * m_data = nullptr;
         _file_data const * m_file = nullptr;
         friend file;
+#ifdef USE_IMG
+        //The loose .img backend (includes/ImgLib) builds nodes itself
+        friend struct img_access;
+#endif
     };
     //More convenience string concatenation operators
     std::string operator+(std::string, node);

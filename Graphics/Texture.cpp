@@ -19,6 +19,10 @@
 
 #include "GraphicsGL.h"
 
+#ifdef USE_IMG
+#include "../includes/ImgLib/img_impl.hpp"
+#endif
+
 #ifdef USE_NX
 #include <nlnx/nx.hpp>
 #endif
@@ -57,6 +61,22 @@ namespace ms
 
 			bitmap = src;
 			dimensions = Point<int16_t>(bitmap.width(), bitmap.height());
+
+#ifdef USE_IMG
+			// Pins the decoded pixels for as long as this texture (or a copy of it)
+			// exists; the deleter of the shared pointer releases the pin.
+			const void* data = bitmap.data();
+
+			if (data)
+			{
+				nl::img_pin_pixels(data);
+
+				pixels = std::shared_ptr<const void>(data, [](const void* pinned)
+				{
+					nl::img_unpin_pixels(pinned);
+				});
+			}
+#endif
 
 			GraphicsGL::get().addbitmap(bitmap);
 		}

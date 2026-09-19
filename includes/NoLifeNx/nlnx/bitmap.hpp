@@ -44,6 +44,13 @@ namespace nl {
         size_t id() const;
     private:
         bitmap(void const *, uint16_t, uint16_t);
+#ifdef USE_IMG
+        // The loose .img backend keys GPU resources by a stable identity: the
+        // pixels of a canvas are decoded and dropped independently of the bitmap
+        // object, so their address cannot be used to recognise a canvas again.
+        bitmap(void const *, uint16_t, uint16_t, size_t);
+        size_t m_uid = 0;
+#endif
         void const * m_data = nullptr;
         uint16_t m_width = 0;
         uint16_t m_height = 0;

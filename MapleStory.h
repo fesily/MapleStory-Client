@@ -26,6 +26,12 @@
 // If defined use NX, otherwise use WZ.
 #define USE_NX
 
+// If defined read the loose .img data folder ("<cwd>/data/<Category>/...") instead
+// of .nx files. USE_NX stays defined because it also selects the nl:: node API the
+// client source is written against; USE_IMG swaps the backend behind it for
+// includes/ImgLib.
+#define USE_IMG
+
 // Debug options
 #define LOG_ERROR	1
 #define LOG_WARN	2

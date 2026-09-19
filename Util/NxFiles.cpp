@@ -19,6 +19,10 @@
 #include "../Configuration.h"
 
 #ifdef USE_NX
+// With USE_IMG the .nx backend is replaced by includes/ImgLib, which reads the
+// same categories from the loose .img folder; nothing calls into NxFiles then,
+// and nl::file (NoLifeNx) is not linked.
+#ifndef USE_IMG
 #include <fstream>
 #include <memory>
 #include <string>
@@ -185,3 +189,5 @@ namespace ms
 	}
 }
 #endif
+
+#endif // USE_IMG

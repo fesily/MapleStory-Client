@@ -14,3 +14,5 @@
 Settings
 
 /includes/WzLib
+# client run directory assembled by run_img.bat
+/run_img

@@ -23,6 +23,10 @@
 #include <nlnx/bitmap.hpp>
 #endif
 
+#ifdef USE_IMG
+#include <memory>
+#endif
+
 namespace ms
 {
 	// Represents a single image loaded from a of game data
@@ -48,5 +52,11 @@ namespace ms
 		nl::bitmap bitmap;
 		Point<int16_t> origin;
 		Point<int16_t> dimensions;
+#ifdef USE_IMG
+		// The pixels of a canvas are decoded into a cache which may drop them again
+		// while a texture still draws them, so a texture (and every copy of it)
+		// holds a reference-counted pin on them for as long as it exists.
+		std::shared_ptr<const void> pixels;
+#endif
 	};
 }

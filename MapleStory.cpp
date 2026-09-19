@@ -33,7 +33,9 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef USE_NX
+#if defined(USE_IMG)
+#include "Util/ImgFiles.h"
+#elif defined(USE_NX)
 #include "Util/NxFiles.h"
 #else
 #include "Util/WzFiles.h"
@@ -244,7 +246,10 @@ namespace ms
 		if (Error error = Session::get().init())
 			return error;
 
-#ifdef USE_NX
+#if defined(USE_IMG)
+		if (Error error = ImgFiles::init())
+			return error;
+#elif defined(USE_NX)
 		if (Error error = NxFiles::init())
 			return error;
 #else
