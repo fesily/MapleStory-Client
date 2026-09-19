@@ -40,6 +40,21 @@ namespace
 {
 	bool ready = false;
 	bool bound = false;
+	// Set while the window the ImGui state was built for is gone: the next attach
+	// builds the state again, because the backends cannot be moved to another window
+	bool contextstale = false;
+
+	// Take the backends down; the window they are bound to has to be alive for it
+	void unbind()
+	{
+		if (!bound)
+			return;
+
+		ImGui_ImplGlfw_Shutdown();
+		ImGui_ImplOpenGL2_Shutdown();
+
+		bound = false;
+	}
 
 	// Whether the font file is there; ImGui keeps its own font when the client's is
 	// missing, and that one has no CJK, which the log needs (names, chat, dialogs)
@@ -67,29 +82,39 @@ namespace ms
 {
 	namespace debugui
 	{
+		namespace
+		{
+			// Put the ImGui state in place: the flags the backend has to answer, the ini
+			// file the windows remember themselves in, the font they print with and the
+			// style. It is set up for the first window and again when the window the
+			// game draws in is created anew.
+			void create_context()
+			{
+				IMGUI_CHECKVERSION();
+				ImGui::CreateContext();
+
+				ImGuiIO& io = ImGui::GetIO();
+
+				io.IniFilename = "debugui.ini";
+				io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+
+				const std::string font = Setting<FontPathCJKNormal>::get().load();
+
+				if (!font.empty() && font_available(font))
+					io.Fonts->AddFontFromFileTTF(font.c_str(), 15.0f);
+
+				// A rounded corner would show the desktop through the gap it leaves at
+				// each of the windows which are drawn outside the game window
+				ImGuiStyle& style = ImGui::GetStyle();
+
+				style.WindowRounding = 0.0f;
+				style.Colors[ImGuiCol_WindowBg].w = 0.94f;
+			}
+		}
+
 		void init()
 		{
-			IMGUI_CHECKVERSION();
-			ImGui::CreateContext();
-
-			ImGuiIO& io = ImGui::GetIO();
-
-			// The windows remember where they were put; a window dragged out of the
-			// game window is one of its own and stays there
-			io.IniFilename = "debugui.ini";
-			io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
-
-			const std::string font = Setting<FontPathCJKNormal>().get().load();
-
-			if (!font.empty() && font_available(font))
-				io.Fonts->AddFontFromFileTTF(font.c_str(), 15.0f);
-
-			// A rounded corner would show the desktop through the gap it leaves at
-			// each of the windows which are drawn outside the game window
-			ImGuiStyle& style = ImGui::GetStyle();
-
-			style.WindowRounding = 0.0f;
-			style.Colors[ImGuiCol_WindowBg].w = 0.94f;
+			create_context();
 
 			ready = true;
 		}
@@ -99,21 +124,38 @@ namespace ms
 			if (!ready)
 				return;
 
-			// The window the game draws in is created again when the screen mode
-			// changes; the backends remember the window they were bound to, so they
-			// are taken down and set up for the new one. Their callbacks chain to the
-			// game callbacks that were installed before them.
-			if (bound)
+			// The backend subclasses the window it is bound to and holds the platform
+			// windows it created for the windows that were dragged out of it; none of
+			// that can be moved to the window this replaces. The ImGui state is built
+			// again instead, which drops the platform windows of the one that is gone
+			// and leaves the new window with the ones it can have.
+			bool replacing = contextstale;
+
+			unbind();
+
+			if (replacing)
 			{
-				ImGui_ImplGlfw_Shutdown();
-				ImGui_ImplOpenGL2_Shutdown();
+				ImGui::DestroyContext();
+
+				create_context();
 			}
+
+			contextstale = false;
 
 			ImGui_ImplGlfw_InitForOpenGL(window, true);
 			ImGui_ImplGlfw_SetCallbacksChainForAllWindows(false);
 			ImGui_ImplOpenGL2_Init();
 
 			bound = true;
+		}
+
+		void detach()
+		{
+			// The window the state was built for is going away, which the backends
+			// cannot be moved off: the next attach builds the state again
+			unbind();
+
+			contextstale = true;
 		}
 
 		void draw()

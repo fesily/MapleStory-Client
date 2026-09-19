@@ -61,6 +61,9 @@ namespace ms
 		void write_frame(const std::string& path) const;
 		// The file the next frame is written to, empty when none was asked for
 		std::string shotpath;
+		// Whether the window has to be created again, set by toggle_fullscreen and
+		// carried out by check_events once the event behind it was dispatched
+		bool windowpending;
 
 		GLFWwindow* glwnd;
 		GLFWwindow* context;

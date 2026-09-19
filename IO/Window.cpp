@@ -38,6 +38,7 @@ namespace ms
 		context = nullptr;
 		glwnd = nullptr;
 		cursorcaptured = false;
+		windowpending = false;
 		opacity = 1.0f;
 		opcstep = 0.0f;
 		width = Constants::Constants::get().get_viewwidth();
@@ -190,7 +191,22 @@ namespace ms
 	Error Window::initwindow()
 	{
 		if (glwnd)
+		{
+			// The debug backends restore the callbacks of the window they were bound
+			// to, so they are taken down while it still exists
+			debugui::detach();
+
 			glfwDestroyWindow(glwnd);
+		}
+
+		// The window hints are global state, and the debug backends create windows of
+		// their own for the ones that were dragged out of the game window: the hints
+		// this window is made with are set again here instead of being inherited from
+		// whatever created a window last, which leaves it hidden or unfocused
+		glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+		glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
+		glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 		glwnd = glfwCreateWindow(
 			width,
@@ -320,6 +336,17 @@ namespace ms
 		}
 
 		glfwPollEvents();
+
+		// A screen change that was asked for while an event was handled is carried out
+		// here, with the dispatch it came from over: the window is destroyed and
+		// created again, and both GLFW and ImGui are still using it while one of
+		// their callbacks runs
+		if (windowpending)
+		{
+			windowpending = false;
+
+			initwindow();
+		}
 	}
 
 	void Window::begin() const
@@ -454,8 +481,9 @@ namespace ms
 
 			LOG(LOG_INFO, "Full screen: " << (fullscreen ? "on" : "off"));
 
-			initwindow();
-			glfwPollEvents();
+			// The window is created again in check_events, once the event which asked
+			// for it has been dispatched
+			windowpending = true;
 		}
 		else
 		{

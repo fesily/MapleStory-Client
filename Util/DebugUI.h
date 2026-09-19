@@ -32,6 +32,10 @@ namespace ms
 		// destroyed and created again whenever the screen mode changes, so this runs
 		// again for every window.
 		void attach(GLFWwindow* window);
+		// Take the backends down while the window they are bound to still exists; the
+		// game calls this before it destroys that window, because the backends restore
+		// its callbacks on the way out and would write into a window that is gone
+		void detach();
 		// Build the windows of this frame and draw them; runs after the game has
 		// drawn and before the buffers are swapped
 		void draw();
