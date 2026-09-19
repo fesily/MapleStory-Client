@@ -248,11 +248,38 @@ namespace
 			{
 				// A directory keeps the record behind it, so the entries it does not
 				// hold are still served from the file
-				if (loose->kind == nl::IMG_DIR && loose->nx_file < 0)
+				if (loose->kind == nl::IMG_DIR)
 				{
-					loose->nx_file = dir->nx_file;
-					loose->nx_index = index;
-					loose->nx_kids = record.num;
+					if (loose->nx_file < 0)
+					{
+						loose->nx_file = dir->nx_file;
+						loose->nx_index = index;
+						loose->nx_kids = record.num;
+					}
+					else if (loose->nx_file != dir->nx_file)
+					{
+						// The folder is shared by two packages (Map.nx and Map001.nx
+						// both read data/Map/) and it can only carry one of them, so
+						// this one gets its own copy of the folder to fall back into,
+						// which replaces the shared entry in this listing
+						std::unique_ptr<nl::img_prop> copy(new nl::img_prop());
+						copy->name = loose->name;
+						copy->kind = nl::IMG_DIR;
+						copy->path = loose->path;
+						copy->root = loose->root;
+						copy->nx_file = dir->nx_file;
+						copy->nx_index = index;
+						copy->nx_kids = record.num;
+
+						nl::img_prop* raw = copy.get();
+						dir->owned.emplace_back(std::move(copy));
+
+						for (nl::img_prop*& kid : dir->kids)
+							if (kid == loose)
+								kid = raw;
+
+						loose = raw;
+					}
 				}
 
 				LOG(LOG_INFO, "[ImgLib] takes over: " << loose->path << (loose->kind == nl::IMG_FILE ? " (image)" : ""));
