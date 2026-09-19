@@ -17,6 +17,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+// The sink the LOG macro below feeds (the line builder it expands to)
+#include "Util/Log.h"
+
 // If defined use Asio for networking, otherwise use Winsock.
 //#define USE_ASIO
 
@@ -59,19 +62,12 @@
 	#define LOG_LEVEL LOG_WARN
 #endif
 
-// Log Text
-#define LOG_TEXT(level) (\
-	level == LOG_ERROR		? "ERROR"	:\
-	level == LOG_WARN		? "WARN"	:\
-	level == LOG_INFO		? "INFO"	:\
-	level == LOG_DEBUG		? "DEBUG"	:\
-	level == LOG_NETWORK	? "NETWORK"	:\
-	level == LOG_UI			? "UI"		:\
-	level == LOG_TRACE		? "TRACE"	: "UNDEFINED")
-
 // Log Commands
+// A line is assembled by the sink (Util/Log.h) and written to the console, kept
+// in memory for the log window and appended to a rotating file. The level names
+// are log::level_name(); a release build compiles the lines out entirely.
 #ifdef _DEBUG
-	#define LOG(level, message) level <= LOG_LEVEL ? std::cout << "[" << LOG_TEXT(level) << "]: " << message << std::endl : std::cout
+	#define LOG(level, message) ms::log::Line(level, (level) <= LOG_LEVEL) << message
 #else
 	#define LOG(level, message) void(0)
 #endif

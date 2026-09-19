@@ -64,6 +64,24 @@ Edit **MapleStory.h** to toggle build-time features:
 
 Default settings are defined in **Configuration.h**. A **Settings** file is generated after a game session with the same options. Editing either file works the same way, but **Settings** will not persist if deleted.
 
+### Log and console windows
+
+The client draws two windows over the game (Dear ImGui, vendored in `includes/imgui`), one per stream:
+
+- **Log** shows what the `LOG` macro produces. Those lines are written to the **error stream** as well and appended to a rotating file, so `2> log.txt` captures the log of a session and nothing else.
+- **Console** shows the commands that were entered and what they answered. That is the **input and output stream**, so `1> console.txt` captures the commands of a session and nothing else. The commands the window takes in go through the same reader as the ones typed into the terminal the client was started in (`Util/DebugConsole.h`), so prompts asking for a line work in either of them.
+
+Either window dragged out of the game window becomes a window of its own, which is what lets them stay in sight next to a full screen client. A release build compiles the `LOG` macro out, so the log window stays empty there; the console window works in both.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LogLines` | `5000` | How many lines the log keeps in memory at most |
+| `LogSeconds` | `900` | How long the log keeps a line in memory, in seconds |
+| `LogFile` | `true` | Whether the log is written to a rotating file as well |
+| `LogFileMB` | `8` | Size at which the log file rolls over, in megabytes |
+
+The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. `log [on|off|clear]` shows, hides and clears the log window, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
+
 ---
 
 ## Required Files
@@ -80,7 +98,7 @@ Default settings are defined in **Configuration.h**. A **Settings** file is gene
 |----------|---------|
 | NX | [NoLifeNx] |
 | WZ | TBA |
-| Graphics | [GLFW3], [GLEW], [FreeType] |
+| Graphics | [GLFW3], [GLEW], [FreeType], [Dear ImGui] |
 | Audio | [Bass] |
 | Networking | [Asio] *(optional)* |
 
@@ -129,6 +147,7 @@ All donations go directly toward the development of this project. Please also re
 [GLEW]:              http://glew.sourceforge.net/
 [FreeType]:          http://www.freetype.org/
 [Bass]:              http://www.un4seen.com/
+[Dear ImGui]:        https://github.com/ocornut/imgui
 [Asio]:              http://think-async.com/
 [commit]:            https://github.com/ryantpayton/MapleStory-Client/commit/e3e97c23fc6a92b87356fc2484c7f8b12d71bf19
 [archive]:           https://1drv.ms/u/s!Al6eadQnem68on8i7qG62UBsFXpV?e=sumYue

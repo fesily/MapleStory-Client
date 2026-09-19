@@ -540,6 +540,23 @@ namespace ms
 			SCREEN = Rectangle<int16_t>(0, VWIDTH, 0, VHEIGHT);
 		}
 
+		resetstate();
+
+		// The textures of the large canvases belong to no atlas band, so they survive the
+		// rebuild of the atlas; only the per frame bookkeeping starts over
+		framecount = 0;
+		atlasuploads = 0;
+		directuploads = 0;
+		directevictions = 0;
+
+		for (auto& entry : directtextures)
+			entry.second.lastframe = 0;
+
+		clearinternal();
+	}
+
+	void GraphicsGL::resetstate()
+	{
 		glUseProgram(shaderProgram);
 
 		glUniform1i(uniform_fontregion, fontymax);
@@ -558,17 +575,9 @@ namespace ms
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		// The textures of the large canvases belong to no atlas band, so they survive the
-		// rebuild of the atlas; only the per frame bookkeeping starts over
-		framecount = 0;
-		atlasuploads = 0;
-		directuploads = 0;
-		directevictions = 0;
-
-		for (auto& entry : directtextures)
-			entry.second.lastframe = 0;
-
-		clearinternal();
+		// The viewport belongs to the context, and drawing into the windows a debug
+		// window was dragged into leaves another one behind
+		glViewport(0, 0, VWIDTH, VHEIGHT);
 	}
 
 	void GraphicsGL::clearinternal()

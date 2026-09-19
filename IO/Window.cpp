@@ -21,7 +21,11 @@
 
 #include "../Configuration.h"
 #include "../Timer.h"
+#include "../Util/DebugUI.h"
 #include "../Util/ScreenResolution.h"
+
+#include <fstream>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -33,6 +37,7 @@ namespace ms
 	{
 		context = nullptr;
 		glwnd = nullptr;
+		cursorcaptured = false;
 		opacity = 1.0f;
 		opcstep = 0.0f;
 		width = Constants::Constants::get().get_viewwidth();
@@ -51,6 +56,11 @@ namespace ms
 
 	void key_callback(GLFWwindow*, int key, int, int action, int)
 	{
+		// A debug window takes the keyboard while it is used: what is typed into it
+		// (a filter, a text field) is not a game key
+		if (debugui::captures_keyboard())
+			return;
+
 		UI::get().send_key(key, action != GLFW_RELEASE, action == GLFW_REPEAT);
 	}
 
@@ -58,6 +68,11 @@ namespace ms
 
 	void mousekey_callback(GLFWwindow*, int button, int action, int)
 	{
+		// A debug window takes the mouse while it is used; the clicks that go into
+		// it are not game clicks
+		if (debugui::captures_mouse())
+			return;
+
 		switch (button)
 		{
 			case GLFW_MOUSE_BUTTON_LEFT:
@@ -101,6 +116,11 @@ namespace ms
 
 	void cursor_callback(GLFWwindow*, double xpos, double ypos)
 	{
+		// The cursor belongs to the debug window while it is over one; the game
+		// cursor stays where it was
+		if (debugui::captures_mouse())
+			return;
+
 		Point<int16_t> cursor_position = Point<int16_t>(
 			static_cast<int16_t>(xpos),
 			static_cast<int16_t>(ypos)
@@ -123,6 +143,9 @@ namespace ms
 
 	void scroll_callback(GLFWwindow*, double xoffset, double yoffset)
 	{
+		if (debugui::captures_mouse())
+			return;
+
 		UI::get().send_scroll(yoffset);
 	}
 
@@ -157,6 +180,10 @@ namespace ms
 		if (Error error = GraphicsGL::get().init())
 			return error;
 
+		// The debug windows need no window of their own; their backends are bound to
+		// the one the game draws in (initwindow)
+		debugui::init();
+
 		return initwindow();
 	}
 
@@ -186,6 +213,8 @@ namespace ms
 		glLoadIdentity();
 
 		glfwSetInputMode(glwnd, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+		cursorcaptured = false;
 
 		double xpos, ypos;
 
@@ -218,6 +247,10 @@ namespace ms
 
 		GraphicsGL::get().reinit();
 
+		// The window is created again when the screen mode changes, and the debug
+		// backends were bound to the one this replaces
+		debugui::attach(glwnd);
+
 		return Error::Code::NONE;
 	}
 
@@ -229,6 +262,18 @@ namespace ms
 	void Window::update()
 	{
 		updateopc();
+
+		// The game draws its own cursor and keeps the system one hidden; while a
+		// debug window is used the system one has to be shown, or there would be
+		// two of them
+		bool captured = debugui::captures_mouse();
+
+		if (captured != cursorcaptured)
+		{
+			glfwSetInputMode(glwnd, GLFW_CURSOR, captured ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+
+			cursorcaptured = captured;
+		}
 	}
 
 	void Window::updateopc()
@@ -282,10 +327,99 @@ namespace ms
 		GraphicsGL::get().clearscene();
 	}
 
-	void Window::end() const
+	void Window::end()
 	{
 		GraphicsGL::get().flush(opacity);
+
+		// The debug windows are drawn over the game, so they come after its flush
+		// and before the buffers are swapped
+		debugui::draw();
+
+		// A frame which was asked for is taken from the buffer that was just drawn,
+		// so what the client shows can be looked at without the screen (which does
+		// not hand out the frames of a window while something else covers it)
+		if (!shotpath.empty())
+		{
+			write_frame(shotpath);
+
+			shotpath.clear();
+		}
+
 		glfwSwapBuffers(glwnd);
+	}
+
+	void Window::screenshot(const std::string& path)
+	{
+		shotpath = path;
+	}
+
+	void Window::write_frame(const std::string& path) const
+	{
+		std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+
+		glReadBuffer(GL_BACK);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+		// A bitmap of 24 bits per pixel, the rows of which are stored from the bottom
+		// one up, which is the order the pixels of the buffer arrive in
+		int32_t rowbytes = width * 3;
+		int32_t padding = (4 - rowbytes % 4) % 4;
+		int32_t imgsize = (rowbytes + padding) * height;
+		int32_t filesize = 54 + imgsize;
+
+		uint8_t header[54] = { 0 };
+
+		header[0] = 'B';
+		header[1] = 'M';
+		header[2] = static_cast<uint8_t>(filesize);
+		header[3] = static_cast<uint8_t>(filesize >> 8);
+		header[4] = static_cast<uint8_t>(filesize >> 16);
+		header[5] = static_cast<uint8_t>(filesize >> 24);
+		header[10] = 54;
+		header[14] = 40;
+		header[18] = static_cast<uint8_t>(width);
+		header[19] = static_cast<uint8_t>(width >> 8);
+		header[20] = static_cast<uint8_t>(width >> 16);
+		header[21] = static_cast<uint8_t>(width >> 24);
+		header[22] = static_cast<uint8_t>(height);
+		header[23] = static_cast<uint8_t>(height >> 8);
+		header[24] = static_cast<uint8_t>(height >> 16);
+		header[25] = static_cast<uint8_t>(height >> 24);
+		header[26] = 1;
+		header[28] = 24;
+		header[34] = static_cast<uint8_t>(imgsize);
+		header[35] = static_cast<uint8_t>(imgsize >> 8);
+		header[36] = static_cast<uint8_t>(imgsize >> 16);
+		header[37] = static_cast<uint8_t>(imgsize >> 24);
+
+		std::ofstream out(path, std::ios::binary);
+
+		if (!out.is_open())
+		{
+			LOG(LOG_WARN, "shot: " << path << " cannot be written");
+
+			return;
+		}
+
+		out.write(reinterpret_cast<const char*>(header), sizeof(header));
+
+		std::vector<char> row(static_cast<size_t>(rowbytes + padding), 0);
+
+		for (int32_t y = 0; y < height; y++)
+		{
+			for (int32_t x = 0; x < width; x++)
+			{
+				const uint8_t* pixel = &pixels[(static_cast<size_t>(y) * width + x) * 4];
+
+				row[x * 3 + 0] = static_cast<char>(pixel[2]);
+				row[x * 3 + 1] = static_cast<char>(pixel[1]);
+				row[x * 3 + 2] = static_cast<char>(pixel[0]);
+			}
+
+			out.write(row.data(), static_cast<std::streamsize>(row.size()));
+		}
+
+		LOG(LOG_INFO, "shot: " << path << " written");
 	}
 
 	void Window::fadeout(float step, std::function<void()> fadeproc)

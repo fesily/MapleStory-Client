@@ -98,7 +98,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,7 +120,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,7 +144,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,7 +170,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -387,11 +387,21 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Util\NxFiles.cpp" />
     <ClCompile Include="Util\ImgFiles.cpp" />
     <ClCompile Include="Util\WzFiles.cpp" />
+    <ClCompile Include="Util\Log.cpp" />
+    <ClCompile Include="Util\LogWindow.cpp" />
+    <ClCompile Include="Util\DebugUI.cpp" />
+    <ClCompile Include="Util\CommandWindow.cpp" />
     <ClCompile Include="includes\ImgLib\img_blit.cpp" />
     <ClCompile Include="includes\ImgLib\img_fs.cpp" />
     <ClCompile Include="includes\ImgLib\img_node.cpp" />
     <ClCompile Include="includes\ImgLib\img_nx.cpp" />
     <ClCompile Include="includes\ImgLib\img_parse.cpp" />
+    <ClCompile Include="includes\imgui\imgui.cpp" />
+    <ClCompile Include="includes\imgui\imgui_draw.cpp" />
+    <ClCompile Include="includes\imgui\imgui_tables.cpp" />
+    <ClCompile Include="includes\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="includes\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="includes\imgui\backends\imgui_impl_opengl2.cpp" />
     <ClCompile Include="includes\miniz\miniz_tinfl.c" />
   </ItemGroup>
   <ItemGroup>
@@ -637,12 +647,24 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Util\HardwareInfo.h" />
     <ClInclude Include="Util\Lerp.h" />
     <ClInclude Include="Util\Misc.h" />
+    <ClInclude Include="Util\Log.h" />
+    <ClInclude Include="Util\LogWindow.h" />
+    <ClInclude Include="Util\DebugUI.h" />
+    <ClInclude Include="Util\CommandWindow.h" />
     <ClInclude Include="Util\NxFiles.h" />
     <ClInclude Include="Util\ImgFiles.h" />
     <ClInclude Include="includes\ImgLib\img_impl.hpp" />
     <ClInclude Include="includes\miniz\miniz.h" />
     <ClInclude Include="includes\miniz\miniz_common.h" />
     <ClInclude Include="includes\miniz\miniz_tinfl.h" />
+    <ClInclude Include="includes\imgui\imgui.h" />
+    <ClInclude Include="includes\imgui\imgui_internal.h" />
+    <ClInclude Include="includes\imgui\imconfig.h" />
+    <ClInclude Include="includes\imgui\imstb_rectpack.h" />
+    <ClInclude Include="includes\imgui\imstb_textedit.h" />
+    <ClInclude Include="includes\imgui\imstb_truetype.h" />
+    <ClInclude Include="includes\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="includes\imgui\backends\imgui_impl_opengl2.h" />
     <ClInclude Include="Util\QuadTree.h" />
     <ClInclude Include="Util\Randomizer.h" />
     <ClInclude Include="Util\ScreenResolution.h" />

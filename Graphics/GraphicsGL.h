@@ -43,6 +43,11 @@ namespace ms
 		Error init();
 		// Re-initialize after changing screen modes
 		void reinit();
+		// Establish the state the renderer draws with: the shader program and its
+		// uniforms, the vertex attributes, the texture and the blend mode. Whatever
+		// else draws (the debug windows do) changes state of its own, so the
+		// renderer sets its own up instead of assuming it survived.
+		void resetstate();
 
 		// Clear all bitmaps if most of the space is used up
 		void clear();

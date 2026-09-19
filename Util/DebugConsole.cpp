@@ -17,6 +17,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "DebugConsole.h"
 
+#include "CommandWindow.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -125,6 +127,10 @@ namespace ms
 
 			void run(const std::string& line)
 			{
+				// The transcript of the console shows what was entered, whichever of
+				// the two streams the line came in on
+				console_window::append(std::string("> ") + line);
+
 				// A command which asked for the next lines takes one exactly as it was
 				// typed, so a name which is a command of its own can be entered and an
 				// empty line can repeat what the prompt wants. 'cancel' is the way out.
@@ -196,6 +202,13 @@ namespace ms
 		void start()
 		{
 			std::thread(read_input).detach();
+		}
+
+		void submit(const std::string& line)
+		{
+			std::lock_guard<std::mutex> guard(inputmutex);
+
+			input.push_back(line);
 		}
 
 		void poll()

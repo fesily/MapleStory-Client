@@ -318,6 +318,32 @@ namespace ms
 		TraceMissing() : BoolEntry("TraceMissing", "false") {}
 	};
 
+	// How long the log keeps a line in memory, in seconds; older lines are dropped
+	// even when fewer than LogLines are kept
+	struct LogSeconds : public Configuration::IntEntry
+	{
+		LogSeconds() : IntEntry("LogSeconds", "900") {}
+	};
+
+	// How many lines the log keeps in memory at most
+	struct LogLines : public Configuration::IntEntry
+	{
+		LogLines() : IntEntry("LogLines", "5000") {}
+	};
+
+	// Whether the log is written to a rotating file as well
+	struct LogFile : public Configuration::BoolEntry
+	{
+		LogFile() : BoolEntry("LogFile", "true") {}
+	};
+
+	// Size at which the log file rolls over, in megabytes; the three files the
+	// client keeps hold three times this much
+	struct LogFileMB : public Configuration::IntEntry
+	{
+		LogFileMB() : IntEntry("LogFileMB", "8") {}
+	};
+
 	// Whether to start in full screen mode
 	struct Fullscreen : public Configuration::BoolEntry
 	{
