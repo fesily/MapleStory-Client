@@ -21,6 +21,7 @@
 
 #include "../Configuration.h"
 #include "../Timer.h"
+#include "../Util/DebugUI.h"
 #include "../Util/ScreenResolution.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -33,6 +34,7 @@ namespace ms
 	{
 		context = nullptr;
 		glwnd = nullptr;
+		cursorcaptured = false;
 		opacity = 1.0f;
 		opcstep = 0.0f;
 		width = Constants::Constants::get().get_viewwidth();
@@ -51,6 +53,11 @@ namespace ms
 
 	void key_callback(GLFWwindow*, int key, int, int action, int)
 	{
+		// A debug window takes the keyboard while it is used: what is typed into it
+		// (a filter, a text field) is not a game key
+		if (debugui::captures_keyboard())
+			return;
+
 		UI::get().send_key(key, action != GLFW_RELEASE, action == GLFW_REPEAT);
 	}
 
@@ -58,6 +65,11 @@ namespace ms
 
 	void mousekey_callback(GLFWwindow*, int button, int action, int)
 	{
+		// A debug window takes the mouse while it is used; the clicks that go into
+		// it are not game clicks
+		if (debugui::captures_mouse())
+			return;
+
 		switch (button)
 		{
 			case GLFW_MOUSE_BUTTON_LEFT:
@@ -101,6 +113,11 @@ namespace ms
 
 	void cursor_callback(GLFWwindow*, double xpos, double ypos)
 	{
+		// The cursor belongs to the debug window while it is over one; the game
+		// cursor stays where it was
+		if (debugui::captures_mouse())
+			return;
+
 		Point<int16_t> cursor_position = Point<int16_t>(
 			static_cast<int16_t>(xpos),
 			static_cast<int16_t>(ypos)
@@ -123,6 +140,9 @@ namespace ms
 
 	void scroll_callback(GLFWwindow*, double xoffset, double yoffset)
 	{
+		if (debugui::captures_mouse())
+			return;
+
 		UI::get().send_scroll(yoffset);
 	}
 
@@ -157,6 +177,10 @@ namespace ms
 		if (Error error = GraphicsGL::get().init())
 			return error;
 
+		// The debug windows need no window of their own; their backends are bound to
+		// the one the game draws in (initwindow)
+		debugui::init();
+
 		return initwindow();
 	}
 
@@ -186,6 +210,8 @@ namespace ms
 		glLoadIdentity();
 
 		glfwSetInputMode(glwnd, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+		cursorcaptured = false;
 
 		double xpos, ypos;
 
@@ -218,6 +244,10 @@ namespace ms
 
 		GraphicsGL::get().reinit();
 
+		// The window is created again when the screen mode changes, and the debug
+		// backends were bound to the one this replaces
+		debugui::attach(glwnd);
+
 		return Error::Code::NONE;
 	}
 
@@ -229,6 +259,18 @@ namespace ms
 	void Window::update()
 	{
 		updateopc();
+
+		// The game draws its own cursor and keeps the system one hidden; while a
+		// debug window is used the system one has to be shown, or there would be
+		// two of them
+		bool captured = debugui::captures_mouse();
+
+		if (captured != cursorcaptured)
+		{
+			glfwSetInputMode(glwnd, GLFW_CURSOR, captured ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+
+			cursorcaptured = captured;
+		}
 	}
 
 	void Window::updateopc()
@@ -285,6 +327,11 @@ namespace ms
 	void Window::end() const
 	{
 		GraphicsGL::get().flush(opacity);
+
+		// The debug windows are drawn over the game, so they come after its flush
+		// and before the buffers are swapped
+		debugui::draw();
+
 		glfwSwapBuffers(glwnd);
 	}
 

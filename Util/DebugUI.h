@@ -12,58 +12,36 @@
 //	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
 //	GNU Affero General Public License for more details.							//
 //																				//
-//	You should have received a copy of the GNU Affero General Public License	//
+//	You should have received a copy of the GNU Affero General Public License		//
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
 //////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "../Error.h"
-
-#include "../Template/Singleton.h"
-
-#define GLEW_STATIC
-#include <glew.h>
-#include <glfw3.h>
-
-#include <functional>
-#include <string>
+struct GLFWwindow;
 
 namespace ms
 {
-	class Window : public Singleton<Window>
+	// The debug windows the client draws with Dear ImGui, and what the game asks
+	// about them: input a window of them takes must not reach the game.
+	namespace debugui
 	{
-	public:
-		Window();
-		~Window();
+		// Create the ImGui context and load the font it prints with; no window is
+		// needed for it
+		void init();
+		// Bind the ImGui backends to the window the game draws in. The window is
+		// destroyed and created again whenever the screen mode changes, so this runs
+		// again for every window.
+		void attach(GLFWwindow* window);
+		// Build the windows of this frame and draw them; runs after the game has
+		// drawn and before the buffers are swapped
+		void draw();
 
-		Error init();
-		Error initwindow();
+		// Whether a debug window takes the mouse or the keyboard this frame
+		bool captures_mouse();
+		bool captures_keyboard();
 
-		bool not_closed() const;
-		void update();
-		void begin() const;
-		void end() const;
-		void fadeout(float step, std::function<void()> fadeprocedure);
-		void check_events();
-
-		void setclipboard(const std::string& text) const;
-		std::string getclipboard() const;
-
-		void toggle_fullscreen();
-
-	private:
-		void updateopc();
-
-		GLFWwindow* glwnd;
-		GLFWwindow* context;
-		// Whether the system cursor is shown for a debug window; the game hides it
-		// and draws its own
-		bool cursorcaptured;
-		bool fullscreen;
-		float opacity;
-		float opcstep;
-		std::function<void()> fadeprocedure;
-		int16_t width;
-		int16_t height;
-	};
+		// Show or hide the log window; the console command 'log' uses this
+		void set_log_visible(bool visible);
+		void toggle_log();
+	}
 }

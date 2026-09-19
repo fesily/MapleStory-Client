@@ -64,6 +64,19 @@ Edit **MapleStory.h** to toggle build-time features:
 
 Default settings are defined in **Configuration.h**. A **Settings** file is generated after a game session with the same options. Editing either file works the same way, but **Settings** will not persist if deleted.
 
+### Log window
+
+The client draws a log window over the game (Dear ImGui, vendored in `includes/imgui`). Every line the `LOG` macro produces goes to the console, to that window and to a rotating file, so a session can be watched while it runs and read after it ended. A window dragged out of the game window becomes a window of its own, which is what lets it stay in sight next to a full screen client. A release build compiles the `LOG` macro out, so the window stays empty there.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LogLines` | `5000` | How many lines are kept in memory at most |
+| `LogSeconds` | `900` | How long a line is kept in memory, in seconds |
+| `LogFile` | `true` | Whether the log is written to a rotating file as well |
+| `LogFileMB` | `8` | Size at which the log file rolls over, in megabytes |
+
+The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. The debug console shows and hides the window with `log [on|off|clear]`, which also drops the lines kept in memory.
+
 ---
 
 ## Required Files
@@ -80,7 +93,7 @@ Default settings are defined in **Configuration.h**. A **Settings** file is gene
 |----------|---------|
 | NX | [NoLifeNx] |
 | WZ | TBA |
-| Graphics | [GLFW3], [GLEW], [FreeType] |
+| Graphics | [GLFW3], [GLEW], [FreeType], [Dear ImGui] |
 | Audio | [Bass] |
 | Networking | [Asio] *(optional)* |
 
@@ -129,6 +142,7 @@ All donations go directly toward the development of this project. Please also re
 [GLEW]:              http://glew.sourceforge.net/
 [FreeType]:          http://www.freetype.org/
 [Bass]:              http://www.un4seen.com/
+[Dear ImGui]:        https://github.com/ocornut/imgui
 [Asio]:              http://think-async.com/
 [commit]:            https://github.com/ryantpayton/MapleStory-Client/commit/e3e97c23fc6a92b87356fc2484c7f8b12d71bf19
 [archive]:           https://1drv.ms/u/s!Al6eadQnem68on8i7qG62UBsFXpV?e=sumYue

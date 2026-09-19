@@ -12,58 +12,24 @@
 //	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
 //	GNU Affero General Public License for more details.							//
 //																				//
-//	You should have received a copy of the GNU Affero General Public License	//
+//	You should have received a copy of the GNU Affero General Public License		//
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
 //////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "../Error.h"
-
-#include "../Template/Singleton.h"
-
-#define GLEW_STATIC
-#include <glew.h>
-#include <glfw3.h>
-
-#include <functional>
-#include <string>
-
 namespace ms
 {
-	class Window : public Singleton<Window>
+	// The debug window that shows what the log sink (Util/Log.h) keeps: the lines of
+	// the levels that are switched on, narrowed down by a text, followed to the
+	// bottom while that is wanted. It is drawn with ImGui, so it can be dragged out
+	// of the game window into one of its own.
+	namespace log_window
 	{
-	public:
-		Window();
-		~Window();
+		// Whether the window is shown; the console command 'log' switches it
+		void set_visible(bool visible);
+		bool visible();
 
-		Error init();
-		Error initwindow();
-
-		bool not_closed() const;
-		void update();
-		void begin() const;
-		void end() const;
-		void fadeout(float step, std::function<void()> fadeprocedure);
-		void check_events();
-
-		void setclipboard(const std::string& text) const;
-		std::string getclipboard() const;
-
-		void toggle_fullscreen();
-
-	private:
-		void updateopc();
-
-		GLFWwindow* glwnd;
-		GLFWwindow* context;
-		// Whether the system cursor is shown for a debug window; the game hides it
-		// and draws its own
-		bool cursorcaptured;
-		bool fullscreen;
-		float opacity;
-		float opcstep;
-		std::function<void()> fadeprocedure;
-		int16_t width;
-		int16_t height;
-	};
+		// Draw the window of the current ImGui frame
+		void draw();
+	}
 }

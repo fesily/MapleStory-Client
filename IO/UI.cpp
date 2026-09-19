@@ -17,6 +17,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "UI.h"
 
+#include "../Util/DebugUI.h"
+
 #include "UIStateCashShop.h"
 #include "UIStateGame.h"
 #include "UIStateLogin.h"
@@ -56,7 +58,10 @@ namespace ms
 
 		scrollingnotice.draw(alpha);
 
-		cursor.draw(alpha);
+		// The game draws the cursor itself; a debug window draws its own (and the
+		// system one is shown for it), so it is left out while one of them is used
+		if (!debugui::captures_mouse())
+			cursor.draw(alpha);
 	}
 
 	void UI::update()

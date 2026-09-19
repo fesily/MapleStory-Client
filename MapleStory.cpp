@@ -26,7 +26,9 @@
 #include "Net/Packets/NpcInteractionPackets.h"
 #include "Net/Session.h"
 #include "Util/DebugConsole.h"
+#include "Util/DebugUI.h"
 #include "Util/HardwareInfo.h"
+#include "Util/Log.h"
 #include "Util/Misc.h"
 
 #include <cstdlib>
@@ -228,11 +230,38 @@ namespace ms
 			UI::get().quit();
 		}
 
+		void command_log(const std::string& args)
+		{
+			if (args == "clear")
+			{
+				log::clear();
+
+				std::cout << "log: the lines kept in memory are dropped" << std::endl;
+			}
+			else if (args == "off")
+			{
+				debugui::set_log_visible(false);
+
+				std::cout << "log: window hidden, 'log on' shows it again" << std::endl;
+			}
+			else if (args == "on" || args.empty())
+			{
+				debugui::set_log_visible(true);
+
+				std::cout << "log: window shown" << std::endl;
+			}
+			else
+			{
+				std::cout << "Usage: log [on|off|clear]" << std::endl;
+			}
+		}
+
 		void register_commands()
 		{
 			debug_console::add({
 				{ "center", "", "open the server's center UI (NPC 9900001)", command_center },
 				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
+				{ "log", "[on|off|clear]", "show or hide the log window, or clear the lines it keeps", command_log },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
 				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
 				{ "quit", "", "close the client", command_quit },

@@ -98,6 +98,10 @@ namespace ms
 		settings.emplace<MiniMapSimpleMode>();
 		settings.emplace<MiniMapDefaultHelpers>();
 		settings.emplace<TraceMissing>();
+		settings.emplace<LogSeconds>();
+		settings.emplace<LogLines>();
+		settings.emplace<LogFile>();
+		settings.emplace<LogFileMB>();
 
 		load();
 	}
