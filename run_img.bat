@@ -23,7 +23,7 @@ rem The first parameter wins over the default data folder. For the other
 rem settings, a name already set as MAPLESTORY_* in the environment wins over
 rem the short name, exactly like the environment wins over the settings file.
 if not "%~1"=="" set "MAPLESTORY_DATAPATH=%~1"
-if not defined MAPLESTORY_DATAPATH set "MAPLESTORY_DATAPATH=C:\Users\fesil\Downloads\BeiDou-ClientV17\BeiDou-Client\data"
+if not defined MAPLESTORY_DATAPATH set "MAPLESTORY_DATAPATH=%REPO%data"
 
 if not defined MAPLESTORY_WIDTH if defined WIDTH set "MAPLESTORY_WIDTH=%WIDTH%"
 if not defined MAPLESTORY_WIDTH set "MAPLESTORY_WIDTH=1366"
