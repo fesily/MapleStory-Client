@@ -313,6 +313,42 @@ namespace ms
 		}
 	}
 
+	bool UISoftKey::set_field(const std::string& name, const std::string& value)
+	{
+		if (name != "pic")
+			return false;
+
+		// The rules the 'ok' button checks, so that a code it would refuse is refused
+		// here, where a caller can see it, instead of leaving the screen up
+		if (value.size() < MIN_TEXT_LEN || value.size() > MAX_TEXT_LEN || repeats(value))
+			return false;
+
+		textfield.change_text(value);
+
+		return true;
+	}
+
+	bool UISoftKey::trigger(const std::string& action)
+	{
+		if (action == "ok")
+			return press_button(Buttons::BtOK);
+
+		if (action == "cancel")
+			return press_button(Buttons::BtCancel);
+
+		return false;
+	}
+
+	void UISoftKey::describe(std::vector<Offer>& out) const
+	{
+		out.emplace_back(Offer{ Offer::Kind::FIELD, "pic",
+			std::to_string(MIN_TEXT_LEN) + " to " + std::to_string(MAX_TEXT_LEN) + " characters" });
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "ok", std::string() });
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "cancel", std::string() });
+
+		UIElement::describe(out);
+	}
+
 	void UISoftKey::deactivate()
 	{
 		UI::get().remove(UIElement::Type::SOFTKEYBOARD);
@@ -562,39 +598,26 @@ namespace ms
 		return "Blank";
 	}
 
-	bool UISoftKey::check_pic()
+	bool UISoftKey::repeats(const std::string& pic)
 	{
-		const char* pStr = textfield.get_text().c_str();
+		int32_t count = 0;
+		char previous = ' ';
 
-		if (pStr == NULL)
-			return false;
-
-		int count = 0;
-		char m = ' ';
-		bool reptitive = false;
-
-		while (*pStr)
+		for (char c : pic)
 		{
-			if (*pStr == m)
-			{
-				count++;
-			}
-			else
-			{
-				count = 0;
-				m = *pStr;
-			}
+			count = c == previous ? count + 1 : 0;
+			previous = c;
 
 			if (count > 2)
-			{
-				reptitive = true;
-				break;
-			}
-
-			pStr++;
+				return true;
 		}
 
-		if (reptitive)
+		return false;
+	}
+
+	bool UISoftKey::check_pic()
+	{
+		if (repeats(textfield.get_text()))
 		{
 			clear_tooltip();
 			show_text("Your 2nd password cannot contain three of the same character in a row.", 220, true, 1);

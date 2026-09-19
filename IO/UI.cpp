@@ -85,6 +85,8 @@ namespace ms
 
 	void UI::change_state(State id)
 	{
+		stateid = id;
+
 		switch (id)
 		{
 			case State::LOGIN:
@@ -102,6 +104,16 @@ namespace ms
 	void UI::quit()
 	{
 		quitted = true;
+	}
+
+	UI::State UI::get_state() const
+	{
+		return stateid;
+	}
+
+	UIElement* UI::get_element(UIElement::Type type)
+	{
+		return state->get(type);
 	}
 
 	bool UI::not_quitted() const

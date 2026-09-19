@@ -54,6 +54,22 @@ namespace ms
 		{
 			std::vector<Command> commands;
 
+			// Set while the lines entered answer a prompt instead of naming a command
+			std::function<void(const std::string&)> awaiting;
+
+			// The line without the whitespace around it, which the reader leaves on it
+			std::string trim(const std::string& line)
+			{
+				size_t begin = line.find_first_not_of(WHITESPACE);
+
+				if (begin == std::string::npos)
+					return std::string();
+
+				size_t end = line.find_last_not_of(WHITESPACE);
+
+				return line.substr(begin, end + 1 - begin);
+			}
+
 			// Split a line into the command name and the arguments behind it
 			void split(const std::string& line, std::string& name, std::string& args)
 			{
@@ -109,6 +125,22 @@ namespace ms
 
 			void run(const std::string& line)
 			{
+				// A command which asked for the next lines takes one exactly as it was
+				// typed, so a name which is a command of its own can be entered and an
+				// empty line can repeat what the prompt wants. 'cancel' is the way out.
+				if (awaiting)
+				{
+					std::function<void(const std::string&)> handler = awaiting;
+					awaiting = {};
+
+					if (trim(line) == "cancel")
+						std::cout << "Input cancelled." << std::endl;
+					else
+						handler(trim(line));
+
+					return;
+				}
+
 				std::string name;
 				std::string args;
 
@@ -144,6 +176,21 @@ namespace ms
 		void add(std::initializer_list<Command> list)
 		{
 			commands.insert(commands.end(), list.begin(), list.end());
+		}
+
+		void await_line(std::function<void(const std::string&)> handler)
+		{
+			awaiting = handler;
+		}
+
+		void cancel_await()
+		{
+			awaiting = {};
+		}
+
+		bool is_awaiting()
+		{
+			return awaiting != nullptr;
 		}
 
 		void start()

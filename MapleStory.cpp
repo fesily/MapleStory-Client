@@ -19,6 +19,8 @@
 #include "Gameplay/MapleMap/MapObjects.h"
 #include "Gameplay/MapleMap/Npc.h"
 #include "IO/UI.h"
+#include "IO/LoginScript.h"
+#include "IO/UiScript.h"
 #include "IO/UITypes/UINpcTalk.h"
 #include "IO/Window.h"
 #include "Net/Packets/GameplayPackets.h"
@@ -267,6 +269,9 @@ namespace ms
 				{ "quit", "", "close the client", command_quit },
 				{ "talk", "<npcid|oid>", "ask the server for that NPC's dialog", command_talk },
 			});
+
+			login_script::register_commands();
+			ui_script::register_commands();
 		}
 	}
 
@@ -343,6 +348,7 @@ namespace ms
 		while (running())
 		{
 			debug_console::poll();
+			login_script::tick();
 
 			int64_t elapsed = Timer::get().stop();
 

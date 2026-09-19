@@ -49,6 +49,12 @@ namespace ms
 
 		void deactivate();
 
+		// 'pic' types the code into the box, which is checked the way the keys check
+		// it; 'ok' and 'cancel' press those two buttons
+		bool set_field(const std::string& name, const std::string& value) override;
+		bool trigger(const std::string& action) override;
+		void describe(std::vector<Offer>& out) const override;
+
 		Cursor::State send_cursor(bool clicked, Point<int16_t> cursorpos) override;
 		void send_key(int32_t keycode, bool pressed, bool escape) override;
 
@@ -67,6 +73,9 @@ namespace ms
 		std::string get_key_map_index(std::string key);
 		std::string get_key_from_index(uint16_t index);
 		bool check_pic();
+		// Whether the code holds three of the same character in a row, which is what
+		// check_pic refuses
+		static bool repeats(const std::string& pic);
 
 		enum Buttons : uint16_t
 		{

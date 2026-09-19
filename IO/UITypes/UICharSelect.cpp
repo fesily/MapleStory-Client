@@ -34,6 +34,8 @@
 
 #include "../../Net/Packets/SelectCharPackets.h"
 
+#include <cstdlib>
+
 #define NOMINMAX
 #include <windows.h>
 
@@ -625,6 +627,120 @@ namespace ms
 				return;
 			}
 		}
+	}
+
+	bool UICharSelect::set_field(const std::string& name, const std::string& value)
+	{
+		if (name != "character")
+			return false;
+
+		uint8_t slot = 0;
+
+		if (!find_character(value, slot))
+			return false;
+
+		// The slot buttons only cover the page they are on, so the page has to be
+		// turned first, the way the page buttons turn it
+		uint8_t page = slot / PAGESIZE;
+
+		if (page != selected_page)
+		{
+			selected_page = page;
+
+			update_buttons();
+		}
+
+		press_button(Buttons::CHARACTER_SLOT0 + slot % PAGESIZE);
+
+		return true;
+	}
+
+	bool UICharSelect::trigger(const std::string& action)
+	{
+		if (action != "select")
+			return false;
+
+		return press_button(Buttons::BtSelect);
+	}
+
+	void UICharSelect::describe(std::vector<Offer>& out) const
+	{
+		for (size_t i = 0; i < characters.size(); i++)
+		{
+			const StatsEntry& stats = characters[i].stats;
+
+			out.emplace_back(Offer{ Offer::Kind::FIELD, "character",
+				std::to_string(i) + ": " + stats.name
+				+ " (level " + std::to_string(stats.stats[MapleStat::Id::LEVEL])
+				+ ", job " + std::to_string(stats.stats[MapleStat::Id::JOB])
+				+ ", map " + std::to_string(stats.mapid)
+				+ ", id " + std::to_string(characters[i].id) + ")" });
+		}
+
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "select", std::string() });
+
+		UIElement::describe(out);
+	}
+
+	bool UICharSelect::find_character(const std::string& text, uint8_t& slot) const
+	{
+		if (text.empty())
+			return false;
+
+		// '#<id>' names the character the way the server does
+		if (text[0] == '#')
+		{
+			int32_t id = std::atoi(text.c_str() + 1);
+
+			for (size_t i = 0; i < characters.size(); i++)
+			{
+				if (characters[i].id != id)
+					continue;
+
+				slot = static_cast<uint8_t>(i);
+
+				return true;
+			}
+
+			return false;
+		}
+
+		// A number is the slot unless no slot of that number exists, because a name of
+		// digits is common enough to be worth the second look
+		bool number = true;
+
+		for (char c : text)
+		{
+			if (c < '0' || c > '9')
+			{
+				number = false;
+				break;
+			}
+		}
+
+		if (number)
+		{
+			int32_t index = std::atoi(text.c_str());
+
+			if (index >= 0 && index < static_cast<int32_t>(characters.size()))
+			{
+				slot = static_cast<uint8_t>(index);
+
+				return true;
+			}
+		}
+
+		for (size_t i = 0; i < characters.size(); i++)
+		{
+			if (characters[i].stats.name != text)
+				continue;
+
+			slot = static_cast<uint8_t>(i);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	const CharEntry& UICharSelect::get_character(int32_t id)

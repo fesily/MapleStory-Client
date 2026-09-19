@@ -29,7 +29,7 @@
 
 namespace ms
 {
-	UILoginNotice::UILoginNotice(uint16_t message, std::function<void()> okhandler, std::function<void()> cancelhandler) : okhandler(okhandler), cancelhandler(cancelhandler)
+	UILoginNotice::UILoginNotice(uint16_t message, std::function<void()> okhandler, std::function<void()> cancelhandler) : message(message), okhandler(okhandler), cancelhandler(cancelhandler)
 	{
 		multiple = false;
 
@@ -95,6 +95,34 @@ namespace ms
 	UIElement::Type UILoginNotice::get_type() const
 	{
 		return TYPE;
+	}
+
+	uint16_t UILoginNotice::get_message() const
+	{
+		return message;
+	}
+
+	bool UILoginNotice::trigger(const std::string& action)
+	{
+		if (action == "yes")
+			return press_button(Buttons::YES);
+
+		// The second button only exists on the notices which ask a question; without
+		// it the answer would run the cancel handler all the same
+		if (action == "no")
+			return multiple && press_button(Buttons::NO);
+
+		return false;
+	}
+
+	void UILoginNotice::describe(std::vector<Offer>& out) const
+	{
+		out.emplace_back(Offer{ Offer::Kind::ACTION, "yes", std::string() });
+
+		if (multiple)
+			out.emplace_back(Offer{ Offer::Kind::ACTION, "no", std::string() });
+
+		UIElement::describe(out);
 	}
 
 	Button::State UILoginNotice::button_pressed(uint16_t buttonid)

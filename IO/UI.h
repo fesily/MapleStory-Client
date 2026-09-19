@@ -43,6 +43,9 @@ namespace ms
 		void enable();
 		void disable();
 		void change_state(State state);
+		// The state the client is in, so that a command can tell the login screens
+		// from the game
+		State get_state() const;
 
 		void quit();
 		bool not_quitted() const;
@@ -96,10 +99,16 @@ namespace ms
 			return static_cast<T*>(element);
 		}
 
+		// The element of that type without the cast get_element<T> makes. A type more
+		// than one class uses, like LOGINNOTICE, needs the caller to decide which one
+		// it got; dynamic_cast answers that without reading the wrong object.
+		UIElement* get_element(UIElement::Type type);
+
 		void remove(UIElement::Type type);
 
 	private:
 		std::unique_ptr<UIState> state;
+		State stateid = State::LOGIN;
 		Keyboard keyboard;
 		Cursor cursor;
 		ScrollingNotice scrollingnotice;
