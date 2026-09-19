@@ -58,6 +58,9 @@ namespace ms
 	// Opcode: GIVE_BUFF(32)
 	class ApplyBuffHandler : public BuffHandler
 	{
+	public:
+		void handle(InPacket& recv) const override;
+
 	protected:
 		void handle_buff(InPacket& recv, Buffstat::Id stat) const override;
 	};

@@ -1,4 +1,4 @@
-﻿//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 //	This file is part of the continued Journey MMORPG client					//
 //	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
 //																				//
@@ -32,6 +32,34 @@ namespace ms
 {
 	namespace NxFiles
 	{
+#ifdef USE_NX_V83
+		// Number of needed files
+		// A pre-split client (v83) has one *.wz per category, so this is the full set such a
+		// client converts to. The split files the 28-file set adds are optional under
+		// USE_NX_V83: init() aliases the roots they would fill to the single package.
+		constexpr uint8_t NUM_FILES = 16;
+
+		// Names of the needed game files
+		constexpr std::array<const char*, NUM_FILES> filenames =
+		{
+			"Base.nx",
+			"Character.nx",
+			"Effect.nx",
+			"Etc.nx",
+			"Item.nx",
+			"Map.nx",
+			"Mob.nx",
+			"Morph.nx",
+			"Npc.nx",
+			"Quest.nx",
+			"Reactor.nx",
+			"Skill.nx",
+			"Sound.nx",
+			"String.nx",
+			"TamingMob.nx",
+			"UI.nx"
+		};
+#else
 		// Number of needed files
 		constexpr uint8_t NUM_FILES = 28;
 
@@ -67,6 +95,7 @@ namespace ms
 			"TamingMob.nx",
 			"UI.nx"
 		};
+#endif // USE_NX_V83
 
 		// Initialize NX
 		// When successful test if the UI file is the correct version

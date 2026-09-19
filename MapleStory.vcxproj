@@ -368,6 +368,15 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="Net\InPacket.cpp" />
     <ClCompile Include="Net\OutPacket.cpp" />
     <ClCompile Include="Net\PacketSwitch.cpp" />
+    <ClCompile Include="Net\UnsupportedPackets.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets1.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets2.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets3.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets4.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets5.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets6.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets7.cpp" />
+    <ClCompile Include="Net\Handlers\Unsupported\UnsupportedPackets8.cpp" />
     <ClCompile Include="Net\Session.cpp" />
     <ClCompile Include="Net\SocketAsio.cpp" />
     <ClCompile Include="Net\SocketWinsock.cpp" />
@@ -589,6 +598,8 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="Net\PacketError.h" />
     <ClInclude Include="Net\PacketHandler.h" />
     <ClInclude Include="Net\PacketSwitch.h" />
+    <ClInclude Include="Net\ServerOpcodes.h" />
+    <ClInclude Include="Net\UnsupportedPackets.h" />
     <ClInclude Include="Net\Packets\AttackAndSkillPackets.h" />
     <ClInclude Include="Net\Packets\CharCreationPackets.h" />
     <ClInclude Include="Net\Packets\CommonPackets.h" />

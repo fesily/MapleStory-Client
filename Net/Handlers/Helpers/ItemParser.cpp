@@ -98,8 +98,10 @@ namespace ms
 			{
 				recv.read_byte();
 				itemlevel = recv.read_byte();
-				recv.read_short();
+				// The growth EXP is written as one little-endian int, so the low word
+				// comes first (PacketCreator.java:473-475).
 				itemexp = recv.read_short();
+				recv.read_short();
 				vicious = recv.read_int();
 				recv.read_long();
 			}
@@ -117,16 +119,20 @@ namespace ms
 
 		void parse_item(InPacket& recv, InventoryType::Id invtype, int16_t slot, Inventory& inventory)
 		{
-			// Read type and item id
-			recv.read_byte(); // 'type' byte
+			// Read type and item id. The server derives the body layout from the item
+			// itself and sends the same choice in this byte: 1 = equip, 3 = pet
+			// (petid > -1) and 2 = anything else (PacketCreator.java:393, :412,
+			// Equip.java:135-137, Item.java:116-121). The inventory the item sits in
+			// does not take part in that choice.
+			int8_t type = recv.read_byte();
 			int32_t iid = recv.read_int();
 
-			if (invtype == InventoryType::Id::EQUIP || invtype == InventoryType::Id::EQUIPPED)
+			if (type == 1)
 			{
 				// Parse an equip
 				add_equip(recv, invtype, slot, iid, inventory);
 			}
-			else if (iid >= 5000000 && iid <= 5000102)
+			else if (type == 3)
 			{
 				// Parse a pet
 				add_pet(recv, invtype, slot, iid, inventory);

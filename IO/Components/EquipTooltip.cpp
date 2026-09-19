@@ -17,6 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "EquipTooltip.h"
 
+#include "../../Data/TextResolver.h"
 #include "../../Data/WeaponData.h"
 #include "../../Gameplay/Stage.h"
 
@@ -292,7 +293,7 @@ namespace ms
 
 					if (hasdesc_preview)
 					{
-						desc_preview = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, desctext, 250);
+						desc_preview = FormatText(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, desctext, 250, TextResolver::get(), textformat::Mode::DESCRIPTION);
 						height_preview += desc_preview.height() + 10;
 					}
 
@@ -510,7 +511,7 @@ namespace ms
 
 		if (hasdesc)
 		{
-			desc = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, desctext, 250);
+			desc = FormatText(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, desctext, 250, TextResolver::get(), textformat::Mode::DESCRIPTION);
 			height += desc.height() + 10;
 		}
 

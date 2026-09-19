@@ -98,6 +98,12 @@ namespace ms
 
 		Stage::get().loadplayer(playerentry);
 
+		// This block is parsed only to advance the cursor. The player was built from the cached
+		// character-select entry above, and the map/portal that transition() uses come from that
+		// entry, not from the map id and spawn point the server writes here
+		// (PacketCreator.java:210-211 writes chr.getMapId() and chr.getInitialSpawnPoint()).
+		// The call still has to consume exactly what addCharStats wrote (PacketCreator.java:173-214),
+		// including the Evan SP table branch, or every following section reads the wrong offset.
 		LoginParser::parse_stats(recv);
 
 		Player& player = Stage::get().get_player();

@@ -28,6 +28,28 @@ namespace ms
 		World parse_world(InPacket& recv);
 		CharEntry parse_charentry(InPacket& recv);
 		StatsEntry parse_stats(InPacket& recv);
+		// Job ids of the Evan family, the only jobs whose remaining SP is stored per skill
+		// book. Mirrors Job.java:62-66.
+		enum Jobs : uint16_t
+		{
+			EVAN = 2001,
+			EVAN1 = 2200,
+			EVAN2 = 2210,
+			EVAN3 = 2211,
+			EVAN4 = 2212,
+			EVAN5 = 2213,
+			EVAN6 = 2214,
+			EVAN7 = 2215,
+			EVAN8 = 2216,
+			EVAN9 = 2217,
+			EVAN10 = 2218
+		};
+		// True for the jobs whose remaining SP is stored per skill book instead of in a single
+		// value. Mirrors GameConstants.hasSPTable (GameConstants.java:604-620).
+		bool has_sp_table(uint16_t job);
+		// Reads the per-book SP table written by PacketCreator.addRemainingSkillInfo
+		// (PacketCreator.java:155-171) and returns the SP summed over all its books.
+		uint16_t parse_remaining_skill_info(InPacket& recv);
 		LookEntry parse_look(InPacket& recv);
 		void parse_login(InPacket& recv);
 	}

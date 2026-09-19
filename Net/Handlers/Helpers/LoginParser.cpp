@@ -122,7 +122,8 @@ namespace ms
 		for (size_t i = 0; i < 3; i++)
 			statsentry.petids.push_back(recv.read_long());
 
-		statsentry.stats[MapleStat::Id::LEVEL] = recv.read_short();
+		// The level is a single byte here; reading a short eats the job's low byte
+		statsentry.stats[MapleStat::Id::LEVEL] = recv.read_byte();
 		statsentry.stats[MapleStat::Id::JOB] = recv.read_short();
 		statsentry.stats[MapleStat::Id::STR] = recv.read_short();
 		statsentry.stats[MapleStat::Id::DEX] = recv.read_short();
@@ -133,7 +134,18 @@ namespace ms
 		statsentry.stats[MapleStat::Id::MP] = recv.read_short();
 		statsentry.stats[MapleStat::Id::MAXMP] = recv.read_short();
 		statsentry.stats[MapleStat::Id::AP] = recv.read_short();
-		statsentry.stats[MapleStat::Id::SP] = recv.read_short();
+
+		// The server writes a variable-length per-book SP table instead of a short when the
+		// job stores its SP per skill book: addCharStats (PacketCreator.java:202-205)
+		//		if (GameConstants.hasSPTable(chr.getJob())) {
+		//			addRemainingSkillInfo(p, chr);
+		//		} else {
+		//			p.writeShort(chr.getRemainingSp()); // remaining sp
+		//		}
+		if (has_sp_table(statsentry.stats[MapleStat::Id::JOB]))
+			statsentry.stats[MapleStat::Id::SP] = parse_remaining_skill_info(recv);
+		else
+			statsentry.stats[MapleStat::Id::SP] = recv.read_short();
 		statsentry.exp = recv.read_int();
 		statsentry.stats[MapleStat::Id::FAME] = recv.read_short();
 
@@ -145,6 +157,56 @@ namespace ms
 		recv.skip(4); // timestamp
 
 		return statsentry;
+	}
+
+	bool LoginParser::has_sp_table(uint16_t job)
+	{
+		// GameConstants.hasSPTable (GameConstants.java:604-620) returns true for EVAN and
+		// EVAN1..EVAN10.
+		switch (job)
+		{
+		case LoginParser::EVAN:
+		case LoginParser::EVAN1:
+		case LoginParser::EVAN2:
+		case LoginParser::EVAN3:
+		case LoginParser::EVAN4:
+		case LoginParser::EVAN5:
+		case LoginParser::EVAN6:
+		case LoginParser::EVAN7:
+		case LoginParser::EVAN8:
+		case LoginParser::EVAN9:
+		case LoginParser::EVAN10:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	uint16_t LoginParser::parse_remaining_skill_info(InPacket& recv)
+	{
+		// addRemainingSkillInfo (PacketCreator.java:155-171) writes
+		//		p.writeByte(effectiveLength);
+		//		for (int i = 0; i < remainingSp.length; i++) {
+		//			if (remainingSp[i] > 0) {
+		//				p.writeByte(i + 1);
+		//				p.writeByte(remainingSp[i]);
+		//			}
+		//		}
+		// so the block is 1 + 2 * count bytes, count <= 10 (Character.java:6419 allocates ten
+		// books). A StatsEntry has a single SP slot and the skill window renders a single
+		// counter (UISkillBook::change_sp), so the per-book values are summed: every remaining
+		// point stays visible and spendable instead of being dropped with the books.
+		uint8_t count = static_cast<uint8_t>(recv.read_byte());
+		uint16_t total = 0;
+
+		for (uint8_t i = 0; i < count; i++)
+		{
+			recv.read_byte(); // SP book index (the server writes i + 1)
+			uint16_t book_sp = static_cast<uint8_t>(recv.read_byte()); // SP held by that book
+			total = static_cast<uint16_t>(total + book_sp);
+		}
+
+		return total;
 	}
 
 	LookEntry LoginParser::parse_look(InPacket& recv)
@@ -200,7 +262,10 @@ namespace ms
 		}
 
 		// Read the port address in a string
-		std::string portstr = std::to_string(recv.read_short());
+		// getServerIP writes the port as an unsigned 16-bit little-endian value
+		// (PacketCreator.java:849 `p.writeShort(port);`), so it has to be read back unsigned:
+		// a port above 32767 would otherwise turn negative and break the address string.
+		std::string portstr = std::to_string(static_cast<uint16_t>(recv.read_short()));
 
 		// Attempt to reconnect to the server
 		Session::get().reconnect(addrstr.c_str(), portstr.c_str());

@@ -21,6 +21,28 @@
 
 namespace ms
 {
+	// Mirrors Skill.isFourthJob (Skill.java:40 assign `this.job = id / 10000;` and :55-63), the
+	// gate for the masterLevel int in addSkillInfo (PacketCreator.java:547-548):
+	//		if (job == 2212) {
+	//			return false;
+	//		}
+	//		if (id == 22170001 || id == 22171003 || id == 22171004 || id == 22181002 || id == 22181003) {
+	//			return true;
+	//		}
+	//		return job % 10 == 2;
+	static bool is_fourth_job_skill(int32_t skill_id)
+	{
+		int32_t job = skill_id / 10000;
+
+		if (job == 2212)
+			return false;
+
+		if (skill_id == 22170001 || skill_id == 22171003 || skill_id == 22171004 || skill_id == 22181002 || skill_id == 22181003)
+			return true;
+
+		return job % 10 == 2;
+	}
+
 	void CharacterParser::parse_inventory(InPacket& recv, Inventory& invent)
 	{
 		invent.set_meso(recv.read_int());
@@ -74,8 +96,7 @@ namespace ms
 			int32_t skill_id = recv.read_int();
 			int32_t level = recv.read_int();
 			int64_t expiration = recv.read_long();
-			bool fourthtjob = ((skill_id % 100000) / 10000 == 2);
-			int32_t masterlevel = fourthtjob ? recv.read_int() : 0;
+			int32_t masterlevel = is_fourth_job_skill(skill_id) ? recv.read_int() : 0;
 			skills.set_skill(skill_id, level, masterlevel, expiration);
 		}
 	}
@@ -96,6 +117,11 @@ namespace ms
 	{
 		int16_t size = recv.read_short();
 
+		// The server inflates this list: addQuestInfo (PacketCreator.java:354-372) appends an
+		// extra entry for every started quest with an info number, carrying the info quest's own
+		// id and progress data. Because the extra entry never repeats an id, the is_started
+		// branch below cannot attach it to a parent and the fragment is stored as a standalone
+		// started quest. Both forms are a short plus a string, so the cursor stays in sync.
 		for (int16_t i = 0; i < size; i++)
 		{
 			int16_t qid = recv.read_short();

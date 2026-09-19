@@ -23,6 +23,7 @@
 // same categories from the loose .img folder; nothing calls into NxFiles then,
 // and nl::file (NoLifeNx) is not linked.
 #ifndef USE_IMG
+#include <cstddef>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -179,10 +180,55 @@ namespace ms
 				return Error(Error::Code::NLNX, message.c_str());
 			}
 
+#ifdef USE_NX_V83
+			// The split files are optional when the data comes from a pre-split client: point
+			// every split root that stayed empty at the single package holding the same data,
+			// since readers across the client address those roots by name (Map001 for Back/,
+			// Map002 for Map/ and Effect.img, Sound002 for music, ...).
+			std::pair<nl::node*, nl::node*> split_aliases[] =
+			{
+				{ &nl::nx::Map001, &nl::nx::Map },
+				{ &nl::nx::Map002, &nl::nx::Map },
+				{ &nl::nx::Map2, &nl::nx::Map },
+				{ &nl::nx::Mob001, &nl::nx::Mob },
+				{ &nl::nx::Mob002, &nl::nx::Mob },
+				{ &nl::nx::Mob2, &nl::nx::Mob },
+				{ &nl::nx::Skill001, &nl::nx::Skill },
+				{ &nl::nx::Skill002, &nl::nx::Skill },
+				{ &nl::nx::Skill003, &nl::nx::Skill },
+				{ &nl::nx::Sound001, &nl::nx::Sound },
+				{ &nl::nx::Sound002, &nl::nx::Sound },
+				{ &nl::nx::Sound2, &nl::nx::Sound }
+			};
+
+			std::size_t aliased = 0;
+
+			for (auto& alias : split_aliases)
+			{
+				if (*alias.first || !*alias.second)
+					continue;
+
+				*alias.first = *alias.second;
+				aliased++;
+			}
+
+			if (aliased > 0)
+				LOG(LOG_WARN, "[NxFiles] Single-package nx set: aliased " << aliased << " split root(s) to their package.");
+#endif
+
 			constexpr const char* POSTCHAOS_BITMAP = "Login.img/WorldSelect/BtChannel/layer:bg";
 
 			if (nl::nx::UI.resolve(POSTCHAOS_BITMAP).data_type() != nl::node::type::bitmap)
+			{
+#ifdef USE_NX_V83
+				// Expected when the UI file comes from a pre-split client: the post-Chaos
+				// screens (login, world select) need a v154+ UI.nx, but the game data of the
+				// version 83 set is still worth running on, so report instead of refusing.
+				LOG(LOG_WARN, "[NxFiles] UI.nx is not the post-Chaos (v154+) file: '" << POSTCHAOS_BITMAP << "' is not a bitmap.");
+#else
 				return Error::Code::WRONG_UI_FILE;
+#endif
+			}
 
 			return Error::Code::NONE;
 		}

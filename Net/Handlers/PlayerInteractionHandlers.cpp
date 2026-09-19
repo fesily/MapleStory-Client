@@ -21,12 +21,20 @@
 
 #include "../../IO/UITypes/UICharInfo.h"
 
+#include "../../MapleStory.h"
+
+#include <iostream>
+
 namespace ms
 {
 	void CharInfoHandler::handle(InPacket& recv) const
 	{
 		int32_t character_id = recv.read_int();
-		uint16_t character_level = recv.read_short();
+		// The server writes the level as a single byte; reading a short here eats the
+		// low byte of the job short and shifts every following field by one byte
+		// (PacketCreator.charInfo, PacketCreator.java:2714). The byte is unsigned: a
+		// level above 127 would come out negative otherwise.
+		uint16_t character_level = static_cast<uint8_t>(recv.read_byte());
 		int16_t character_job_id = recv.read_short();
 		int16_t character_fame = recv.read_short();
 		recv.skip_byte(); // character_marriage_ring
@@ -83,5 +91,10 @@ namespace ms
 		// Update the character information window
 		if (auto charinfo = UI::get().get_element<UICharInfo>())
 			charinfo->update_stats(character_id, character_job_id, character_level, character_fame, guild_name, alliance_name);
+
+		// The reads above cover everything charInfo sends (PacketCreator.java:2761-2790);
+		// anything left means the layout no longer matches the server
+		if (recv.length() > 0)
+			LOG(LOG_NETWORK, "[CharInfoHandler] " << recv.length() << " bytes left unconsumed");
 	}
 }
