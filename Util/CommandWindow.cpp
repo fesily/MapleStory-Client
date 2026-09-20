@@ -18,6 +18,7 @@
 #include "CommandWindow.h"
 
 #include "DebugConsole.h"
+#include "DebugUI.h"
 
 #include "imgui.h"
 
@@ -421,10 +422,13 @@ namespace ms
 			if (!windowshown)
 				return;
 
-			// The first time it is opened the console keeps a size of its own and is
-			// placed inside the game window like the log window next to it; where it
-			// was dragged to afterwards is what it is opened at
-			ImGui::SetNextWindowSize(ImVec2(600.0f, 220.0f), ImGuiCond_FirstUseEver);
+			// The first time it is opened the console keeps a size of its own, at the
+			// scale the debug windows are drawn at, and is placed inside the game window
+			// like the log window next to it; where it was dragged to afterwards is
+			// what it is opened at
+			float scaling = ms::debugui::scale();
+
+			ImGui::SetNextWindowSize(ImVec2(600.0f * scaling, 220.0f * scaling), ImGuiCond_FirstUseEver);
 
 			bool open = true;
 

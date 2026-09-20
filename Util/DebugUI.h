@@ -44,6 +44,10 @@ namespace ms
 		bool captures_mouse();
 		bool captures_keyboard();
 
+		// How much the debug windows are scaled: the scale of the desktop the game
+		// window is on, times the DebugUIScale setting
+		float scale();
+
 		// Show or hide the log window; the console command 'log' uses this
 		void set_log_visible(bool visible);
 		void toggle_log();

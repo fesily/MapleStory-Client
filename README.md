@@ -79,6 +79,9 @@ Either window dragged out of the game window becomes a window of its own, which 
 | `LogSeconds` | `900` | How long the log keeps a line in memory, in seconds |
 | `LogFile` | `true` | Whether the log is written to a rotating file as well |
 | `LogFileMB` | `8` | Size at which the log file rolls over, in megabytes |
+| `DebugUIScale` | `100` | How much the two windows are scaled, in percent, on top of the scale the desktop reports |
+
+The windows follow the scale the desktop reports for the monitor the game window is on (GLFW's content scale, so Windows per monitor DPI and the X11 scale on Linux behave the same), and ImGui re-rasterizes the font when a window is dragged to a monitor with another scale. `DebugUIScale` is for the displays which report no scale at all: `MAPLESTORY_DEBUGUISCALE=150` makes the windows half again as large there.
 
 The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. `log [on|off|clear]` shows, hides and clears the log window, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
 

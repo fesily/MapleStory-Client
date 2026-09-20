@@ -43,6 +43,12 @@ namespace
 	// Set while the window the ImGui state was built for is gone: the next attach
 	// builds the state again, because the backends cannot be moved to another window
 	bool contextstale = false;
+	// Set while the sizes of the style are laid out at the scale of a monitor
+	bool stylescaled = false;
+	// The scale the debug windows are drawn at: the one the desktop reports and the
+	// one the settings ask for
+	float desktopscale = 1.0f;
+	float userscale = 1.0f;
 
 	// Take the backends down; the window they are bound to has to be alive for it
 	void unbind()
@@ -98,6 +104,13 @@ namespace ms
 				io.IniFilename = "debugui.ini";
 				io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 
+				// The debug windows follow the scale the desktop runs at, like the rest
+				// of the windows on it: ImGui keeps the font at the scale of the monitor
+				// a window is on (and re-rasterizes it there), and sizes the platform
+				// windows of the ones which were dragged out of the game window at it
+				io.ConfigDpiScaleFonts = true;
+				io.ConfigDpiScaleViewports = true;
+
 				const std::string font = Setting<FontPathCJKNormal>::get().load();
 
 				if (!font.empty() && font_available(font))
@@ -109,6 +122,9 @@ namespace ms
 
 				style.WindowRounding = 0.0f;
 				style.Colors[ImGuiCol_WindowBg].w = 0.94f;
+
+				// The style of a fresh context holds the sizes the scale is laid over
+				stylescaled = false;
 			}
 		}
 
@@ -145,6 +161,41 @@ namespace ms
 			ImGui_ImplGlfw_InitForOpenGL(window, true);
 			ImGui_ImplGlfw_SetCallbacksChainForAllWindows(false);
 			ImGui_ImplOpenGL2_Init();
+
+			// The font is kept at the scale of the monitor the window is on by ImGui;
+			// the sizes and the padding of the widgets are laid out at that scale times
+			// what the settings ask for, once per style
+			if (!stylescaled)
+			{
+				float xscale = 1.0f;
+				float yscale = 1.0f;
+
+				glfwGetWindowContentScale(window, &xscale, &yscale);
+
+				if (xscale > 0.0f)
+				{
+					uint16_t percent = Setting<DebugUIScale>::get().load();
+					float asked = percent > 0 ? static_cast<float>(percent) / 100.0f : 1.0f;
+
+					ImGuiStyle& style = ImGui::GetStyle();
+
+					style.ScaleAllSizes(xscale * asked);
+
+					// The part of the scale the setting asks for; the part the desktop
+					// reports is kept by ImGui in FontScaleDpi, which it overwrites from
+					// the monitor of the viewport as soon as one is drawn
+					style.FontScaleMain = asked;
+					style.FontScaleDpi = xscale;
+
+					userscale = asked;
+					desktopscale = xscale;
+
+					stylescaled = true;
+
+					LOG(LOG_INFO, "Debug windows: scale " << (xscale * asked)
+						<< " (desktop " << xscale << ", setting " << percent << "%)");
+				}
+			}
 
 			bound = true;
 		}
@@ -221,6 +272,11 @@ namespace ms
 		void set_console_visible(bool visible)
 		{
 			console_window::set_visible(visible);
+		}
+
+		float scale()
+		{
+			return desktopscale * userscale;
 		}
 	}
 }

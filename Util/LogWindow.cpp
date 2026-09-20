@@ -18,6 +18,7 @@
 #include "LogWindow.h"
 
 #include "../MapleStory.h"
+#include "DebugUI.h"
 #include "Log.h"
 
 #include "imgui.h"
@@ -274,11 +275,12 @@ namespace ms
 			if (!windowshown)
 				return;
 
-			// An unrounded window, and no wrapping: a window dragged out of the game
-			// window leaves a gap at its rounded corners, and the clipper that keeps
-			// a full buffer cheap to draw measures by the height of a row, so every
-			// row has to have the same one. Long lines are scrolled sideways instead.
-			ImGui::SetNextWindowSize(ImVec2(600.0f, 300.0f), ImGuiCond_FirstUseEver);
+			// The first time it is opened the window is sized to hold the same lines at
+			// the scale the debug windows are drawn at; afterwards it is where it was
+			// dragged and resized to
+			float scaling = debugui::scale();
+
+			ImGui::SetNextWindowSize(ImVec2(600.0f * scaling, 300.0f * scaling), ImGuiCond_FirstUseEver);
 
 			bool open = true;
 

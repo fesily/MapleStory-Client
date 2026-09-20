@@ -337,6 +337,14 @@ namespace ms
 		LogFile() : BoolEntry("LogFile", "true") {}
 	};
 
+	// How much the debug windows are scaled on top of the scale the desktop reports,
+	// in percent: 150 makes them half again as large, 100 leaves them the size the
+	// desktop asks for
+	struct DebugUIScale : public Configuration::ShortEntry
+	{
+		DebugUIScale() : ShortEntry("DebugUIScale", "100") {}
+	};
+
 	// Size at which the log file rolls over, in megabytes; the three files the
 	// client keeps hold three times this much
 	struct LogFileMB : public Configuration::IntEntry
