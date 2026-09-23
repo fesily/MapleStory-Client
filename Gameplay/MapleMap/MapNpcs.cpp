@@ -65,6 +65,10 @@ namespace ms
 	{
 		npcs.clear();
 		clicked_last = false;
+
+		// An NPC the server had spawned right before the map changed is not built
+		// into the map that replaced it
+		spawns = {};
 	}
 
 	MapObjects * MapNpcs::get_npcs()

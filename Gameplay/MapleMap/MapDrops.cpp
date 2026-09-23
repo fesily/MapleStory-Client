@@ -104,6 +104,10 @@ namespace ms
 	void MapDrops::clear()
 	{
 		drops.clear();
+
+		// A drop the server had spawned right before the map changed is not built
+		// into the map that replaced it
+		spawns = {};
 	}
 
 	MapDrops::Loot MapDrops::find_loot_at(Point<int16_t> playerpos)

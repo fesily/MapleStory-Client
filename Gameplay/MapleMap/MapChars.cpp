@@ -59,6 +59,10 @@ namespace ms
 	void MapChars::clear()
 	{
 		chars.clear();
+
+		// A character the server had spawned right before the map changed is not
+		// built into the map that replaced it
+		spawns = {};
 	}
 
 	MapObjects * MapChars::get_chars()

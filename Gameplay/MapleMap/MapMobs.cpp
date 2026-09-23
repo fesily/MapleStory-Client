@@ -34,8 +34,14 @@ namespace ms
 		for (; !spawns.empty(); spawns.pop())
 		{
 			const MobSpawn& spawn = spawns.front();
+			Optional<Mob> mob = mobs.get(spawn.get_oid());
 
-			if (Optional<Mob> mob = mobs.get(spawn.get_oid()))
+			// The server sends a mob again whenever it leaves and re-enters the view
+			// of this client, with the two kills that stop it in front of the spawn.
+			// A mob that was left dying cannot be brought back by activating it: the
+			// spawn describes a mob that is alive, so the one on the map is replaced
+			// unless it still is what the packet describes.
+			if (mob && mob->is_alive())
 			{
 				int8_t mode = spawn.get_mode();
 
@@ -46,6 +52,9 @@ namespace ms
 			}
 			else
 			{
+				if (mob)
+					mobs.remove(spawn.get_oid());
+
 				mobs.add(spawn.instantiate());
 			}
 		}
@@ -67,6 +76,10 @@ namespace ms
 	void MapMobs::clear()
 	{
 		mobs.clear();
+
+		// A mob the server had spawned right before the map changed is not built
+		// into the map that replaced it
+		spawns = {};
 	}
 
 	void MapMobs::set_control(int32_t oid, bool control)

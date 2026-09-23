@@ -62,6 +62,10 @@ namespace ms
 	void MapReactors::clear()
 	{
 		reactors.clear();
+
+		// A reactor the server had spawned right before the map changed is not
+		// built into the map that replaced it
+		spawns = {};
 	}
 
 	MapObjects* MapReactors::get_reactors()
