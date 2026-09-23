@@ -46,6 +46,13 @@ namespace ms
 		switch (state)
 		{
 			case State::INACTIVE:
+				// The packets the map being left had already sent are still read
+				// while the new map loads, and a mob among them would be built into
+				// the map that replaced it. The server sends the mobs of the map
+				// being entered again for this client (PlayerMapTransitionHandler,
+				// BeiDou server), so only the mobs of the replaced map are dropped.
+				mobs.clear();
+
 				load_map(mapid);
 				respawn(portalid);
 				break;
