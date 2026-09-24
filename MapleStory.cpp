@@ -134,6 +134,52 @@ namespace ms
 				std::cout << "mobs: no mob on this map" << std::endl;
 		}
 
+		// The state the client holds for the player: the values the UI reads from
+		// CharStats and the arrays its getters index, by the values of MapleStat::Id
+		// (hp/maxhp/mp/maxmp are 9/10/11/12) and EquipStat::Id (maxhp/maxmp are 4/5)
+		void command_player(const std::string&)
+		{
+			Player& player = Stage::get().get_player();
+			const CharStats& stats = player.get_stats();
+
+			std::cout << "oid=" << player.get_oid()
+				<< " name=\"" << stats.get_name() << "\""
+				<< " level=" << stats.get_stat(MapleStat::Id::LEVEL)
+				<< " job=" << stats.get_stat(MapleStat::Id::JOB) << "(" << stats.get_jobname() << ")"
+				<< " exp=" << stats.get_exp()
+				<< " map=" << stats.get_mapid()
+				<< " portal=" << static_cast<int16_t>(stats.get_portal())
+				<< " pos=(" << player.get_position().x() << "," << player.get_position().y() << ")"
+				<< std::endl;
+
+			std::cout << "hp=" << stats.get_stat(MapleStat::Id::HP) << "/" << stats.get_total(EquipStat::Id::HP)
+				<< " mp=" << stats.get_stat(MapleStat::Id::MP) << "/" << stats.get_total(EquipStat::Id::MP)
+				<< " str=" << stats.get_stat(MapleStat::Id::STR)
+				<< " dex=" << stats.get_stat(MapleStat::Id::DEX)
+				<< " int=" << stats.get_stat(MapleStat::Id::INT)
+				<< " luk=" << stats.get_stat(MapleStat::Id::LUK)
+				<< " ap=" << stats.get_stat(MapleStat::Id::AP)
+				<< " sp=" << stats.get_stat(MapleStat::Id::SP)
+				<< " fame=" << stats.get_stat(MapleStat::Id::FAME)
+				<< " honor=" << stats.get_honor()
+				<< " meso=" << player.get_inventory().get_meso()
+				<< std::endl;
+
+			std::cout << "basestats";
+
+			for (size_t i = 0; i < MapleStat::Id::LENGTH; i++)
+				std::cout << " " << i << ":" << stats.get_stat(MapleStat::by_id(i));
+
+			std::cout << std::endl;
+
+			std::cout << "totalstats";
+
+			for (size_t i = 0; i < EquipStat::Id::LENGTH; i++)
+				std::cout << " " << i << ":" << stats.get_total(EquipStat::by_id(i));
+
+			std::cout << std::endl;
+		}
+
 		// The NPC the argument refers to: the object id first, then the nearest of the
 		// NPCs which carry the id as their template id
 		Npc* find_npc(int32_t id)
@@ -348,6 +394,7 @@ namespace ms
 				{ "mobs", "", "list the mobs on this map", command_mobs },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
 				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
+				{ "player", "", "print the state the client holds for the player", command_player },
 				{ "quit", "", "close the client", command_quit },
 				{ "shot", "[file]", "write the frame the client draws to a file (a bitmap)", command_shot },
 				{ "talk", "<npcid|oid>", "ask the server for that NPC's dialog", command_talk },
