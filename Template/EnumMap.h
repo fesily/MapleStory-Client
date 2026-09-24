@@ -18,6 +18,8 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
+#include <iterator>
 #include <stdexcept>
 
 namespace ms
@@ -66,9 +68,17 @@ namespace ms
 		}
 
 		template <typename T>
-		class base_iterator : public std::iterator<std::forward_iterator_tag, V> {
+		class base_iterator {
 
 		public:
+			// std::iterator is deprecated since C++17, so the typedefs it used to supply are declared here.
+			// value_type stays non-const on purpose, which the standard requires even for constant iterators.
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = V;
+			using difference_type = std::ptrdiff_t;
+			using pointer = T*;
+			using reference = T&;
+
 			using index_type = typename std::underlying_type<K>::type;
 
 			base_iterator(T* p, index_type i) : value(p), index(i) {}

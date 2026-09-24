@@ -17,11 +17,50 @@
 //////////////////////////////////////////////////////////////////////////////////
 #include "Npc.h"
 
-#include <codecvt>
+#ifdef _WIN32
+	#define WIN32_LEAN_AND_MEAN
+	#include <windows.h>
+#endif
 
 #ifdef USE_NX
 #include <nlnx/nx.hpp>
 #endif
+
+namespace
+{
+	// The nametag font cannot render Korean Hangul Jamo (U+1100..U+11FF), so a function string
+	// containing one is dropped. std::wstring_convert is deprecated since C++17 and an error under
+	// /sdl, so the UTF-8 to UTF-16 conversion uses the Win32 API instead. Invalid UTF-8 is replaced
+	// with U+FFFD rather than throwing the range_error that wstring_convert::from_bytes raised.
+	bool contains_hangul_jamo(const std::string& text)
+	{
+#ifdef _WIN32
+		if (text.empty())
+			return false;
+
+		int length = static_cast<int>(text.size());
+		int wide_length = MultiByteToWideChar(CP_UTF8, 0, text.data(), length, nullptr, 0);
+
+		if (wide_length <= 0)
+			return false;
+
+		std::wstring wide(wide_length, L'\0');
+
+		if (MultiByteToWideChar(CP_UTF8, 0, text.data(), length, &wide[0], wide_length) != wide_length)
+			return false;
+
+		for (wchar_t c : wide)
+		{
+			if (c >= 0x1100 && c <= 0x11FF)
+				return true;
+		}
+
+		return false;
+#else
+		return false;
+#endif
+	}
+}
 
 namespace ms
 {
@@ -65,20 +104,8 @@ namespace ms
 		name = strsrc["name"];
 		func = strsrc["func"];
 
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		std::wstring wide = converter.from_bytes(func);
-
-		for (size_t i = 0; i < wide.size(); i++)
-		{
-			wchar_t c = wide[i];
-
-			// Korean
-			if (c >= 0x1100 && c <= 0x11FF)
-			{
-				func = "";
-				break;
-			}
-		}
+		if (contains_hangul_jamo(func))
+			func = "";
 
 		namelabel = Text(Text::Font::A13B, Text::Alignment::CENTER, Color::Name::YELLOW, Text::Background::NAMETAG, name);
 		funclabel = Text(Text::Font::A13B, Text::Alignment::CENTER, Color::Name::YELLOW, Text::Background::NAMETAG, func);
