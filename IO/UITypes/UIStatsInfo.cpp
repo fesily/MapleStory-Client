@@ -60,7 +60,11 @@ namespace ms
 		abilities[Ability::LEGENDARY] = abilityTitle["legendary"]["0"];
 		abilities[Ability::NONE] = abilityTitle["normal"]["0"];
 
-		inner_ability[true] = metierLine["activated"]["0"];
+		// An activated line carries one canvas per inner ability grade in the data
+		// the client runs on; a package that keeps a single canvas is taken as is.
+		// The grade of a line is not known here, so the lowest one answers for it
+		nl::node activated = metierLine["activated"]["0"];
+		inner_ability[true] = activated["rare"]["0"] ? activated["rare"]["0"] : activated;
 		inner_ability[false] = metierLine["disabled"]["0"];
 
 		buttons[Buttons::BT_CLOSE] = std::make_unique<MapleButton>(close, Point<int16_t>(190, 6));
