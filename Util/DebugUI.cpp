@@ -221,6 +221,22 @@ namespace ms
 
 			ImGui_ImplOpenGL2_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
+
+			// The list of monitors the backend just filled is checked by the frame that
+			// follows, and it stops the client when a scale in it is not a scale: the
+			// backend skips a monitor which reports exactly none, but a remote or
+			// virtual display can report a negative one or a value with no meaning as
+			// well. The list is ours, so such a scale is repaired here.
+			for (ImGuiPlatformMonitor& monitor : ImGui::GetPlatformIO().Monitors)
+			{
+				if (!(monitor.DpiScale > 0.0f && monitor.DpiScale < 99.0f))
+				{
+					LOG(LOG_WARN, "Debug windows: a monitor reports a scale of " << monitor.DpiScale << ", the windows are drawn at 1");
+
+					monitor.DpiScale = 1.0f;
+				}
+			}
+
 			ImGui::NewFrame();
 
 			log_window::draw();
