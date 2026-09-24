@@ -52,7 +52,9 @@ namespace ms
 		canfly = src["fly"].size() > 0;
 		canmove = src["move"].size() > 0 || canfly;
 		
-		std::string linkid = info["link"];
+		// The link names another mob by an id which is written without the zeroes
+		// the package puts in front of it: those name the images with seven digits.
+		std::string linkid = string_format::pad_string(info["link"], 7);
 		nl::node link_src = nl::nx::Mob[linkid + ".img"];
 		nl::node link = link_src ? link_src : src;
 		nl::node fly = link["fly"];
