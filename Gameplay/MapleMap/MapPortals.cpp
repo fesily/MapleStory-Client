@@ -138,7 +138,12 @@ namespace ms
 		nl::node src = nl::nx::Map["MapHelper.img"]["portal"]["game"];
 
 		animations[Portal::HIDDEN] = src["ph"]["default"]["portalContinue"];
-		animations[Portal::REGULAR] = src["pv"]["default"];
+
+		// A package older than the paths were written for keeps the frames of the
+		// regular portal directly under "pv"; a newer one wraps the same frames in
+		// "default" and uses the numbered children for its other portals
+		nl::node regular = src["pv"]["default"];
+		animations[Portal::REGULAR] = regular ? regular : src["pv"];
 	}
 
 	std::unordered_map<Portal::Type, Animation> MapPortals::animations;
