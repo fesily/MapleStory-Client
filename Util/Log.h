@@ -72,8 +72,9 @@ namespace ms
 		spdlog::logger& logger(Channel channel);
 
 		// The line LOG() hands to the logger of its channel. The format string has
-		// to be a literal: FMT_STRING in the macro checks it against the arguments
-		// at compile time, which is why the arguments are passed on unchanged.
+		// to be a literal: it is checked against the arguments while the client is
+		// compiled, in the consteval constructor fmt gives fmt::format_string from
+		// C++20 on, which is why the arguments are passed on unchanged.
 		template <typename... Args>
 		void write(const Level& level, fmt::format_string<Args...> fmt, Args&&... args)
 		{
@@ -137,11 +138,11 @@ namespace ms
 
 // The lines of a debug build go through the logger of their channel; a release
 // build compiles them out entirely, so nothing of a call is evaluated there.
-// A call without arguments hands an empty __VA_ARGS__ over, which is a comma
-// MSVC's traditional preprocessor drops; the conforming one (/Zc:preprocessor)
-// does not, and would report every such call as soon as it is switched on.
+// Everything after the level is handed over as it is: the format string and its
+// arguments reach write() unchanged, so a call without arguments needs nothing
+// special and the macro reads the same under either preprocessor.
 #ifdef _DEBUG
-	#define LOG(level, fmt, ...) ms::log::write((level), FMT_STRING(fmt), __VA_ARGS__)
+	#define LOG(level, ...) ms::log::write((level), __VA_ARGS__)
 #else
 	#define LOG(level, ...) void(0)
 #endif
