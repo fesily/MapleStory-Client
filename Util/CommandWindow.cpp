@@ -51,6 +51,12 @@ namespace
 	std::vector<std::string> history;
 	int32_t historyindex = -1;
 
+	// The commands the hint lists and which of them is picked: the arrows walk the
+	// pick and tab takes it. The name it was worked out for is kept, so that typing
+	// starts the pick over instead of leaving it where it was
+	std::string hintname;
+	int32_t hintpick = 0;
+
 	void add_line(const std::string& line)
 	{
 		transcript.push_back(line);
@@ -134,13 +140,96 @@ namespace
 
 	TeeBuffer teebuffer;
 
-	// Walk the history with the arrow keys, the way the console of Dear ImGui's own
-	// demo does it
-	int input_callback(ImGuiInputTextCallbackData* data)
+	// The name the hint is worked out for: what was typed before the first space,
+	// with '?' standing for the name the console runs it as
+	std::string hint_name(const char* typed)
 	{
-		if (data->EventFlag != ImGuiInputTextFlags_CallbackHistory)
+		std::string name = typed;
+		size_t space = name.find_first_of(" \t");
+
+		if (space != std::string::npos)
+			name.erase(space);
+
+		if (name == "?")
+			name = "help";
+
+		return name;
+	}
+
+	// Whether the hint lists the command under that name, which is what the keys
+	// that walk it work on as well
+	bool hinted(const std::string& name, const ms::debug_console::Command& command)
+	{
+		return command.name.compare(0, name.size(), name) == 0;
+	}
+
+	// How many commands the hint lists, in the order 'help' lists them
+	size_t hint_size(const std::string& name)
+	{
+		if (name.empty())
 			return 0;
 
+		size_t size = 0;
+
+		for (const ms::debug_console::Command& command : ms::debug_console::command_list())
+			if (hinted(name, command))
+				size++;
+
+		return size;
+	}
+
+	// The command the given position of the hint holds
+	const ms::debug_console::Command* hint_command(const std::string& name, int32_t picked)
+	{
+		int32_t position = 0;
+
+		for (const ms::debug_console::Command& command : ms::debug_console::command_list())
+		{
+			if (!hinted(name, command))
+				continue;
+
+			if (position == picked)
+				return &command;
+
+			position++;
+		}
+
+		return nullptr;
+	}
+
+	// Make the pick fit the name that is typed, which it belongs to: it starts on
+	// the command the name is complete as, which is the one that runs, or on the
+	// first one the name is the beginning of
+	void hint_fit(const std::string& name)
+	{
+		if (name == hintname)
+			return;
+
+		hintname = name;
+		hintpick = 0;
+
+		int32_t position = 0;
+
+		for (const ms::debug_console::Command& command : ms::debug_console::command_list())
+		{
+			if (!hinted(name, command))
+				continue;
+
+			if (command.name == name)
+			{
+				hintpick = position;
+
+				break;
+			}
+
+			position++;
+		}
+	}
+
+	// Walk the lines that were entered before, the way the console of Dear ImGui's
+	// own demo does it: one step per press, the oldest at the top
+	void walk_history(ImGuiInputTextCallbackData* data)
+	{
 		int32_t previous = historyindex;
 
 		if (data->EventKey == ImGuiKey_UpArrow)
@@ -159,12 +248,76 @@ namespace
 		}
 
 		if (previous == historyindex)
-			return 0;
+			return;
 
 		const char* line = historyindex >= 0 ? history[static_cast<size_t>(historyindex)].c_str() : "";
 
 		data->DeleteChars(0, data->BufTextLen);
 		data->InsertChars(0, line);
+	}
+
+	// The keys the field takes care of itself, which is what makes it complete like
+	// one of an editor: the arrows walk the hint while it lists more than one command
+	// and the lines that were entered before when it does not, and tab takes the
+	// command the hint is on
+	int input_callback(ImGuiInputTextCallbackData* data)
+	{
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
+		{
+			std::string name = hint_name(data->Buf);
+			size_t size = hint_size(name);
+
+			// One command is nothing to walk and none of them is what is typed, so the
+			// arrows are free to walk the lines that were entered before
+			if (size < 2)
+			{
+				walk_history(data);
+
+				return 0;
+			}
+
+			hint_fit(name);
+
+			if (data->EventKey == ImGuiKey_UpArrow)
+				hintpick = hintpick > 0 ? hintpick - 1 : static_cast<int32_t>(size) - 1;
+			else
+				hintpick = (hintpick + 1) % static_cast<int32_t>(size);
+
+			return 0;
+		}
+
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
+		{
+			// Tab takes the command the hint is on: the typed name is what it replaces,
+			// what follows it are the arguments and stay as they are, and a command
+			// that takes arguments keeps a space for them
+			std::string name = hint_name(data->Buf);
+
+			hint_fit(name);
+
+			const ms::debug_console::Command* command = hint_command(name, hintpick);
+
+			if (!command)
+				return 0;
+
+			std::string text(data->Buf, static_cast<size_t>(data->BufTextLen));
+			size_t end = text.find_first_of(" \t");
+
+			if (end == std::string::npos)
+				end = text.size();
+
+			std::string taken = command->name;
+
+			if (end == text.size() && !command->args.empty())
+				taken += ' ';
+
+			data->DeleteChars(0, static_cast<int>(end));
+			data->InsertChars(0, taken.c_str());
+
+			data->CursorPos = data->SelectionStart = data->SelectionEnd = static_cast<int>(taken.size());
+
+			return 0;
+		}
 
 		return 0;
 	}
@@ -207,24 +360,14 @@ namespace
 	}
 
 	// The hint under the field: the commands the typed name is the beginning of, with
-	// the arguments they take and what they do. The name that is complete is the one
-	// that would run, so it is the one that is not dimmed. While a command waits for
-	// a line, the field answers that instead, and the hint says how to drop it. It is
-	// a tooltip, so it takes neither the mouse nor the keyboard from the field.
+	// the arguments they take and what they do, of which the arrows pick one and tab
+	// takes it. The name that is complete is the one that would run, so the pick
+	// starts on it and it is not dimmed. While a command waits for a line, the field
+	// answers that instead, and the hint says how to drop it. It is a tooltip, so it
+	// takes neither the mouse nor the keyboard from the field.
 	void draw_hint(const char* typed)
 	{
-		// The name is what was typed up to the first space; what follows it are the
-		// arguments of the command the name stands for
-		std::string name = typed;
-		size_t space = name.find_first_of(" \t");
-
-		if (space != std::string::npos)
-			name.erase(space);
-
-		// '?' is the shorthand the console runs as 'help', so it is that name the
-		// hint looks up and shows
-		if (name == "?")
-			name = "help";
+		std::string name = hint_name(typed);
 
 		// While a command waits for a line the field answers it rather than naming a
 		// command, and an empty field names nothing a hint could go on
@@ -251,23 +394,13 @@ namespace
 			return;
 		}
 
-		const std::vector<ms::debug_console::Command>& commands = ms::debug_console::command_list();
+		// The pick belongs to the name that is typed, so it is made to fit it before
+		// it is drawn: what is typed decides where the keys that walk it start
+		hint_fit(name);
 
 		// Nothing begins with what was typed, which is the same the console itself
 		// says of the name when the line is entered
-		bool matched = false;
-
-		for (const ms::debug_console::Command& command : commands)
-		{
-			if (command.name.compare(0, name.size(), name) == 0)
-			{
-				matched = true;
-
-				break;
-			}
-		}
-
-		if (!matched)
+		if (hint_size(name) == 0)
 		{
 			ImGui::Text("Unknown command: %s (type 'help')", name.c_str());
 
@@ -280,16 +413,23 @@ namespace
 		// its width from the longest signature, which is what sizes the tooltip
 		if (ImGui::BeginTable("hint", 2, ImGuiTableFlags_SizingFixedFit))
 		{
-			for (const ms::debug_console::Command& command : commands)
+			int32_t position = 0;
+
+			for (const ms::debug_console::Command& command : ms::debug_console::command_list())
 			{
-				if (command.name.compare(0, name.size(), name) != 0)
+				if (!hinted(name, command))
 					continue;
 
-				// What the name could still become is dimmed; the one it stands for,
-				// which is the one that runs, is not
+				// The one the pick is on is the one tab would take, so it is the one
+				// that stands out; what the name could still become is dimmed, the name
+				// it stands for, which is the one that runs, is not
+				bool picked = position == hintpick;
 				bool runs = command.name == name;
 
-				if (!runs)
+				if (picked)
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(ImGuiCol_Header));
+
+				if (!runs && !picked)
 					ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
 
 				std::string signature = command.name;
@@ -306,8 +446,10 @@ namespace
 				ImGui::TableNextColumn();
 				ImGui::TextUnformatted(command.description.c_str());
 
-				if (!runs)
+				if (!runs && !picked)
 					ImGui::PopStyleColor();
+
+				position++;
 			}
 
 			ImGui::EndTable();
@@ -327,7 +469,7 @@ namespace
 			"command ('help' lists them)",
 			line,
 			IM_ARRAYSIZE(line),
-			ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory,
+			ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCompletion,
 			input_callback
 		);
 
