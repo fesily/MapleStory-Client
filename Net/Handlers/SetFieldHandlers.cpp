@@ -78,6 +78,14 @@ namespace ms
 		int32_t mapid = recv.read_int();
 		int8_t portalid = recv.read_byte();
 
+		// The current map of the character is read from its stats (the cash shop and the
+		// console report it), and the entering packet is not what carries a map change:
+		// the server writes the block it does carry only when a character enters the
+		// game, so every map change has to write the map id here. A portal warp writes it
+		// from the portal it went through (Stage::load), a warp the server asks for
+		// arrives on this path.
+		Stage::get().get_player().get_stats().set_mapid(mapid);
+
 		transition(mapid, portalid);
 	}
 
