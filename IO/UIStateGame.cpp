@@ -103,7 +103,7 @@ namespace ms
 		// after entering the game and after taking damage: the revival dialog is offered
 		// until the server brings the player back (ChangeMapHandler answers the revival
 		// request with respawn(), which sends HP 50).
-		if (stats.get_stat(MapleStat::Id::HP) == 0)
+		if (Stage::get().get_player().is_dead())
 		{
 			if (!UI::get().get_element<UIRevive>())
 				emplace<UIRevive>();

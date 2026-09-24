@@ -19,12 +19,15 @@
 
 #include "PlayerStates.h"
 
+#include "../Audio/Audio.h"
 #include "../Data/WeaponData.h"
 #include "../IO/UI.h"
 
 #include "../IO/UITypes/UIStatsInfo.h"
 #include "../Net/Packets/GameplayPackets.h"
 #include "../Net/Packets/InventoryPackets.h"
+
+#include <nlnx/nx.hpp>
 
 namespace ms
 {
@@ -66,12 +69,26 @@ namespace ms
 	{
 		attacking = false;
 		underwater = false;
+		tomblanded = false;
+		dead = false;
+
+		// The tombstone a player at zero HP is drawn as: Effect.wz/Tomb.img holds the
+		// stone falling (16 frames) and the stone it comes to rest as (the original
+		// client keeps the layer it draws them in as CUser::m_pLayerTomb)
+		nl::node tomb = nl::nx::Effect["Tomb.img"];
+
+		tombfall = Animation(tomb["fall"]);
+		tombrest = Animation(tomb["land"]);
 
 		set_state(Char::State::STAND);
 		set_direction(true);
 	}
 
-	Player::Player() : Char(0, {}, "") {}
+	Player::Player() : Char(0, {}, "")
+	{
+		tomblanded = false;
+		dead = false;
+	}
 
 	void Player::respawn(Point<int16_t> pos, bool uw)
 	{
@@ -85,6 +102,11 @@ namespace ms
 
 	void Player::send_action(KeyAction::Id action, bool down)
 	{
+		// The keys of a dead player are ignored until the server revives them, the same
+		// way the original client ignores them while it holds a tombstone
+		if (is_dead())
+			return;
+
 		const PlayerState* pst = get_state(state);
 
 		if (pst)
@@ -147,12 +169,52 @@ namespace ms
 
 	void Player::draw(Layer::Id layer, double viewx, double viewy, float alpha) const
 	{
-		if (layer == get_layer())
-			Char::draw(viewx, viewy, alpha);
+		if (layer != get_layer())
+			return;
+
+		// A dead player is drawn as the tombstone that fell on them, not as their
+		// character: the stone drops once and stays until the revival brings the player
+		// back, which is when the server sends their HP above zero again
+		if (is_dead())
+		{
+			Point<int16_t> absp = phobj.get_absolute(viewx, viewy, alpha);
+
+			if (tomblanded)
+				tombrest.draw(DrawArgument(absp), alpha);
+			else
+				tombfall.draw(DrawArgument(absp), alpha);
+
+			return;
+		}
+
+		Char::draw(viewx, viewy, alpha);
 	}
 
 	int8_t Player::update(const Physics& physics)
 	{
+		// A dead player is out of play until the server respawns them: their state
+		// machine stays where the death left them, so they do not walk, climb or act,
+		// and no movement is sent for a tombstone
+		if (is_dead())
+		{
+			if (!dead)
+			{
+				dead = true;
+				tomblanded = false;
+
+				tombfall.reset();
+
+				Sound(Sound::Name::TOMBSTONE).play();
+			}
+
+			if (!tomblanded && tombfall.update())
+				tomblanded = true;
+
+			return get_layer();
+		}
+
+		dead = false;
+
 		const PlayerState* pst = get_state(state);
 
 		if (pst)
@@ -225,6 +287,13 @@ namespace ms
 	bool Player::is_attacking() const
 	{
 		return attacking;
+	}
+
+	bool Player::is_dead() const
+	{
+		// The server counts a character whose HP is zero as dead (Character.isAlive of
+		// the BeiDou server) and holds it there until the revival request respawns it
+		return stats.get_stat(MapleStat::Id::HP) == 0;
 	}
 
 	bool Player::can_attack() const

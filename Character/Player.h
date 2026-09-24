@@ -63,6 +63,9 @@ namespace ms
 
 		// Return if the player is attacking
 		bool is_attacking() const;
+		// Return whether the player is at zero HP; the server holds them there, and the
+		// client draws them as a tombstone, until a revival brings them back
+		bool is_dead() const;
 		// Return whether the player can attack or not
 		bool can_attack() const;
 		// Return whether the player can use a skill or not
@@ -168,6 +171,14 @@ namespace ms
 
 		Optional<const Ladder> ladder;
 		TimedBool climb_cooldown;
+
+		// The tombstone a player at zero HP is drawn as: the stone falls once and then
+		// rests, and 'dead' is the state the last update saw, so the fall restarts with
+		// every death
+		Animation tombfall;
+		Animation tombrest;
+		bool tomblanded;
+		bool dead;
 
 		bool underwater;
 	};
