@@ -335,6 +335,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClCompile Include="IO\UITypes\UIOptionMenu.cpp" />
     <ClCompile Include="IO\UITypes\UIQuestLog.cpp" />
     <ClCompile Include="IO\UITypes\UIQuit.cpp" />
+    <ClCompile Include="IO\UITypes\UIRevive.cpp" />
     <ClCompile Include="IO\UITypes\UIRaceSelect.cpp" />
     <ClCompile Include="IO\UITypes\UIRegion.cpp" />
     <ClCompile Include="IO\UITypes\UIShop.cpp" />
@@ -573,6 +574,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
     <ClInclude Include="IO\UITypes\UIOptionMenu.h" />
     <ClInclude Include="IO\UITypes\UIQuestLog.h" />
     <ClInclude Include="IO\UITypes\UIQuit.h" />
+    <ClInclude Include="IO\UITypes\UIRevive.h" />
     <ClInclude Include="IO\UITypes\UIRaceSelect.h" />
     <ClInclude Include="IO\UITypes\UIRegion.h" />
     <ClInclude Include="IO\UITypes\UIShop.h" />

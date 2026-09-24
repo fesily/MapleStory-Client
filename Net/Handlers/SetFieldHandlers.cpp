@@ -96,15 +96,17 @@ namespace ms
 		if (playerentry.id != cid)
 			return;
 
-		Stage::get().loadplayer(playerentry);
+		// The block the server writes here is the live state of the character
+		// (addCharStats, PacketCreator.java:173-214): the stats come from it instead of
+		// from the snapshot the character list took at login, which is stale by the time
+		// a map is entered (the packet also carries HP, so a character that was logged
+		// out dead enters the map dead). The look still comes from the cached entry,
+		// because the equipped items of the packet are read as an inventory below.
+		// The parse has to consume exactly what addCharStats wrote, including the Evan
+		// SP table branch, or every following section reads the wrong offset.
+		StatsEntry stats = LoginParser::parse_stats(recv);
 
-		// This block is parsed only to advance the cursor. The player was built from the cached
-		// character-select entry above, and the map/portal that transition() uses come from that
-		// entry, not from the map id and spawn point the server writes here
-		// (PacketCreator.java:210-211 writes chr.getMapId() and chr.getInitialSpawnPoint()).
-		// The call still has to consume exactly what addCharStats wrote (PacketCreator.java:173-214),
-		// including the Evan SP table branch, or every following section reads the wrong offset.
-		LoginParser::parse_stats(recv);
+		Stage::get().loadplayer({ stats, playerentry.look, cid });
 
 		Player& player = Stage::get().get_player();
 

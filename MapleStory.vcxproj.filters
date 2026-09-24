@@ -426,6 +426,7 @@
     <ClCompile Include="IO\UITypes\UIQuit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IO\UITypes\UIRevive.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IO\UITypes\UIRaceSelect.cpp">
@@ -1132,6 +1133,7 @@
     <ClInclude Include="IO\UITypes\UIQuit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IO\UITypes\UIRevive.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IO\UITypes\UIRaceSelect.h">

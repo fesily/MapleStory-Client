@@ -31,6 +31,7 @@
 #include "UITypes/UIMiniMap.h"
 #include "UITypes/UIQuestLog.h"
 #include "UITypes/UIQuit.h"
+#include "UITypes/UIRevive.h"
 #include "UITypes/UIShop.h"
 #include "UITypes/UISkillBook.h"
 #include "UITypes/UIStatsInfo.h"
@@ -96,6 +97,20 @@ namespace ms
 
 			const CharStats& stats = Stage::get().get_player().get_stats();
 			emplace<UIStatusBar>(stats);
+		}
+
+		// The server sends the HP of the player, so a character can be out of lives both
+		// after entering the game and after taking damage: the revival dialog is offered
+		// until the server brings the player back (ChangeMapHandler answers the revival
+		// request with respawn(), which sends HP 50).
+		if (stats.get_stat(MapleStat::Id::HP) == 0)
+		{
+			if (!UI::get().get_element<UIRevive>())
+				emplace<UIRevive>();
+		}
+		else if (UI::get().get_element<UIRevive>())
+		{
+			remove(UIElement::Type::REVIVE);
 		}
 
 		for (auto& type : elementorder)
