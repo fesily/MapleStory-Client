@@ -1348,7 +1348,7 @@ namespace ms
 
 		framecount++;
 
-#if LOG_LEVEL >= LOG_DEBUG
+#if LOG_LEVEL >= LOG_TRACE
 		// The share of the atlas and the memory used by the large canvases are reported
 		// every few frames, next to how much was uploaded and dropped since the last log
 		if (framecount % STATSINTERVAL == 0)
@@ -1356,7 +1356,7 @@ namespace ms
 			size_t used = ATLASW * border.y() + border.x() * yrange.second();
 			double usedpercent = static_cast<double>(used) / (ATLASW * ATLASH) * 100.0;
 
-			LOG(LOG_DEBUG, "Atlas: [" << usedpercent << "%], direct textures: " << directtextures.size()
+			LOG(LOG_TRACE, "Atlas: [" << usedpercent << "%], direct textures: " << directtextures.size()
 				<< " [" << directbytes / (1024 * 1024) << " MB], atlas uploads: " << atlasuploads
 				<< ", direct uploads: " << directuploads << ", direct evictions: " << directevictions);
 
