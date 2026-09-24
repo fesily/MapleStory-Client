@@ -257,9 +257,9 @@ namespace
 	}
 
 	// The keys the field takes care of itself, which is what makes it complete like
-	// one of an editor: the arrows walk the hint while it lists more than one command
-	// and the lines that were entered before when it does not, and tab takes the
-	// command the hint is on
+	// one of an editor: tab takes the command the hint is on, and the arrows walk the
+	// hint while it lists something and the lines that were entered before when it
+	// lists nothing
 	int input_callback(ImGuiInputTextCallbackData* data)
 	{
 		if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
@@ -267,9 +267,10 @@ namespace
 			std::string name = hint_name(data->Buf);
 			size_t size = hint_size(name);
 
-			// One command is nothing to walk and none of them is what is typed, so the
-			// arrows are free to walk the lines that were entered before
-			if (size < 2)
+			// Nothing of the list is what is typed, so the arrows are free to walk the
+			// lines that were entered before; while something is listed they belong to
+			// the hint
+			if (size == 0)
 			{
 				walk_history(data);
 
