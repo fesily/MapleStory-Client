@@ -236,7 +236,7 @@ namespace ms
 	{
 		UIDragElement::remove_cursor();
 
-		UI::get().clear_tooltip(Tooltip::Parent::WORLDMAP);
+		UI::get().clear_tooltip(UIElement::Type::WORLDMAP);
 
 		show_path_img = false;
 	}
@@ -244,9 +244,17 @@ namespace ms
 	Cursor::State UIWorldMap::send_cursor(bool clicked, Point<int16_t> cursorpos)
 	{
 		if (Cursor::State new_state = search_text.send_cursor(cursorpos, clicked))
+		{
+			// The cursor is working the search field instead of the map, so the tooltip of
+			// the spot it was over belongs to nothing the cursor is on any more
+			UI::get().clear_tooltip(UIElement::Type::WORLDMAP);
+
 			return new_state;
+		}
 
 		show_path_img = false;
+
+		bool found_spot = false;
 
 		for (auto path : map_spots)
 		{
@@ -259,10 +267,18 @@ namespace ms
 				path_img = path.second.path;
 				show_path_img = path_img.is_valid();
 
-				UI::get().show_map(Tooltip::Parent::WORLDMAP, path.second.title, path.second.description, path.second.map_ids[0], path.second.bolded, false);
+				UI::get().show_map(UIElement::Type::WORLDMAP, path.second.title, path.second.description, path.second.map_ids[0], path.second.bolded, false);
+
+				found_spot = true;
+
 				break;
 			}
 		}
+
+		// The state only clears a tooltip when the cursor enters another window, so the one of
+		// the spot the cursor has left is dropped here, as the other windows drop their own
+		if (!found_spot)
+			UI::get().clear_tooltip(UIElement::Type::WORLDMAP);
 
 		return UIDragElement::send_cursor(clicked, cursorpos);
 	}

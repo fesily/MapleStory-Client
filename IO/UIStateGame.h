@@ -45,12 +45,12 @@ namespace ms
 		void send_close() override;
 
 		void drag_icon(Icon* icon) override;
-		void clear_tooltip(Tooltip::Parent parent) override;
-		void show_equip(Tooltip::Parent parent, int16_t slot) override;
-		void show_item(Tooltip::Parent parent, int32_t itemid) override;
-		void show_skill(Tooltip::Parent parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration) override;
-		void show_text(Tooltip::Parent parent, std::string text) override;
-		void show_map(Tooltip::Parent parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal) override;
+		void clear_tooltip(UIElement::Type parent) override;
+		void show_equip(UIElement::Type parent, int16_t slot) override;
+		void show_item(UIElement::Type parent, int32_t itemid) override;
+		void show_skill(UIElement::Type parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration) override;
+		void show_text(UIElement::Type parent, std::string text) override;
+		void show_map(UIElement::Type parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal) override;
 
 		Iterator pre_add(UIElement::Type type, bool toggled, bool focused);
 		void remove(UIElement::Type type) override;
@@ -80,7 +80,7 @@ namespace ms
 		TextTooltip tetooltip;
 		MapTooltip matooltip;
 		Optional<Tooltip> tooltip;
-		Tooltip::Parent tooltipparent;
+		UIElement::Type tooltipparent;
 
 		Optional<Icon> draggedicon;
 

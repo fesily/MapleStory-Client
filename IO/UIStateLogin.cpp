@@ -134,17 +134,17 @@ namespace ms
 			UI::get().emplace<UIQuitConfirm>();
 	}
 
-	void UIStateLogin::clear_tooltip(Tooltip::Parent parent)
+	void UIStateLogin::clear_tooltip(UIElement::Type parent)
 	{
 		if (parent == tooltipparent)
 		{
 			tetooltip.set_text("");
 			tooltip = {};
-			tooltipparent = Tooltip::Parent::NONE;
+			tooltipparent = UIElement::Type::NONE;
 		}
 	}
 
-	void UIStateLogin::show_text(Tooltip::Parent parent, std::string text)
+	void UIStateLogin::show_text(UIElement::Type parent, std::string text)
 	{
 		tetooltip.set_text(text);
 

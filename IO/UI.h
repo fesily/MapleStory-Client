@@ -68,12 +68,12 @@ namespace ms
 
 		void add_keymapping(uint8_t no, uint8_t type, int32_t action);
 
-		void clear_tooltip(Tooltip::Parent parent);
-		void show_equip(Tooltip::Parent parent, int16_t slot);
-		void show_item(Tooltip::Parent parent, int32_t item_id);
-		void show_skill(Tooltip::Parent parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration);
-		void show_text(Tooltip::Parent parent, std::string text);
-		void show_map(Tooltip::Parent parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal);
+		void clear_tooltip(UIElement::Type parent);
+		void show_equip(UIElement::Type parent, int16_t slot);
+		void show_item(UIElement::Type parent, int32_t item_id);
+		void show_skill(UIElement::Type parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration);
+		void show_text(UIElement::Type parent, std::string text);
+		void show_map(UIElement::Type parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal);
 
 		Keyboard& get_keyboard();
 

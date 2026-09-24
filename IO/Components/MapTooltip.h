@@ -31,7 +31,7 @@ namespace ms
 
 		void draw(Point<int16_t> position) const override;
 
-		void set_title(Tooltip::Parent parent, std::string title, bool bolded);
+		void set_title(UIElement::Type parent, std::string title, bool bolded);
 		void set_desc(std::string description);
 		void set_mapid(int32_t mapid, bool portal);
 
@@ -39,6 +39,8 @@ namespace ms
 
 	private:
 		static constexpr uint8_t MAX_LIFE = 10u;
+		// The width a world map tooltip starts from, the same one set_worldmap_title() uses
+		static constexpr int16_t WORLDMAP_WIDTH = 206;
 		static constexpr Point<int16_t> SEPARATOR_ADJ = Point<int16_t>(1, 10);
 		static constexpr Point<int16_t> LIFE_LABEL_ADJ = Point<int16_t>(16, 3);
 		static constexpr Point<int16_t> LIFE_ICON_ADJ = Point<int16_t>(1, 9);
@@ -53,6 +55,9 @@ namespace ms
 		void set_worldmap_mapid(std::unordered_map<int64_t, std::pair<std::string, std::string>> life, bool portal);
 		void set_minimap_mapid(std::unordered_map<int64_t, std::pair<std::string, std::string>> life, bool portal);
 
+		// Drops the mob and npc rows of the tooltip which was shown before
+		void clear_life_labels();
+
 		MapleFrame frame;
 
 		Texture cover;
@@ -60,7 +65,7 @@ namespace ms
 		Texture Npc;
 		//Texture Party;
 
-		Tooltip::Parent parent;
+		UIElement::Type parent;
 
 		std::string title;
 		std::string description;

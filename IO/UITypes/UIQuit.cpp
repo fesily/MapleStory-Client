@@ -150,9 +150,9 @@ namespace ms
 		auto bounds = Rectangle<int16_t>(lt, rb);
 
 		if (bounds.contains(cursorpos))
-			UI::get().show_text(Tooltip::Parent::TEXT, std::to_string(hours) + "Hour " + std::to_string(minutes) + "Minute");
+			UI::get().show_text(UIElement::Type::QUIT, std::to_string(hours) + "Hour " + std::to_string(minutes) + "Minute");
 		else
-			UI::get().clear_tooltip(Tooltip::Parent::TEXT);
+			UI::get().clear_tooltip(UIElement::Type::QUIT);
 
 		return UIElement::send_cursor(clicked, cursorpos);
 	}
@@ -240,6 +240,6 @@ namespace ms
 	{
 		deactivate();
 
-		UI::get().clear_tooltip(Tooltip::Parent::TEXT);
+		UI::get().clear_tooltip(UIElement::Type::QUIT);
 	}
 }

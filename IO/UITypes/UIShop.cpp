@@ -420,7 +420,7 @@ namespace ms
 
 	void UIShop::clear_tooltip()
 	{
-		UI::get().clear_tooltip(Tooltip::Parent::SHOP);
+		UI::get().clear_tooltip(UIElement::Type::SHOP);
 	}
 
 	void UIShop::show_item(int16_t slot, bool buy)
@@ -674,7 +674,7 @@ namespace ms
 			return;
 
 		int32_t itemid = items[absslot].get_id();
-		UI::get().show_item(Tooltip::Parent::SHOP, itemid);
+		UI::get().show_item(UIElement::Type::SHOP, itemid);
 	}
 
 	void UIShop::BuyState::add(BuyItem item)
@@ -791,12 +791,12 @@ namespace ms
 		if (tab == InventoryType::Id::EQUIP)
 		{
 			int16_t realslot = items[absslot].get_slot();
-			UI::get().show_equip(Tooltip::Parent::SHOP, realslot);
+			UI::get().show_equip(UIElement::Type::SHOP, realslot);
 		}
 		else
 		{
 			int32_t itemid = items[absslot].get_id();
-			UI::get().show_item(Tooltip::Parent::SHOP, itemid);
+			UI::get().show_item(UIElement::Type::SHOP, itemid);
 		}
 	}
 

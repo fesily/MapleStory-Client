@@ -39,12 +39,12 @@ namespace ms
 		void send_close() override;
 
 		void drag_icon(Icon*) override {}
-		void clear_tooltip(Tooltip::Parent parent) override;
-		void show_equip(Tooltip::Parent, int16_t) override {}
-		void show_item(Tooltip::Parent, int32_t) override {}
-		void show_skill(Tooltip::Parent, int32_t, int32_t, int32_t, int64_t) override {}
-		void show_text(Tooltip::Parent parent, std::string text) override;
-		void show_map(Tooltip::Parent, std::string, std::string, int32_t, bool, bool) {}
+		void clear_tooltip(UIElement::Type parent) override;
+		void show_equip(UIElement::Type, int16_t) override {}
+		void show_item(UIElement::Type, int32_t) override {}
+		void show_skill(UIElement::Type, int32_t, int32_t, int32_t, int64_t) override {}
+		void show_text(UIElement::Type parent, std::string text) override;
+		void show_map(UIElement::Type, std::string, std::string, int32_t, bool, bool) {}
 
 		Iterator pre_add(UIElement::Type type, bool toggled, bool focused) override;
 		void remove(UIElement::Type type) override;
@@ -64,6 +64,6 @@ namespace ms
 
 		TextTooltip tetooltip;
 		Optional<Tooltip> tooltip;
-		Tooltip::Parent tooltipparent;
+		UIElement::Type tooltipparent;
 	};
 }

@@ -19,6 +19,9 @@
 
 #include "../../Util/Misc.h"
 
+#include <algorithm>
+#include <unordered_map>
+
 #ifdef USE_NX
 #include <nlnx/nx.hpp>
 #endif
@@ -26,7 +29,7 @@
 namespace ms
 {
 	// TODO: Get number of available quests
-	MapTooltip::MapTooltip() : parent(Tooltip::Parent::NONE), title(""), description(""), fillwidth(0), fillheight(0)
+	MapTooltip::MapTooltip() : parent(UIElement::Type::NONE), title(""), description(""), fillwidth(0), fillheight(0)
 	{
 		nl::node Frame = nl::nx::UI["UIToolTip.img"]["Item"]["Frame2"];
 		nl::node WorldMap = nl::nx::UI["UIWindow2.img"]["ToolTip"]["WorldMap"];
@@ -63,10 +66,10 @@ namespace ms
 
 		switch (parent)
 		{
-			case Tooltip::Parent::WORLDMAP:
+			case UIElement::Type::WORLDMAP:
 				draw_worldmap(position);
 				break;
-			case Tooltip::Parent::MINIMAP:
+			case UIElement::Type::MINIMAP:
 				draw_minimap(position);
 				break;
 			default:
@@ -74,7 +77,7 @@ namespace ms
 		}
 	}
 
-	void MapTooltip::set_title(Tooltip::Parent p, std::string t, bool bolded)
+	void MapTooltip::set_title(UIElement::Type p, std::string t, bool bolded)
 	{
 		if (parent == p && title == t)
 			return;
@@ -87,10 +90,10 @@ namespace ms
 
 		switch (parent)
 		{
-			case Tooltip::Parent::WORLDMAP:
+			case UIElement::Type::WORLDMAP:
 				set_worldmap_title(bolded);
 				break;
-			case Tooltip::Parent::MINIMAP:
+			case UIElement::Type::MINIMAP:
 				set_minimap_title(bolded);
 				break;
 			default:
@@ -110,10 +113,10 @@ namespace ms
 
 		switch (parent)
 		{
-			case Tooltip::Parent::WORLDMAP:
+			case UIElement::Type::WORLDMAP:
 				set_worldmap_desc();
 				break;
-			case Tooltip::Parent::MINIMAP:
+			case UIElement::Type::MINIMAP:
 				set_minimap_desc();
 				break;
 			default:
@@ -127,10 +130,10 @@ namespace ms
 
 		switch (parent)
 		{
-			case Tooltip::Parent::WORLDMAP:
+			case UIElement::Type::WORLDMAP:
 				set_worldmap_mapid(life, portal);
 				break;
-			case Tooltip::Parent::MINIMAP:
+			case UIElement::Type::MINIMAP:
 				set_minimap_mapid(life, portal);
 				break;
 			default:
@@ -140,7 +143,7 @@ namespace ms
 
 	void MapTooltip::reset()
 	{
-		parent = Tooltip::Parent::NONE;
+		parent = UIElement::Type::NONE;
 
 		title = "";
 		title_label.change_text("");
@@ -148,14 +151,19 @@ namespace ms
 		description = "";
 		desc_label.change_text("");
 
+		clear_life_labels();
+
+		fillwidth = 0;
+		fillheight = 0;
+	}
+
+	void MapTooltip::clear_life_labels()
+	{
 		for (uint8_t i = 0; i < MAX_LIFE; i++)
 		{
 			mob_labels[i].change_text("");
 			npc_labels[i].change_text("");
 		}
-
-		fillwidth = 0;
-		fillheight = 0;
 	}
 
 	void MapTooltip::draw_worldmap(Point<int16_t> position) const
@@ -305,7 +313,7 @@ namespace ms
 
 	void MapTooltip::set_worldmap_title(bool bolded)
 	{
-		fillwidth = 206;
+		fillwidth = WORLDMAP_WIDTH;
 		title_label = Text(bolded ? Text::Font::A12B : Text::Font::A12M, Text::Alignment::CENTER, Color::Name::WHITE, title);
 
 		int16_t width = title_label.width();
@@ -374,8 +382,25 @@ namespace ms
 		int32_t n = 0;
 		bool desc_empty = desc_label.empty();
 
+		// The box is sized from the content it holds: this runs for every frame the cursor
+		// rests on a spot and the rows used to be added to the height the tooltip before them
+		// left behind, which made the box grow as long as it stayed up. The width and height
+		// the title alone asks for are the ones a tooltip starts from when it is shown fresh.
+		fillwidth = WORLDMAP_WIDTH;
+		fillheight = title_label.height();
+
+		clear_life_labels();
+
+		if (title_label.width() > fillwidth)
+			fillwidth = title_label.width();
+
 		if (!desc_empty)
+		{
+			fillwidth = std::max(fillwidth, desc_label.width());
+			fillheight = std::max(fillheight, desc_label.height());
+
 			fillheight += title_label.height() + 7;
+		}
 
 		for (auto& l : life)
 		{
@@ -413,8 +438,21 @@ namespace ms
 		int32_t n = 0;
 		bool desc_empty = desc_label.empty();
 
-		if (portal && !desc_empty)
-			fillheight += title_label.height() + 7;
+		// Sizes the box from the content it holds, the same way set_worldmap_mapid() does:
+		// the rows are not added to the height the tooltip before them left behind
+		fillwidth = title_label.width();
+		fillheight = title_label.height();
+
+		clear_life_labels();
+
+		if (!desc_empty)
+		{
+			fillwidth = std::max(fillwidth, desc_label.width());
+			fillheight = std::max(fillheight, desc_label.height());
+
+			if (portal)
+				fillheight += title_label.height() + 7;
+		}
 
 		for (auto& l : life)
 		{

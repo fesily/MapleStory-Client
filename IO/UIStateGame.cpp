@@ -48,7 +48,7 @@ namespace ms
 	UIStateGame::UIStateGame() : stats(Stage::get().get_player().get_stats()), dragged(nullptr)
 	{
 		focused = UIElement::Type::NONE;
-		tooltipparent = Tooltip::Parent::NONE;
+		tooltipparent = UIElement::Type::NONE;
 
 		const CharLook& look = Stage::get().get_player().get_look();
 		const Inventory& inventory = Stage::get().get_player().get_inventory();
@@ -526,20 +526,20 @@ namespace ms
 		draggedicon = drgic;
 	}
 
-	void UIStateGame::clear_tooltip(Tooltip::Parent parent)
+	void UIStateGame::clear_tooltip(UIElement::Type parent)
 	{
 		if (parent == tooltipparent)
 		{
-			eqtooltip.set_equip(Tooltip::Parent::NONE, 0);
+			eqtooltip.set_equip(UIElement::Type::NONE, 0);
 			ittooltip.set_item(0);
 			tetooltip.set_text("");
 			matooltip.reset();
 			tooltip = {};
-			tooltipparent = Tooltip::Parent::NONE;
+			tooltipparent = UIElement::Type::NONE;
 		}
 	}
 
-	void UIStateGame::show_equip(Tooltip::Parent parent, int16_t slot)
+	void UIStateGame::show_equip(UIElement::Type parent, int16_t slot)
 	{
 		eqtooltip.set_equip(parent, slot);
 
@@ -550,7 +550,7 @@ namespace ms
 		}
 	}
 
-	void UIStateGame::show_item(Tooltip::Parent parent, int32_t itemid)
+	void UIStateGame::show_item(UIElement::Type parent, int32_t itemid)
 	{
 		ittooltip.set_item(itemid);
 
@@ -561,7 +561,7 @@ namespace ms
 		}
 	}
 
-	void UIStateGame::show_skill(Tooltip::Parent parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration)
+	void UIStateGame::show_skill(UIElement::Type parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration)
 	{
 		sktooltip.set_skill(skill_id, level, masterlevel, expiration);
 
@@ -572,7 +572,7 @@ namespace ms
 		}
 	}
 
-	void UIStateGame::show_text(Tooltip::Parent parent, std::string text)
+	void UIStateGame::show_text(UIElement::Type parent, std::string text)
 	{
 		tetooltip.set_text(text);
 
@@ -583,7 +583,7 @@ namespace ms
 		}
 	}
 
-	void UIStateGame::show_map(Tooltip::Parent parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal)
+	void UIStateGame::show_map(UIElement::Type parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal)
 	{
 		matooltip.set_title(parent, title, bolded);
 		matooltip.set_desc(description);

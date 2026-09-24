@@ -105,7 +105,7 @@ namespace ms
 		invpos_preview = 0;
 	}
 
-	void EquipTooltip::set_equip(Tooltip::Parent parent, int16_t ivp)
+	void EquipTooltip::set_equip(UIElement::Type parent, int16_t ivp)
 	{
 		if (invpos == ivp)
 			return;
@@ -119,11 +119,11 @@ namespace ms
 
 		switch (parent)
 		{
-		case Tooltip::Parent::ITEMINVENTORY:
-		case Tooltip::Parent::SHOP:
+		case UIElement::Type::ITEMINVENTORY:
+		case UIElement::Type::SHOP:
 			invtype = InventoryType::Id::EQUIP;
 			break;
-		case Tooltip::Parent::EQUIPINVENTORY:
+		case UIElement::Type::EQUIPINVENTORY:
 			invtype = InventoryType::Id::EQUIPPED;
 			break;
 		default:

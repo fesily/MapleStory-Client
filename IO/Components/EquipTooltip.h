@@ -34,7 +34,7 @@ namespace ms
 	public:
 		EquipTooltip();
 
-		void set_equip(Tooltip::Parent parent, int16_t invpos);
+		void set_equip(UIElement::Type parent, int16_t invpos);
 		void draw(Point<int16_t> position) const override;
 		void draw_preview(Point<int16_t> position) const;
 

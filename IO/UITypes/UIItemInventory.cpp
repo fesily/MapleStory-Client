@@ -707,18 +707,18 @@ namespace ms
 	{
 		if (tab == InventoryType::Id::EQUIP)
 		{
-			UI::get().show_equip(Tooltip::Parent::ITEMINVENTORY, slot);
+			UI::get().show_equip(UIElement::Type::ITEMINVENTORY, slot);
 		}
 		else
 		{
 			int32_t item_id = inventory.get_item_id(tab, slot);
-			UI::get().show_item(Tooltip::Parent::ITEMINVENTORY, item_id);
+			UI::get().show_item(UIElement::Type::ITEMINVENTORY, item_id);
 		}
 	}
 
 	void UIItemInventory::clear_tooltip()
 	{
-		UI::get().clear_tooltip(Tooltip::Parent::ITEMINVENTORY);
+		UI::get().clear_tooltip(UIElement::Type::ITEMINVENTORY);
 	}
 
 	bool UIItemInventory::is_visible(int16_t slot) const

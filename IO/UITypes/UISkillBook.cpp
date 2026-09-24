@@ -694,12 +694,12 @@ namespace ms
 		int32_t masterlevel = skillbook.get_masterlevel(id);
 		int64_t expiration = skillbook.get_expiration(id);
 
-		UI::get().show_skill(Tooltip::Parent::SKILLBOOK, skill_id, level, masterlevel, expiration);
+		UI::get().show_skill(UIElement::Type::SKILLBOOK, skill_id, level, masterlevel, expiration);
 	}
 
 	void UISkillBook::clear_tooltip()
 	{
-		UI::get().clear_tooltip(Tooltip::Parent::SKILLBOOK);
+		UI::get().clear_tooltip(UIElement::Type::SKILLBOOK);
 	}
 
 	bool UISkillBook::can_raise(int32_t skill_id) const

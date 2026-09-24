@@ -719,7 +719,7 @@ namespace ms
 	/// UI: Tooltip
 	void UIKeyConfig::show_item(int32_t item_id)
 	{
-		UI::get().show_item(Tooltip::Parent::KEYCONFIG, item_id);
+		UI::get().show_item(UIElement::Type::KEYCONFIG, item_id);
 	}
 
 	void UIKeyConfig::show_skill(int32_t skill_id)
@@ -728,12 +728,12 @@ namespace ms
 		int32_t masterlevel = skillbook.get_masterlevel(skill_id);
 		int64_t expiration = skillbook.get_expiration(skill_id);
 
-		UI::get().show_skill(Tooltip::Parent::KEYCONFIG, skill_id, level, masterlevel, expiration);
+		UI::get().show_skill(UIElement::Type::KEYCONFIG, skill_id, level, masterlevel, expiration);
 	}
 
 	void UIKeyConfig::clear_tooltip()
 	{
-		UI::get().clear_tooltip(Tooltip::Parent::KEYCONFIG);
+		UI::get().clear_tooltip(UIElement::Type::KEYCONFIG);
 	}
 
 	/// Keymap Staging

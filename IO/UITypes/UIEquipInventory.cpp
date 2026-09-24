@@ -335,12 +335,12 @@ namespace ms
 
 	void UIEquipInventory::show_equip(EquipSlot::Id slot)
 	{
-		UI::get().show_equip(Tooltip::Parent::EQUIPINVENTORY, slot);
+		UI::get().show_equip(UIElement::Type::EQUIPINVENTORY, slot);
 	}
 
 	void UIEquipInventory::clear_tooltip()
 	{
-		UI::get().clear_tooltip(Tooltip::Parent::EQUIPINVENTORY);
+		UI::get().clear_tooltip(UIElement::Type::EQUIPINVENTORY);
 	}
 
 	EquipSlot::Id UIEquipInventory::slot_by_position(Point<int16_t> cursorpos) const

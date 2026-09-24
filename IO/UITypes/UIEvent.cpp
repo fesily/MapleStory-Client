@@ -171,7 +171,7 @@ namespace ms
 	{
 		UIDragElement::remove_cursor();
 
-		UI::get().clear_tooltip(Tooltip::Parent::EVENT);
+		UI::get().clear_tooltip(UIElement::Type::EVENT);
 
 		slider.remove_cursor();
 	}
@@ -333,6 +333,6 @@ namespace ms
 
 	void UIEvent::show_item(int16_t row, int16_t col)
 	{
-		UI::get().show_item(Tooltip::Parent::EVENT, 2000000 + col - 1);
+		UI::get().show_item(UIElement::Type::EVENT, 2000000 + col - 1);
 	}
 }

@@ -444,32 +444,32 @@ namespace ms
 		keyboard.assign(no, type, action);
 	}
 
-	void UI::clear_tooltip(Tooltip::Parent parent)
+	void UI::clear_tooltip(UIElement::Type parent)
 	{
 		state->clear_tooltip(parent);
 	}
 
-	void UI::show_equip(Tooltip::Parent parent, int16_t slot)
+	void UI::show_equip(UIElement::Type parent, int16_t slot)
 	{
 		state->show_equip(parent, slot);
 	}
 
-	void UI::show_item(Tooltip::Parent parent, int32_t item_id)
+	void UI::show_item(UIElement::Type parent, int32_t item_id)
 	{
 		state->show_item(parent, item_id);
 	}
 
-	void UI::show_skill(Tooltip::Parent parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration)
+	void UI::show_skill(UIElement::Type parent, int32_t skill_id, int32_t level, int32_t masterlevel, int64_t expiration)
 	{
 		state->show_skill(parent, skill_id, level, masterlevel, expiration);
 	}
 
-	void UI::show_text(Tooltip::Parent parent, std::string text)
+	void UI::show_text(UIElement::Type parent, std::string text)
 	{
 		state->show_text(parent, text);
 	}
 
-	void UI::show_map(Tooltip::Parent parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal)
+	void UI::show_map(UIElement::Type parent, std::string title, std::string description, int32_t mapid, bool bolded, bool portal)
 	{
 		state->show_map(parent, title, description, mapid, bolded, portal);
 	}

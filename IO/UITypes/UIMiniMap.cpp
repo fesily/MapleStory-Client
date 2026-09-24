@@ -190,7 +190,7 @@ namespace ms
 
 		listNpc_slider.remove_cursor();
 
-		UI::get().clear_tooltip(Tooltip::Parent::MINIMAP);
+		UI::get().clear_tooltip(UIElement::Type::MINIMAP);
 	}
 
 	Cursor::State UIMiniMap::send_cursor(bool clicked, Point<int16_t> cursorpos)
@@ -219,7 +219,9 @@ namespace ms
 				if (clicked)
 					select_npclist(in_list ? list_index : -1);
 				else if (in_list)
-					UI::get().show_text(Tooltip::Parent::MINIMAP, listNpc_full_names[list_index]);
+					UI::get().show_text(UIElement::Type::MINIMAP, listNpc_full_names[list_index]);
+				else
+					UI::get().clear_tooltip(UIElement::Type::MINIMAP);
 
 				return Cursor::State::IDLE;
 			}
@@ -244,7 +246,7 @@ namespace ms
 				std::string name = n->get_name();
 				std::string func = n->get_func();
 
-				UI::get().show_map(Tooltip::Parent::MINIMAP, name, func, {}, false, false);
+				UI::get().show_map(UIElement::Type::MINIMAP, name, func, {}, false, false);
 				break;
 			}
 		}
@@ -268,12 +270,17 @@ namespace ms
 					{
 						found = true;
 
-						UI::get().show_map(Tooltip::Parent::MINIMAP, portal_name, "", portal_tm, false, true);
+						UI::get().show_map(UIElement::Type::MINIMAP, portal_name, "", portal_tm, false, true);
 						break;
 					}
 				}
 			}
 		}
+
+		// The state only clears a tooltip when the cursor enters another window, so the one of
+		// the dot or portal the cursor has left is dropped here, as the other windows drop theirs
+		if (!found)
+			UI::get().clear_tooltip(UIElement::Type::MINIMAP);
 
 		return Cursor::State::IDLE;
 	}
