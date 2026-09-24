@@ -97,16 +97,26 @@ namespace
 		return std::chrono::duration_cast<std::chrono::milliseconds>(clock::now().time_since_epoch()).count();
 	}
 
-	// The logger a line went through: spdlog names it with the name the logger was
-	// built with, which is the channel name for the two loggers that are not the
-	// client's
+	// The channels the log has, in the order the window lists them. A channel is a
+	// logger of its own and its name is what the tag of a line and the switch of
+	// the window show, so adding one is a value in ms::log::Channel and a name
+	// here - nothing else has to know about it.
+	const char* CHANNELNAMES[] = { "CLIENT", "NETWORK", "UI" };
+	const size_t CHANNELCOUNT = sizeof(CHANNELNAMES) / sizeof(CHANNELNAMES[0]);
+
+	static_assert(
+		CHANNELCOUNT == static_cast<size_t>(ms::log::Channel::COUNT),
+		"every value of ms::log::Channel needs a name in CHANNELNAMES"
+	);
+
+	// The channel a line was written from: the name of the logger it went through,
+	// looked up in the table above. A logger that is none of the channels is shown
+	// as a client line, which is what keeps its severity in the tag.
 	Channel channel_of(const spdlog::string_view_t& name)
 	{
-		if (name == ms::log::channel_name(Channel::NETWORK))
-			return Channel::NETWORK;
-
-		if (name == ms::log::channel_name(Channel::UI))
-			return Channel::UI;
+		for (size_t index = 0; index < CHANNELCOUNT; index++)
+			if (name == CHANNELNAMES[index])
+				return static_cast<Channel>(index);
 
 		return Channel::CLIENT;
 	}
@@ -304,6 +314,8 @@ namespace ms
 					return "DEBUG";
 				case spdlog::level::trace:
 					return "TRACE";
+				case spdlog::level::critical:
+					return "CRITICAL";
 			}
 
 			return "UNDEFINED";
@@ -311,17 +323,9 @@ namespace ms
 
 		const char* channel_name(Channel channel)
 		{
-			switch (channel)
-			{
-				case Channel::CLIENT:
-					return "CLIENT";
-				case Channel::NETWORK:
-					return "NETWORK";
-				case Channel::UI:
-					return "UI";
-			}
+			size_t index = static_cast<size_t>(channel);
 
-			return "UNDEFINED";
+			return index < CHANNELCOUNT ? CHANNELNAMES[index] : "UNDEFINED";
 		}
 
 		const char* line_tag(int severity, Channel channel)

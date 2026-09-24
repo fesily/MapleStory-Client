@@ -86,6 +86,8 @@ The windows follow the scale the desktop reports for the monitor the game window
 
 The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. A line of the error level is on the disk as soon as it is written and the rest follow every 120 frames, which is what keeps the frame time from depending on the disk. `log [on|off|clear|level <name>]` shows, hides and clears the log window and puts the log on a level while the client runs, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
 
+The window offers a switch per severity and one per channel, and the filter (the switches and the text field together) runs a moment after the last switch is pressed or the last character is typed, so a row of clicks costs one pass over the buffer instead of one per click. The channels it lists are the values of `ms::log::Channel`, and their names come from one table in `Util/Log.cpp`: a channel added to the enum appears in the window without a change to it.
+
 The project compiles with `/utf-8`, which fmt refuses to build without, and with `/wd4828`, which is about the Latin-1 bytes in the comments of the vendored headers next to it (`NoLifeNx`, GLFW, ImGui); `/utf-8` is safe for the client's own sources because they are ASCII by the rule above.
 
 ---

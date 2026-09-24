@@ -32,23 +32,21 @@
 
 namespace
 {
-	// The severities and the channels the window offers, in the order it lists
-	// them. A line is drawn when both of the two it has are switched on.
-	const int OFFEREDSEVERITIES[] = {
-		spdlog::level::err,
-		spdlog::level::warn,
-		spdlog::level::info,
-		spdlog::level::debug,
-		spdlog::level::trace
-	};
-	const size_t SEVERITYCOUNT = sizeof(OFFEREDSEVERITIES) / sizeof(OFFEREDSEVERITIES[0]);
+	// The severities the window offers: the one spdlog logs the most severe line
+	// with down to the one it logs the most verbose with. Which channels it offers
+	// is not written here at all - the window walks ms::log::Channel, so a channel
+	// that is added there gets its switch without this file being touched.
+	const int SEVERITYTOP = spdlog::level::err;
+	const int SEVERITYBOTTOM = spdlog::level::trace;
 
-	const ms::log::Channel OFFEREDCHANNELS[] = {
-		ms::log::Channel::CLIENT,
-		ms::log::Channel::NETWORK,
-		ms::log::Channel::UI
+	// The color the rows of a channel are drawn in. A client line takes the color
+	// of its severity instead, so the entry of the client channel here is what they
+	// fall back to; a channel that is added to ms::log::Channel needs its color.
+	const ImVec4 CHANNELCOLORS[static_cast<size_t>(ms::log::Channel::COUNT)] = {
+		ImVec4(0.80f, 0.80f, 0.80f, 1.00f),
+		ImVec4(0.55f, 0.80f, 0.95f, 1.00f),
+		ImVec4(0.78f, 0.72f, 0.96f, 1.00f)
 	};
-	const size_t CHANNELCOUNT = sizeof(OFFEREDCHANNELS) / sizeof(OFFEREDCHANNELS[0]);
 
 	bool windowshown = true;
 	// Indexed by the severity a line was written with. The trace lines only reach
@@ -61,14 +59,44 @@ namespace
 	char filtertext[64] = {};
 	bool follow = true;
 
-	// What 'matches' was built from: the filter it was narrowed down with, how many
-	// lines of the buffer were looked at and how many were dropped in front of them
-	// then. While lines are only added at the back, the ones that were looked at
-	// stay where they are and only the new ones have to be tested.
+	// How long the filter waits after the last switch or keystroke. Walking the
+	// buffer is a pass over every line it keeps, so a row of clicks runs one pass
+	// instead of one per click; until the wait is over the rows stay as they were.
+	const double FILTERDELAY = 0.25;
+	double filterdue = 0.0;
+
+	void touch_filter()
+	{
+		filterdue = ImGui::GetTime() + FILTERDELAY;
+	}
+
+	// What 'matches' was built from: the switches and the filter it was narrowed
+	// down with, how many lines of the buffer were looked at and how many were
+	// dropped in front of them then. While lines are only added at the back, the
+	// ones that were looked at stay where they are and only the new ones have to be
+	// tested; a switch or the filter changing starts the work over.
 	std::vector<size_t> matches;
 	std::string builtfilter;
+	uint32_t builtswitches = 0;
 	size_t scanned = 0;
 	size_t builtoffset = 0;
+
+	// The switches of the toolbar as one value, so the two arrays do not have to be
+	// compared entry by entry
+	uint32_t switch_signature()
+	{
+		uint32_t signature = 0;
+
+		for (size_t index = 0; index < spdlog::level::n_levels; index++)
+			if (severityshown[index])
+				signature |= 1u << index;
+
+		for (size_t index = 0; index < static_cast<size_t>(ms::log::Channel::COUNT); index++)
+			if (channelshown[index])
+				signature |= 1u << (spdlog::level::n_levels + index);
+
+		return signature;
+	}
 
 	bool contains_ignoring_case(const std::string& line, const std::string& needle)
 	{
@@ -93,20 +121,13 @@ namespace
 		return lowered;
 	}
 
-	// The color of a row: the channel decides for the lines the network and the ui
-	// wrote, the severity for a client line, which is how the window colored the
-	// rows before the two were channels
+	// The color of a row: the channel decides, and a client line takes the color of
+	// its severity, which is how the window colored the rows before the two were
+	// channels
 	ImVec4 line_color(int severity, ms::log::Channel channel)
 	{
-		switch (channel)
-		{
-			case ms::log::Channel::NETWORK:
-				return ImVec4(0.55f, 0.80f, 0.95f, 1.00f);
-			case ms::log::Channel::UI:
-				return ImVec4(0.78f, 0.72f, 0.96f, 1.00f);
-			case ms::log::Channel::CLIENT:
-				break;
-		}
+		if (channel != ms::log::Channel::CLIENT)
+			return CHANNELCOLORS[static_cast<size_t>(channel)];
 
 		switch (severity)
 		{
@@ -120,7 +141,7 @@ namespace
 				return ImVec4(0.62f, 0.62f, 0.62f, 1.00f);
 		}
 
-		return ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
+		return CHANNELCOLORS[static_cast<size_t>(ms::log::Channel::CLIENT)];
 	}
 
 	// Whether the switches of the toolbar let a line through
@@ -157,19 +178,38 @@ namespace
 	}
 
 	// Test the lines that were not looked at yet and keep the ordinals of the ones
-	// the filter keeps
+	// the switches and the filter keep
 	void build_matches(const ms::log::Locked& locked)
 	{
 		const std::deque<ms::log::Entry>& lines = locked.lines();
 		std::string needle = lowercased(filtertext);
+		uint32_t switches = switch_signature();
 
-		if (needle != builtfilter || locked.dropped() != builtoffset || lines.size() < scanned)
+		// The ordinals the rows are drawn by stop meaning what they meant when the
+		// buffer drops lines in front of them or shrinks, so that starts the work
+		// over at once, whatever else is pending
+		if (locked.dropped() != builtoffset || lines.size() < scanned)
 		{
 			matches.clear();
 
 			scanned = 0;
 			builtfilter = needle;
+			builtswitches = switches;
 			builtoffset = locked.dropped();
+		}
+		else if (switches != builtswitches || needle != builtfilter)
+		{
+			// A switch or the filter changes which lines the rows are, but the work
+			// waits for the toolbar to be left alone for a moment; until then the
+			// rows stay as they were
+			if (ImGui::GetTime() < filterdue)
+				return;
+
+			matches.clear();
+
+			scanned = 0;
+			builtfilter = needle;
+			builtswitches = switches;
 		}
 
 		if (scanned == lines.size())
@@ -179,8 +219,8 @@ namespace
 
 		for (const ms::log::Entry& entry : lines)
 		{
-			// The lines that were looked at before only pass by; the filter runs on
-			// the ones that are new
+			// The lines that were looked at before only pass by; the switches and
+			// the filter run on the ones that are new
 			if (ordinal >= scanned && line_shown(entry) && contains_ignoring_case(entry.text, needle))
 				matches.push_back(ordinal);
 
@@ -213,37 +253,46 @@ namespace
 
 	void draw_toolbar(const ms::log::Locked& locked)
 	{
-		// One checkbox per severity and one per channel, so a noisy part of the log
+		// One switch per severity and one per channel, so a noisy part of the log
 		// can be switched off while the rest stays in sight, in the color its rows
-		// are drawn in
-		for (size_t i = 0; i < SEVERITYCOUNT; i++)
+		// are drawn in. Pressing one only starts the wait the filter runs after.
+		for (int severity = SEVERITYTOP; severity >= SEVERITYBOTTOM; severity--)
 		{
-			int severity = OFFEREDSEVERITIES[i];
-
-			if (i > 0)
+			if (severity != SEVERITYTOP)
 				ImGui::SameLine();
 
 			ImGui::PushStyleColor(ImGuiCol_Text, line_color(severity, ms::log::Channel::CLIENT));
-			ImGui::Checkbox(ms::log::severity_name(severity), &severityshown[severity]);
+
+			if (ImGui::Checkbox(ms::log::severity_name(severity), &severityshown[severity]))
+				touch_filter();
+
 			ImGui::PopStyleColor();
 		}
 
-		for (size_t i = 0; i < CHANNELCOUNT; i++)
+		// The channels the log has, walked rather than listed, so one that is added
+		// to ms::log::Channel is offered here without a change to this file; the
+		// first of them starts the row of its own
+		for (size_t index = 0; index < static_cast<size_t>(ms::log::Channel::COUNT); index++)
 		{
-			ms::log::Channel channel = OFFEREDCHANNELS[i];
+			ms::log::Channel channel = static_cast<ms::log::Channel>(index);
 
-			if (i > 0)
+			if (index > 0)
 				ImGui::SameLine();
 
 			ImGui::PushStyleColor(ImGuiCol_Text, line_color(spdlog::level::info, channel));
-			ImGui::Checkbox(ms::log::channel_name(channel), &channelshown[static_cast<size_t>(channel)]);
+
+			if (ImGui::Checkbox(ms::log::channel_name(channel), &channelshown[index]))
+				touch_filter();
+
 			ImGui::PopStyleColor();
 		}
 
 		ImGui::Checkbox("Follow", &follow);
 
 		ImGui::SetNextItemWidth(220.0f);
-		ImGui::InputTextWithHint("##filter", "filter", filtertext, IM_ARRAYSIZE(filtertext));
+
+		if (ImGui::InputTextWithHint("##filter", "filter", filtertext, IM_ARRAYSIZE(filtertext)))
+			touch_filter();
 
 		ImGui::SameLine();
 

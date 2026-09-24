@@ -357,7 +357,7 @@ namespace ms
 				}
 				else
 				{
-					std::cout << "log: '" << name << "' is no level; the names are trace, debug, info, warn, error and off" << std::endl;
+					std::cout << "log: '" << name << "' is no level; the names are trace, debug, info, warn, error, critical and off" << std::endl;
 				}
 			}
 			else if (args == "on" || args.empty())
