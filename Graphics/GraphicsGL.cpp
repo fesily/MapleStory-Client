@@ -144,8 +144,8 @@ namespace ms
 		if (GLenum error = glewInit())
 			return Error(Error::Code::GLEW, (const char*)glewGetErrorString(error));
 
-		LOG(LOG_INFO, "Using OpenGL " << glGetString(GL_VERSION));
-		LOG(LOG_INFO, "Using GLEW " << glewGetString(GLEW_VERSION));
+		LOG(LOG_INFO, "Using OpenGL {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+		LOG(LOG_INFO, "Using GLEW {}", reinterpret_cast<const char*>(glewGetString(GLEW_VERSION)));
 
 		if (FT_Init_FreeType(&ftlibrary))
 			return Error::Code::FREETYPE;
@@ -156,7 +156,7 @@ namespace ms
 
 		FT_Library_Version(ftlibrary, &ftmajor, &ftminor, &ftpatch);
 
-		LOG(LOG_INFO, "Using FreeType " << ftmajor << "." << ftminor << "." << ftpatch);
+		LOG(LOG_INFO, "Using FreeType {}.{}.{}", ftmajor, ftminor, ftpatch);
 
 		// Build and compile our shader program
 		// ------------------------------------
@@ -311,14 +311,14 @@ namespace ms
 		// i.e. with blank text, so say it instead of failing silently
 		if (FT_New_Face(ftlibrary, name, 0, &face))
 		{
-			LOG(LOG_ERROR, "Font [" << name << "] could not be loaded, all text is blank");
+			LOG(LOG_ERROR, "Font [{}] could not be loaded, all text is blank", name);
 
 			return false;
 		}
 
 		if (FT_Set_Pixel_Sizes(face, pixelw, pixelh))
 		{
-			LOG(LOG_ERROR, "Font [" << name << "] size " << pixelh << " could not be set, all text is blank");
+			LOG(LOG_ERROR, "Font [{}] size {} could not be set, all text is blank", name, pixelh);
 
 			FT_Done_Face(face);
 
@@ -356,7 +356,7 @@ namespace ms
 			}
 			else if (log_once(cjkname))
 			{
-				LOG(LOG_ERROR, "Fallback font [" << cjkname << "] could not be loaded, characters the main font lacks cannot be rendered");
+				LOG(LOG_ERROR, "Fallback font [{}] could not be loaded, characters the main font lacks cannot be rendered", cjkname);
 			}
 		}
 
@@ -397,8 +397,8 @@ namespace ms
 		// The pitch is frozen (FONT_LINESPACES), the ink height is kept for the log below
 		fonts[id] = Font(width, height, FONT_LINESPACES[id]);
 
-		LOG(LOG_DEBUG, "Font [" << name << "] size " << pixelh << ": ink rows " << height
-			<< ", line pitch " << FONT_LINESPACES[id]);
+		LOG(LOG_DEBUG, "Font [{}] size {}: ink rows {}, line pitch {}",
+			name, pixelh, height, FONT_LINESPACES[id]);
 
 		GLshort ox = x;
 		GLshort oy = y;
@@ -428,17 +428,17 @@ namespace ms
 		if (log_once(name))
 		{
 			if (FT_Get_Char_Index(face, 0x4E2D) == 0)
-				LOG(LOG_WARN, "Font [" << name << "] has no CJK glyphs, non-ASCII text from the server cannot be rendered");
+				LOG(LOG_WARN, "Font [{}] has no CJK glyphs, non-ASCII text from the server cannot be rendered", name);
 			else
-				LOG(LOG_INFO, "Font [" << name << "] provides CJK glyphs");
+				LOG(LOG_INFO, "Font [{}] provides CJK glyphs", name);
 		}
 
 		if (cjkfaces[id] && log_once(cjkname))
 		{
 			if (FT_Get_Char_Index(cjkfaces[id], 0x4E2D) == 0)
-				LOG(LOG_WARN, "Fallback font [" << cjkname << "] has no CJK glyphs");
+				LOG(LOG_WARN, "Fallback font [{}] has no CJK glyphs", cjkname);
 			else
-				LOG(LOG_INFO, "Fallback font [" << cjkname << "] provides the characters the main font lacks");
+				LOG(LOG_INFO, "Fallback font [{}] provides the characters the main font lacks", cjkname);
 		}
 
 		return true;
@@ -471,7 +471,7 @@ namespace ms
 			}
 			else
 			{
-				LOG(LOG_DEBUG, "Font [" << id << "] has no glyph for codepoint [" << codepoint << "]");
+				LOG(LOG_DEBUG, "Font [{}] has no glyph for codepoint [{}]", static_cast<int>(id), codepoint);
 
 				return font.chars.emplace(codepoint, blank).first->second;
 			}
@@ -479,7 +479,7 @@ namespace ms
 
 		if (FT_Load_Char(face, codepoint, FT_LOAD_RENDER))
 		{
-			LOG(LOG_WARN, "Font [" << id << "] failed to load codepoint [" << codepoint << "]");
+			LOG(LOG_WARN, "Font [{}] failed to load codepoint [{}]", static_cast<int>(id), codepoint);
 
 			return font.chars.emplace(codepoint, blank).first->second;
 		}
@@ -728,13 +728,13 @@ namespace ms
 			}
 		}
 
-#if LOG_LEVEL >= LOG_TRACE
+#if LOG_TRACE_STATS
 		size_t used = ATLASW * border.y() + border.x() * yrange.second();
 
 		double usedpercent = static_cast<double>(used) / (ATLASW * ATLASH);
 		double wastedpercent = static_cast<double>(wasted) / used;
 
-		LOG(LOG_TRACE, "Used: [" << usedpercent << "] Wasted: [" << wastedpercent << "]");
+		LOG(LOG_TRACE, "Used: [{}] Wasted: [{}]", usedpercent, wastedpercent);
 #endif
 
 		// The atlas has to be the bound texture here: flush() leaves the texture of the
@@ -1348,7 +1348,7 @@ namespace ms
 
 		framecount++;
 
-#if LOG_LEVEL >= LOG_TRACE
+#if LOG_TRACE_STATS
 		// The share of the atlas and the memory used by the large canvases are reported
 		// every few frames, next to how much was uploaded and dropped since the last log
 		if (framecount % STATSINTERVAL == 0)
@@ -1356,9 +1356,8 @@ namespace ms
 			size_t used = ATLASW * border.y() + border.x() * yrange.second();
 			double usedpercent = static_cast<double>(used) / (ATLASW * ATLASH) * 100.0;
 
-			LOG(LOG_TRACE, "Atlas: [" << usedpercent << "%], direct textures: " << directtextures.size()
-				<< " [" << directbytes / (1024 * 1024) << " MB], atlas uploads: " << atlasuploads
-				<< ", direct uploads: " << directuploads << ", direct evictions: " << directevictions);
+			LOG(LOG_TRACE, "Atlas: [{}%], direct textures: {} [{} MB], atlas uploads: {}, direct uploads: {}, direct evictions: {}",
+				usedpercent, directtextures.size(), directbytes / (1024 * 1024), atlasuploads, directuploads, directevictions);
 
 			atlasuploads = 0;
 			directuploads = 0;

@@ -101,7 +101,7 @@ namespace ms
 			}
 			catch (const PacketError& err)
 			{
-				LOG(LOG_NETWORK, err.what());
+				LOG(LOG_NETWORK, "{}", err.what());
 			}
 
 			pos = 0;

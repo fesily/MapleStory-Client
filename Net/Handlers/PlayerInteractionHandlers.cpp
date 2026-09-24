@@ -95,6 +95,6 @@ namespace ms
 		// The reads above cover everything charInfo sends (PacketCreator.java:2761-2790);
 		// anything left means the layout no longer matches the server
 		if (recv.length() > 0)
-			LOG(LOG_NETWORK, "[CharInfoHandler] " << recv.length() << " bytes left unconsumed");
+			LOG(LOG_NETWORK, "[CharInfoHandler] {} bytes left unconsumed", recv.length());
 	}
 }

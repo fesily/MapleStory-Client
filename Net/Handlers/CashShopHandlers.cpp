@@ -65,7 +65,7 @@ namespace ms
 			int32_t flags = recv.read_int();
 
 			if (flags & ~0x1FFFF)
-				LOG(LOG_NETWORK, "[SetCashShopHandler] Unknown commodity flags: " << flags);
+				LOG(LOG_NETWORK, "[SetCashShopHandler] Unknown commodity flags: {}", flags);
 
 			if (flags & ITEM_ID)
 				recv.skip_int();	// itemid
@@ -120,7 +120,7 @@ namespace ms
 
 		int16_t specialcashitem_size = recv.read_short();
 
-		LOG(LOG_NETWORK, "[SetCashShopHandler] Modified cash items: " << specialcashitem_size);
+		LOG(LOG_NETWORK, "[SetCashShopHandler] Modified cash items: {}", specialcashitem_size);
 
 		for (size_t i = 0; i < specialcashitem_size; i++)
 			parse_modified_cash_item(recv);

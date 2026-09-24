@@ -500,7 +500,7 @@ namespace
 				char line[192];
 				std::snprintf(line, sizeof(line), "prop@0x%zX depth %zu \"%s\"", reader.pos(), depth, name.c_str());
 				trace_budget--;
-				LOG(LOG_DEBUG, line);
+				LOG(LOG_DEBUG, "{}", line);
 			}
 #endif
 

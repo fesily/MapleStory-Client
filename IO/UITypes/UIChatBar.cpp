@@ -146,7 +146,7 @@ namespace ms
 
 		toggle_view(Setting<ChatViewMax>::get().load(), false);
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		dragarea_box = ColorBox(dragarea.x(), dragarea.y(), Color::Name::BLUE, 0.5f);
 		input_box = ColorBox(input_bg_x, input_bg_y, Color::Name::RED, 0.5f);
 #endif
@@ -195,7 +195,7 @@ namespace ms
 
 				input_text.draw(Point<int16_t>(1, -2), Point<int16_t>(1, -3));
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 				input_box.draw(pos);
 #endif
 			}
@@ -268,7 +268,7 @@ namespace ms
 
 		UIElement::draw(inter);
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		dimension_box.draw(get_position());
 		dragarea_box.draw(get_dragarea_position());
 
@@ -415,7 +415,7 @@ namespace ms
 								temp_view_y = pos.y();
 						}
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 						dimension = Point<int16_t>(user_view_x, top_y + center_y + bottom_y) + Point<int16_t>(0, temp_view_y);
 
 						dimension_box = ColorBox(dimension.x(), dimension.y(), Color::Name::RED, 0.5f);
@@ -461,7 +461,7 @@ namespace ms
 								temp_view_x = pos.x();
 						}
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 						dimension = Point<int16_t>(temp_view_x, top_y + center_y + bottom_y) + Point<int16_t>(0, user_view_y);
 
 						dimension_box = ColorBox(dimension.x(), dimension.y(), Color::Name::RED, 0.5f);
@@ -590,7 +590,7 @@ namespace ms
 							}
 						}
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 						dimension = Point<int16_t>(temp_view_x, top_y + center_y + bottom_y) + Point<int16_t>(0, temp_view_y);
 
 						dimension_box = ColorBox(dimension.x(), dimension.y(), Color::Name::RED, 0.5f);
@@ -875,7 +875,7 @@ namespace ms
 		else if (type == MessageType::WHITE)
 			color = Color::Name::WHITE;
 		else
-			LOG(LOG_DEBUG, "[UIChatBar::show_message]: " << type << " not supported.");
+			LOG(LOG_DEBUG, "[UIChatBar::show_message]: {} not supported.", static_cast<int>(type));
 
 		message_history.push_back(Message(MessageGroup::ALL, type, Text(Text::Font::A11M, Text::Alignment::LEFT, color, message)));
 	}
@@ -1106,7 +1106,7 @@ namespace ms
 			buttons[Buttons::BtMin]->set_position(Point<int16_t>(min_x - btMin_x, -top_y - center_y - user_view_y) + btMin_padding);
 		}
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		dimension_box = ColorBox(dimension.x(), dimension.y(), Color::Name::RED, 0.5f);
 		top_box = ColorBox(dimension.x(), 3, Color::Name::GREEN, 0.5f);
 		bottom_box = ColorBox(dimension.x(), 3, Color::Name::GREEN, 0.5f);

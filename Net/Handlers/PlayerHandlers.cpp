@@ -225,7 +225,7 @@ namespace ms
 				// Every set bit costs a value, even when the client has no name
 				// for the buff: the server wrote one for it.
 				if (bs == Buffstat::Id::NONE)
-					LOG(LOG_NETWORK, "Unknown buff bit in " << (first ? "first" : "second") << " mask: [" << bit << "]");
+					LOG(LOG_NETWORK, "Unknown buff bit in {} mask: [{}]", (first ? "first" : "second"), bit);
 
 				handle_buff(recv, bs);
 			}

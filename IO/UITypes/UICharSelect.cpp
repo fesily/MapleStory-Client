@@ -749,7 +749,7 @@ namespace ms
 			if (character.id == id)
 				return character;
 
-		LOG(LOG_DEBUG, "Invalid character id: [" << id << "]");
+		LOG(LOG_DEBUG, "Invalid character id: [{}]", id);
 
 		static const CharEntry null_character = { {}, {}, 0 };
 

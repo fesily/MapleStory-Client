@@ -61,7 +61,7 @@ namespace ms
 			return Id::DEC;
 		}
 
-		LOG(LOG_DEBUG, "Unknown InventoryType::Id value: [" << value << "]");
+		LOG(LOG_DEBUG, "Unknown InventoryType::Id value: [{}]", value);
 
 		return Id::NONE;
 	}

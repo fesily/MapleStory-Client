@@ -101,6 +101,7 @@ namespace ms
 		settings.emplace<LogSeconds>();
 		settings.emplace<LogLines>();
 		settings.emplace<LogFile>();
+		settings.emplace<LogLevel>();
 		settings.emplace<DebugUIScale>();
 		settings.emplace<LogFileMB>();
 

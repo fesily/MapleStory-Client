@@ -439,7 +439,7 @@ namespace ms
 				}
 				else
 				{
-					LOG(LOG_DEBUG, "Invalid mapping (" << mapping.type << ", " << mapping.action << ") for key [" << iter.first << "].");
+					LOG(LOG_DEBUG, "Invalid mapping ({}, {}) for key [{}].", static_cast<int>(mapping.type), mapping.action, iter.first);
 				}
 
 				if (icon)
@@ -617,7 +617,8 @@ namespace ms
 					}
 					else
 					{
-						LOG(LOG_DEBUG, "Invalid mapping (" << mapping.type << ", " << mapping.action << ") for key [" << key << "].");
+						LOG(LOG_DEBUG, "Invalid mapping ({}, {}) for key [{}].",
+							static_cast<int>(mapping.type), mapping.action, static_cast<int>(key));
 					}
 
 					if (icon)

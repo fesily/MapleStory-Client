@@ -51,7 +51,7 @@ namespace ms
 			if (id >= NORMAL && id <= VMOVEB)
 				return static_cast<Type>(id);
 
-			LOG(LOG_DEBUG, "Unknown Background::Type id: [" << id << "]");
+			LOG(LOG_DEBUG, "Unknown Background::Type id: [{}]", id);
 
 			return NORMAL;
 		}

@@ -94,7 +94,7 @@ namespace ms
 				{
 					if (!was_pressed)
 					{
-						LOG(LOG_NETWORK, "[MapNpcs] TALK_TO_NPC oid=[" << npc->get_oid() << "]");
+						LOG(LOG_NETWORK, "[MapNpcs] TALK_TO_NPC oid=[{}]", npc->get_oid());
 
 						TalkToNPCPacket(npc->get_oid()).dispatch();
 					}

@@ -162,7 +162,7 @@ namespace ms
 		Point<int16_t> bg_full_dimensions;
 		Point<int16_t> slot_pos;
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		Text slot_labels[128];
 #endif
 	};

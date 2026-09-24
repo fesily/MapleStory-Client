@@ -213,7 +213,7 @@ namespace ms
 			}
 
 			if (aliased > 0)
-				LOG(LOG_WARN, "[NxFiles] Single-package nx set: aliased " << aliased << " split root(s) to their package.");
+				LOG(LOG_WARN, "[NxFiles] Single-package nx set: aliased {} split root(s) to their package.", aliased);
 #endif
 
 			constexpr const char* POSTCHAOS_BITMAP = "Login.img/WorldSelect/BtChannel/layer:bg";
@@ -224,7 +224,7 @@ namespace ms
 				// Expected when the UI file comes from a pre-split client: the post-Chaos
 				// screens (login, world select) need a v154+ UI.nx, but the game data of the
 				// version 83 set is still worth running on, so report instead of refusing.
-				LOG(LOG_WARN, "[NxFiles] UI.nx is not the post-Chaos (v154+) file: '" << POSTCHAOS_BITMAP << "' is not a bitmap.");
+				LOG(LOG_WARN, "[NxFiles] UI.nx is not the post-Chaos (v154+) file: '{}' is not a bitmap.", POSTCHAOS_BITMAP);
 #else
 				return Error::Code::WRONG_UI_FILE;
 #endif

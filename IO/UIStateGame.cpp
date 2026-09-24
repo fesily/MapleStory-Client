@@ -393,7 +393,7 @@ namespace ms
 							}
 							default:
 							{
-								LOG(LOG_DEBUG, "Unknown KeyAction::Id action: [" << action << "]");
+								LOG(LOG_DEBUG, "Unknown KeyAction::Id action: [{}]", action);
 								break;
 							}
 						}

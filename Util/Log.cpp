@@ -18,26 +18,29 @@
 #include "Log.h"
 
 #include "../Configuration.h"
-#include "../MapleStory.h"
 
+#include <spdlog/details/os.h>
+#include <spdlog/pattern_formatter.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
+
+#include <array>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
-#include <fstream>
-#include <iostream>
-
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#endif
+#include <memory>
+#include <vector>
 
 namespace
 {
+	using ms::log::Channel;
+	using ms::log::Entry;
+
 	// The lines kept in memory, the newest at the back; droppedcount says how many
 	// were dropped in front of them, so a reader can tell a moved front from new
 	// lines, and keptbytes is what keeping them costs
-	std::deque<ms::log::Entry> kept;
+	std::deque<Entry> kept;
 	std::recursive_mutex keptmutex;
 	size_t keptbytes = 0;
 	size_t droppedcount = 0;
@@ -48,15 +51,23 @@ namespace
 	const size_t MAX_BYTES = 8 * 1024 * 1024;
 
 	// The file sink: log/client.log rolls over to client.1.log and that one to
-	// client.2.log, so the set holds the last LOGFILES * LogFileMB on the disk
+	// client.2.log, so the set holds the last LOGFILES * LogFileMB on the disk.
+	// spdlog keeps the file it writes plus ROTATEDFILES rolled over ones.
 	const char* LOGDIRECTORY = "log";
 	const char* LOGFILE = "log/client.log";
 	const size_t LOGFILES = 3;
+	const size_t ROTATEDFILES = LOGFILES - 1;
 
-	std::ofstream file;
-	size_t filesize = 0;
+	// The console prints the tag and the message, the file the time in front of it,
+	// as both did before the sinks were spdlog's
+	const char* CONSOLEPATTERN = "[%l]: %v";
+	const char* FILEPATTERN = "[%H:%M:%S.%e] [%l] %v";
 
-	// The settings the sink keeps its lines by
+	// Every sink ends its lines with a line feed, whatever spdlog defaults to on
+	// the platform it runs on
+	const char* LINEENDING = "\n";
+
+	// The settings the sinks keep their lines by
 	struct Retention
 	{
 		int64_t seconds;
@@ -86,88 +97,192 @@ namespace
 		return std::chrono::duration_cast<std::chrono::milliseconds>(clock::now().time_since_epoch()).count();
 	}
 
-	int64_t wall_ms()
+	// The logger a line went through: spdlog names it with the name the logger was
+	// built with, which is the channel name for the two loggers that are not the
+	// client's
+	Channel channel_of(const spdlog::string_view_t& name)
 	{
-		using clock = std::chrono::system_clock;
+		if (name == ms::log::channel_name(Channel::NETWORK))
+			return Channel::NETWORK;
 
-		return std::chrono::duration_cast<std::chrono::milliseconds>(clock::now().time_since_epoch()).count();
+		if (name == ms::log::channel_name(Channel::UI))
+			return Channel::UI;
+
+		return Channel::CLIENT;
 	}
 
-	void make_directory()
+	// The tag a line is printed under. spdlog's own %l says "warning" where the
+	// client says "WARN" and knows no name for a line the network or the ui
+	// logger wrote, and the sinks of the client print what they printed before
+	// spdlog replaced them.
+	class TagFlag : public spdlog::custom_flag_formatter
 	{
-#ifdef _WIN32
-		_mkdir(LOGDIRECTORY);
-#else
-		mkdir(LOGDIRECTORY, 0755);
-#endif
-	}
-
-	std::string rolled_name(size_t index)
-	{
-		return std::string("log/client.") + std::to_string(index) + ".log";
-	}
-
-	void open_file()
-	{
-		make_directory();
-
-		file.open(LOGFILE, std::ios::binary | std::ios::app);
-
-		filesize = 0;
-
-		// A file left over from an earlier run keeps the size it grew to, so the
-		// rollover still happens at the point the setting names
-		if (file.is_open())
+	public:
+		void format(const spdlog::details::log_msg& msg, const std::tm&, spdlog::memory_buf_t& dest) override
 		{
-			file.seekp(0, std::ios::end);
+			const char* tag = ms::log::line_tag(static_cast<int>(msg.level), channel_of(msg.logger_name));
 
-			filesize = static_cast<size_t>(file.tellp());
+			dest.append(tag, tag + std::strlen(tag));
 		}
-	}
 
-	// Make the next file the current one and drop the oldest of the set
-	void roll_file()
+		std::unique_ptr<spdlog::custom_flag_formatter> clone() const override
+		{
+			return spdlog::details::make_unique<TagFlag>();
+		}
+	};
+
+	// The formatter compiles its pattern with the flags it is built with, so the
+	// tag flag has to be handed to the constructor: adding it afterwards would
+	// leave the pattern built with spdlog's own %l, which prints "warning" where
+	// the client says "WARN"
+	std::unique_ptr<spdlog::formatter> make_formatter(const char* pattern)
 	{
-		file.close();
+		spdlog::pattern_formatter::custom_flags tags;
 
-		std::remove(rolled_name(LOGFILES - 1).c_str());
+		tags['l'] = std::make_unique<TagFlag>();
 
-		for (size_t index = LOGFILES - 2; index > 0; index--)
-			std::rename(rolled_name(index).c_str(), rolled_name(index + 1).c_str());
-
-		std::rename(LOGFILE, rolled_name(1).c_str());
-
-		open_file();
+		return std::make_unique<spdlog::pattern_formatter>(
+			std::string(pattern),
+			spdlog::pattern_time_type::local,
+			std::string(LINEENDING),
+			std::move(tags)
+		);
 	}
 
-	void write_file(int level, int64_t stamp, const std::string& message)
+	// One line as the window keeps it: the time and the tag are added when it is
+	// drawn, so the lines are kept the way they were written
+	void keep(const spdlog::details::log_msg& msg)
 	{
 		const Retention& kept_by = retention();
 
-		if (!kept_by.tofile || kept_by.filebytes == 0)
-			return;
+		int64_t stamp = std::chrono::duration_cast<std::chrono::milliseconds>(msg.time.time_since_epoch()).count();
+		int64_t now = steady_ms();
 
-		if (!file.is_open())
-			open_file();
+		std::lock_guard<std::recursive_mutex> lock(keptmutex);
 
-		if (!file.is_open())
-			return;
+		Entry entry;
 
-		if (filesize + message.size() >= kept_by.filebytes)
-			roll_file();
+		entry.steady_ms = now;
+		entry.wall_ms = stamp;
+		entry.level = static_cast<int>(msg.level);
+		entry.channel = channel_of(msg.logger_name);
+		entry.text.assign(msg.payload.data(), msg.payload.size());
 
-		char clock[13];
+		keptbytes += entry.text.size();
 
-		ms::log::format_clock(stamp, clock, sizeof(clock));
+		kept.push_back(std::move(entry));
 
-		std::string line = std::string("[") + clock + "] [" + ms::log::level_name(level) + "] " + message + '\n';
+		// Drop what is older than the window and what is past the caps, oldest
+		// first, so both the memory and the time the buffer covers stay bounded
+		int64_t oldest = now - kept_by.seconds * 1000;
 
-		file.write(line.data(), static_cast<std::streamsize>(line.size()));
-		// Flushed per line, so the lines leading up to a crash are on the disk
-		// already; the client writes few enough of them for the cost not to matter
-		file.flush();
+		while (!kept.empty() && (kept.size() > kept_by.lines || keptbytes > MAX_BYTES || kept.front().steady_ms < oldest))
+		{
+			keptbytes -= kept.front().text.size();
 
-		filesize += line.size();
+			kept.pop_front();
+			droppedcount++;
+		}
+	}
+
+	// The sink the log window reads: the lines are kept in the buffer above
+	// instead of being formatted, and the window draws them from there
+	class WindowSink : public spdlog::sinks::sink
+	{
+	public:
+		void log(const spdlog::details::log_msg& msg) override
+		{
+			keep(msg);
+		}
+
+		void flush() override {}
+		void set_pattern(const std::string&) override {}
+		void set_formatter(std::unique_ptr<spdlog::formatter>) override {}
+	};
+
+	// The level the loggers run at: the setting, or the level the client always
+	// showed when the setting names no level
+	spdlog::level::level_enum configured_level()
+	{
+		spdlog::level::level_enum level;
+
+		if (!ms::log::parse_level(ms::Setting<ms::LogLevel>().get().load(), level))
+			level = spdlog::level::debug;
+
+		return level;
+	}
+
+	std::vector<spdlog::sink_ptr> make_sinks()
+	{
+		const Retention& kept_by = retention();
+
+		std::vector<spdlog::sink_ptr> sinks;
+
+		// The console sink keeps no handle of its own, so it writes nothing in a
+		// build that has no console attached
+		sinks.push_back(std::make_shared<spdlog::sinks::stderr_sink_mt>());
+		sinks.back()->set_formatter(make_formatter(CONSOLEPATTERN));
+
+		if (kept_by.tofile && kept_by.filebytes > 0)
+		{
+			spdlog::details::os::create_dir(SPDLOG_FILENAME_T(LOGDIRECTORY));
+
+			sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+				LOGFILE,
+				kept_by.filebytes,
+				ROTATEDFILES
+			));
+
+			sinks.back()->set_formatter(make_formatter(FILEPATTERN));
+		}
+
+		sinks.push_back(std::make_shared<WindowSink>());
+
+		return sinks;
+	}
+
+	// Whether the loggers are up: they are built with the first line that is
+	// logged, so a session that logs nothing opens nothing either
+	bool started = false;
+
+	// The level the loggers are built with: the one init() read from the settings,
+	// or the one the settings name when the first line comes before that
+	bool levelread = false;
+	spdlog::level::level_enum readlevel = spdlog::level::debug;
+
+	spdlog::level::level_enum pending_level()
+	{
+		return levelread ? readlevel : configured_level();
+	}
+
+	std::array<std::shared_ptr<spdlog::logger>, static_cast<size_t>(Channel::COUNT)>& loggers()
+	{
+		// One set of sinks for the three of them, so a line is written once and the
+		// three see it in the same order
+		static std::array<std::shared_ptr<spdlog::logger>, static_cast<size_t>(Channel::COUNT)> built = [] {
+			std::vector<spdlog::sink_ptr> sinks = make_sinks();
+			std::array<std::shared_ptr<spdlog::logger>, static_cast<size_t>(Channel::COUNT)> loggers;
+
+			for (size_t index = 0; index < loggers.size(); index++)
+			{
+				loggers[index] = std::make_shared<spdlog::logger>(
+					ms::log::channel_name(static_cast<Channel>(index)),
+					sinks.begin(),
+					sinks.end()
+				);
+
+				// An error and everything above it is on the disk as soon as it is
+				// written; the rest follows on the flush of the frame loop
+				loggers[index]->flush_on(spdlog::level::err);
+				loggers[index]->set_level(pending_level());
+			}
+
+			started = true;
+
+			return loggers;
+		}();
+
+		return built;
 	}
 }
 
@@ -175,27 +290,92 @@ namespace ms
 {
 	namespace log
 	{
-		const char* level_name(int level)
+		const char* severity_name(int severity)
 		{
-			switch (level)
+			switch (severity)
 			{
-				case LOG_ERROR:
+				case spdlog::level::err:
 					return "ERROR";
-				case LOG_WARN:
+				case spdlog::level::warn:
 					return "WARN";
-				case LOG_INFO:
+				case spdlog::level::info:
 					return "INFO";
-				case LOG_DEBUG:
+				case spdlog::level::debug:
 					return "DEBUG";
-				case LOG_NETWORK:
-					return "NETWORK";
-				case LOG_UI:
-					return "UI";
-				case LOG_TRACE:
+				case spdlog::level::trace:
 					return "TRACE";
 			}
 
 			return "UNDEFINED";
+		}
+
+		const char* channel_name(Channel channel)
+		{
+			switch (channel)
+			{
+				case Channel::CLIENT:
+					return "CLIENT";
+				case Channel::NETWORK:
+					return "NETWORK";
+				case Channel::UI:
+					return "UI";
+			}
+
+			return "UNDEFINED";
+		}
+
+		const char* line_tag(int severity, Channel channel)
+		{
+			return channel == Channel::CLIENT ? severity_name(severity) : channel_name(channel);
+		}
+
+		spdlog::logger& logger(Channel channel)
+		{
+			return *loggers()[static_cast<size_t>(channel)];
+		}
+
+		void init()
+		{
+			// The settings are read here, where they are up; the loggers take the
+			// level when the first line is logged, which is also when the file is
+			// opened, so a session that logs nothing opens nothing
+			readlevel = configured_level();
+			levelread = true;
+		}
+
+		void flush()
+		{
+			// Nothing was logged, so nothing is open
+			if (!started)
+				return;
+
+			// The three loggers share their sinks, so one of them flushes all of them
+			logger(Channel::CLIENT).flush();
+		}
+
+		void set_level(spdlog::level::level_enum level)
+		{
+			readlevel = level;
+			levelread = true;
+
+			// Before the first line there are no loggers to put it on
+			if (!started)
+				return;
+
+			for (size_t index = 0; index < static_cast<size_t>(Channel::COUNT); index++)
+				logger(static_cast<Channel>(index)).set_level(level);
+		}
+
+		bool parse_level(const std::string& name, spdlog::level::level_enum& level)
+		{
+			if (name.empty())
+				return false;
+
+			level = spdlog::level::from_str(name);
+
+			// from_str answers "off" for a name it does not know, so a real "off"
+			// has to be told apart from a typo
+			return level != spdlog::level::off || name == "off";
 		}
 
 		void format_clock(int64_t stamp, char* out, size_t size)
@@ -221,55 +401,6 @@ namespace ms
 				time.tm_sec,
 				static_cast<int>(stamp % 1000)
 			);
-		}
-
-		std::ostringstream& buffer()
-		{
-			// One buffer per thread: the read thread of the network and the game
-			// thread both log, and they would otherwise assemble into each other
-			static thread_local std::ostringstream out;
-
-			return out;
-		}
-
-		void write(int level, const std::string& message)
-		{
-			const Retention& kept_by = retention();
-
-			// The log goes to the error stream: what the console carries (stdin and
-			// stdout) is the command channel, so redirecting one of the two streams
-			// does not capture the other and the console window only shows commands
-			std::cerr << "[" << level_name(level) << "]: " << message << std::endl;
-
-			int64_t stamp = wall_ms();
-			int64_t now = steady_ms();
-
-			std::lock_guard<std::recursive_mutex> lock(keptmutex);
-
-			write_file(level, stamp, message);
-
-			Entry entry;
-
-			entry.steady_ms = now;
-			entry.wall_ms = stamp;
-			entry.level = level;
-			entry.text = message;
-
-			keptbytes += entry.text.size();
-
-			kept.push_back(std::move(entry));
-
-			// Drop what is older than the window and what is past the caps, oldest
-			// first, so both the memory and the time the buffer covers stay bounded
-			int64_t oldest = now - kept_by.seconds * 1000;
-
-			while (!kept.empty() && (kept.size() > kept_by.lines || keptbytes > MAX_BYTES || kept.front().steady_ms < oldest))
-			{
-				keptbytes -= kept.front().text.size();
-
-				kept.pop_front();
-				droppedcount++;
-			}
 		}
 
 		void clear()

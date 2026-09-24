@@ -41,7 +41,7 @@ namespace ms
 			if (opcode == Opcode::PONG)
 				LOG(LOG_NETWORK, "Sent Packet: PONG");
 			else
-				LOG(LOG_NETWORK, "Sent Packet: " << std::to_string(opcode));
+				LOG(LOG_NETWORK, "Sent Packet: {}", std::to_string(opcode));
 		}
 	}
 

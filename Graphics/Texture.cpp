@@ -88,7 +88,7 @@ namespace ms
 		{
 			// Not an image: the data holds something else at the path the caller
 			// wanted a canvas from
-			LOG(LOG_WARN, "[Texture] no image at " << nl::img_access::path(src));
+			LOG(LOG_WARN, "[Texture] no image at {}", nl::img_access::path(src));
 		}
 #endif
 	}

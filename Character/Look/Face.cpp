@@ -32,7 +32,7 @@ namespace ms
 		if (action < Expression::Id::LENGTH)
 			return static_cast<Id>(action);
 
-		LOG(LOG_DEBUG, "Unknown Expression::Id action: [" << action << "]");
+		LOG(LOG_DEBUG, "Unknown Expression::Id action: [{}]", action);
 
 		return Expression::Id::DEFAULT;
 	}

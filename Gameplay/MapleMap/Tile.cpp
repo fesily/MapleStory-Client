@@ -48,7 +48,7 @@ namespace ms
 			if (file == "Map")
 				dsrc = nl::nx::Map.resolve(path);
 			else
-				LOG(LOG_WARN, "Tile::Tile file not handled: " << file);
+				LOG(LOG_WARN, "Tile::Tile file not handled: {}", file);
 		}
 
 		texture = Texture(dsrc);

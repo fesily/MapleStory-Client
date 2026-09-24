@@ -120,9 +120,8 @@ namespace ms
 				// The server drops movement packets with an unknown command
 				// (AbstractMovementPacketHandler.java:255-257), so a relayed blob
 				// cannot contain one.
-				LOG(LOG_NETWORK, "[MovementParser] Unknown movement command "
-					<< static_cast<uint16_t>(fragment.command) << ", "
-					<< recv.length() << " bytes left unparsed");
+				LOG(LOG_NETWORK, "[MovementParser] Unknown movement command {}, {} bytes left unparsed",
+					static_cast<uint16_t>(fragment.command), recv.length());
 
 				movements.push_back(fragment);
 				return movements;

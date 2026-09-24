@@ -71,7 +71,7 @@ namespace ms
 			{
 				if (!is_directory(configured))
 				{
-					LOG(LOG_ERROR, "DataPath is not a directory: " << configured);
+					LOG(LOG_ERROR, "DataPath is not a directory: {}", configured);
 					return std::string();
 				}
 
@@ -96,7 +96,7 @@ namespace ms
 
 			nl::img_set_data_dir(directory);
 			nl::img_set_trace_missing(Setting<TraceMissing>::get().load());
-			LOG(LOG_INFO, "[ImgLib] data folder: " << nl::img_data_dir());
+			LOG(LOG_INFO, "[ImgLib] data folder: {}", nl::img_data_dir());
 
 			try
 			{

@@ -152,7 +152,7 @@ namespace ms
 			}
 		);
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		for (size_t i = 0; i < max_full_slots; i++)
 			slot_labels[i] = Text(Text::Font::A11M, Text::Alignment::LEFT, Color::Name::BLACK, std::to_string(i + 1));
 #endif
@@ -213,7 +213,7 @@ namespace ms
 					disabled.draw(position + slotpos);
 			}
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 			if (i <= lastslot && i < max_full_slots)
 				slot_labels[i].draw(position + get_slotpos(i + 1) - Point<int16_t>(0, 5));
 #endif
@@ -413,7 +413,7 @@ namespace ms
 
 							if (equipslot == EquipSlot::Id::NONE)
 							{
-								LOG(LOG_DEBUG, "Could not find appropriate EquipSlot::Id for item [" << item_id << "]. Equip would be dropped.");
+								LOG(LOG_DEBUG, "Could not find appropriate EquipSlot::Id for item [{}]. Equip would be dropped.", item_id);
 								break;
 							}
 
@@ -915,12 +915,8 @@ namespace ms
 		if (cur_x < xmin || cur_x > xmax || cur_y < ymin || cur_y > ymax)
 			slot = 0;
 
-		LOG(LOG_UI,
-			"Slot: " << slot << " Col: " << col << " Row: " << row << " "
-			<< cur_x << " < (" << xmin << ") || "
-			<< cur_x << " > (" << xmax << ") || "
-			<< cur_y << " < (" << ymin << ") && "
-			<< cur_y << " > (" << ymax << ")");
+		LOG(LOG_UI, "Slot: {} Col: {} Row: {} {} < ({}) || {} > ({}) || {} < ({}) && {} > ({})",
+			slot, col, row, cur_x, xmin, cur_x, xmax, cur_y, ymin, cur_y, ymax);
 
 		if (is_visible(slot))
 			return slot;

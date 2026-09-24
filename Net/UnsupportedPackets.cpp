@@ -77,16 +77,16 @@ namespace ms
 			{
 				// The layout mirrored here no longer matches the server. The packet is
 				// unused anyway, so the remaining bytes are dropped after saying so.
-				LOG(LOG_DEBUG, "[Unsupported] Opcode [" << name << "] payload parse failed: " << err.what()
-					<< " (capability not implemented)");
+				LOG(LOG_DEBUG, "[Unsupported] Opcode [{}] payload parse failed: {} (capability not implemented)",
+					name, err.what());
 
 				return true;
 			}
 
 			size_t read = available - recv.length();
 
-			LOG(LOG_DEBUG, "[Unsupported] Opcode [" << name << "] payload parsed (" << read << " of " << available
-				<< " bytes, " << recv.length() << " left), capability not implemented");
+			LOG(LOG_DEBUG, "[Unsupported] Opcode [{}] payload parsed ({} of {} bytes, {} left), capability not implemented",
+				name, read, available, recv.length());
 
 			return true;
 		}

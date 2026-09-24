@@ -81,7 +81,7 @@ namespace ms
 		std::map<int32_t, std::function<void(void)>> callbacks;
 		std::function<void(void)> ontext;
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		ColorBox boundsoutline;
 #endif
 	};

@@ -51,6 +51,11 @@ namespace ms
 {
 	namespace
 	{
+		// How many frames the log waits before it pushes its lines to the file.
+		// Flushing after every line would make the frame time depend on the disk,
+		// and a line of the error level is on the disk as soon as it is written.
+		const int64_t LOGFLUSHFRAMES = 120;
+
 		// ---- commands of the debug console ----
 
 		// The NPCs the server spawned on this map
@@ -337,6 +342,24 @@ namespace ms
 
 				std::cout << "log: window hidden, 'log on' shows it again" << std::endl;
 			}
+			else if (args == "level" || args.rfind("level ", 0) == 0)
+			{
+				// The level decides what reaches the sinks at all; the checkboxes of
+				// the window only narrow down what is already there
+				std::string name = args == "level" ? std::string() : args.substr(6);
+				spdlog::level::level_enum level;
+
+				if (log::parse_level(name, level))
+				{
+					log::set_level(level);
+
+					std::cout << "log: the level is " << name << std::endl;
+				}
+				else
+				{
+					std::cout << "log: '" << name << "' is no level; the names are trace, debug, info, warn, error and off" << std::endl;
+				}
+			}
 			else if (args == "on" || args.empty())
 			{
 				debugui::set_log_visible(true);
@@ -345,7 +368,7 @@ namespace ms
 			}
 			else
 			{
-				std::cout << "Usage: log [on|off|clear]" << std::endl;
+				std::cout << "Usage: log [on|off|clear|level <name>]" << std::endl;
 			}
 		}
 
@@ -390,7 +413,7 @@ namespace ms
 				{ "center", "", "open the server's center UI (NPC 9900001)", command_center },
 				{ "chat", "<text>", "send a chat line, '!' starts a server command", command_chat },
 				{ "console", "[on|off|clear]", "show or hide the command window, or drop what it shows", command_console },
-				{ "log", "[on|off|clear]", "show or hide the log window, or clear the lines it keeps", command_log },
+				{ "log", "[on|off|clear|level <name>]", "show or hide the log window, drop the lines it keeps, or put the log on a level", command_log },
 				{ "mobs", "", "list the mobs on this map", command_mobs },
 				{ "npcs", "", "list the NPCs on this map", command_npcs },
 				{ "npctalk", "<file|text>", "show an NPC dialog of a local text", command_npctalk },
@@ -472,6 +495,7 @@ namespace ms
 
 		int64_t period = 0;
 		int32_t samples = 0;
+		int64_t frames = 0;
 
 		bool show_fps = Configuration::get().get_show_fps();
 
@@ -490,6 +514,11 @@ namespace ms
 			float alpha = static_cast<float>(accumulator) / timestep;
 			draw(alpha);
 
+			// The lines the sinks hold are pushed to the file every so many frames,
+			// which is what keeps the frame time from depending on the disk
+			if (++frames % LOGFLUSHFRAMES == 0)
+				log::flush();
+
 			if (show_fps)
 			{
 				if (samples < 100)
@@ -501,7 +530,7 @@ namespace ms
 				{
 					int64_t fps = (samples * 1000000) / period;
 
-					LOG(LOG_INFO, "FPS: " << fps);
+					LOG(LOG_INFO, "FPS: {}", fps);
 
 					period = 0;
 					samples = 0;
@@ -514,6 +543,10 @@ namespace ms
 
 	void start()
 	{
+		// The log is up before the first line is written: it reads its settings
+		// here and opens its file, so everything this session writes is kept
+		log::init();
+
 		// The console collects what the client prints from here on, so its window
 		// shows the whole session, a start that ends in an error included
 		console_window::attach_output();
@@ -526,9 +559,9 @@ namespace ms
 			bool can_retry = error.can_retry();
 
 			if (args && args[0])
-				LOG(LOG_ERROR, message << args);
+				LOG(LOG_ERROR, "{}{}", message, args);
 			else
-				LOG(LOG_ERROR, message);
+				LOG(LOG_ERROR, "{}", message);
 
 			if (can_retry)
 				LOG(LOG_INFO, "Enter 'retry' to try again.");
@@ -556,6 +589,10 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 {
 	ms::HardwareInfo();
 	ms::start();
+
+	// The last lines are on the disk before the sinks are closed by the end of
+	// the process
+	ms::log::flush();
 
 	return 0;
 }

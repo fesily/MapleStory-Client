@@ -38,7 +38,7 @@ namespace ms
 			}
 			catch (const std::exception& ex)
 			{
-				LOG(LOG_ERROR, __func__ << ": " << ex.what());
+				LOG(LOG_ERROR, "{}: {}", __func__, ex.what());
 				continue;
 			}
 
@@ -54,7 +54,7 @@ namespace ms
 					}
 					catch (const std::exception& ex)
 					{
-						LOG(LOG_ERROR, __func__ << ": " << ex.what());
+						LOG(LOG_ERROR, "{}: {}", __func__, ex.what());
 						continue;
 					}
 

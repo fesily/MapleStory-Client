@@ -192,8 +192,8 @@ namespace ms
 
 					stylescaled = true;
 
-					LOG(LOG_INFO, "Debug windows: scale " << (xscale * asked)
-						<< " (desktop " << xscale << ", setting " << percent << "%)");
+					LOG(LOG_INFO, "Debug windows: scale {} (desktop {}, setting {}%)",
+						(xscale * asked), xscale, percent);
 				}
 			}
 
@@ -231,7 +231,7 @@ namespace ms
 			{
 				if (!(monitor.DpiScale > 0.0f && monitor.DpiScale < 99.0f))
 				{
-					LOG(LOG_WARN, "Debug windows: a monitor reports a scale of " << monitor.DpiScale << ", the windows are drawn at 1");
+					LOG(LOG_WARN, "Debug windows: a monitor reports a scale of {}, the windows are drawn at 1", monitor.DpiScale);
 
 					monitor.DpiScale = 1.0f;
 				}

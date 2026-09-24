@@ -28,7 +28,7 @@ namespace ms
 		Id by_id(size_t id)
 		{
 			if (id >= LENGTH)
-				LOG(LOG_DEBUG, "Unknown MapleStat::Id id: [" << id << "]");
+				LOG(LOG_DEBUG, "Unknown MapleStat::Id id: [{}]", id);
 
 			return static_cast<Id>(id);
 		}

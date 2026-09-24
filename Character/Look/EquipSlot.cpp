@@ -29,7 +29,7 @@ namespace ms
 		{
 			if (id >= Id::LENGTH)
 			{
-				LOG(LOG_DEBUG, "Unknown EquipSlot::Id id: [" << id << "]");
+				LOG(LOG_DEBUG, "Unknown EquipSlot::Id id: [{}]", id);
 
 				return Id::NONE;
 			}

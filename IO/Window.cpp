@@ -52,7 +52,7 @@ namespace ms
 
 	void error_callback(int no, const char* description)
 	{
-		LOG(LOG_ERROR, "GLFW error [" << no << "]: " << description);
+		LOG(LOG_ERROR, "GLFW error [{}]: {}", no, description);
 	}
 
 	void key_callback(GLFWwindow*, int key, int, int action, int)
@@ -169,7 +169,7 @@ namespace ms
 		// display scaling applied
 		ScreenResolution();
 
-		LOG(LOG_INFO, "Desktop size: " << Configuration::get().get_max_width() << 'x' << Configuration::get().get_max_height());
+		LOG(LOG_INFO, "Desktop size: {}{}{}", Configuration::get().get_max_width(), 'x', Configuration::get().get_max_height());
 
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 		context = glfwCreateWindow(1, 1, "", nullptr, nullptr);
@@ -329,7 +329,7 @@ namespace ms
 			{
 				fullscreen = true;
 
-				LOG(LOG_INFO, "Full screen: on, " << new_width << 'x' << new_height << " is at or above the desktop size");
+				LOG(LOG_INFO, "Full screen: on, {}{}{} is at or above the desktop size", new_width, 'x', new_height);
 			}
 
 			initwindow();
@@ -423,7 +423,7 @@ namespace ms
 
 		if (!out.is_open())
 		{
-			LOG(LOG_WARN, "shot: " << path << " cannot be written");
+			LOG(LOG_WARN, "shot: {} cannot be written", path);
 
 			return;
 		}
@@ -446,7 +446,7 @@ namespace ms
 			out.write(row.data(), static_cast<std::streamsize>(row.size()));
 		}
 
-		LOG(LOG_INFO, "shot: " << path << " written");
+		LOG(LOG_INFO, "shot: {} written", path);
 	}
 
 	void Window::fadeout(float step, std::function<void()> fadeproc)
@@ -479,7 +479,7 @@ namespace ms
 			fullscreen = !fullscreen;
 			Setting<Fullscreen>::get().save(fullscreen);
 
-			LOG(LOG_INFO, "Full screen: " << (fullscreen ? "on" : "off"));
+			LOG(LOG_INFO, "Full screen: {}", (fullscreen ? "on" : "off"));
 
 			// The window is created again in check_events, once the event which asked
 			// for it has been dispatched
@@ -487,7 +487,8 @@ namespace ms
 		}
 		else
 		{
-			LOG(LOG_INFO, "Full screen: not toggled, " << width << 'x' << height << " is not below the desktop size " << max_width << 'x' << max_height);
+			LOG(LOG_INFO, "Full screen: not toggled, {}{}{} is not below the desktop size {}{}{}",
+				width, 'x', height, max_width, 'x', max_height);
 		}
 	}
 }

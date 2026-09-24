@@ -157,7 +157,7 @@ namespace ms
 			return;
 
 		// This client has no UI for the world status yet
-		LOG(LOG_NETWORK, "[ServerStatusHandler] World status: [" << status << "]");
+		LOG(LOG_NETWORK, "[ServerStatusHandler] World status: [{}]", status);
 
 		if (status == 2)
 		{

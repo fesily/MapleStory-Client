@@ -282,7 +282,7 @@ namespace
 					}
 				}
 
-				LOG(LOG_INFO, "[ImgLib] takes over: " << loose->path << (loose->kind == nl::IMG_FILE ? " (image)" : ""));
+				LOG(LOG_INFO, "[ImgLib] takes over: {}{}", loose->path, loose->kind == nl::IMG_FILE ? " (image)" : "");
 				continue;
 			}
 
@@ -416,7 +416,7 @@ namespace nl
 		// Nothing answered: with TraceMissing on this is the line that says which
 		// resource a screen asked for
 		if (g_trace_missing)
-			LOG(LOG_WARN, "[ImgLib] no node: " << img_prop_path(prop) << "/" << name);
+			LOG(LOG_WARN, "[ImgLib] no node: {}/{}", img_prop_path(prop), name);
 
 		return nullptr;
 	}
@@ -522,7 +522,7 @@ namespace nl
 
 			if (!has_directory && nx_file < 0)
 			{
-				LOG(LOG_WARN, "[ImgLib] no data for " << name << ": neither " << stem << " nor " << name << ".nx exists");
+				LOG(LOG_WARN, "[ImgLib] no data for {}: neither {} nor {}.nx exists", name, stem, name);
 				continue;
 			}
 
@@ -545,7 +545,9 @@ namespace nl
 					prop->nx_kids = record.num;
 			}
 
-			LOG(LOG_INFO, "[ImgLib] " << name << ": " << (has_directory ? ("img(" + stem + ")") : "") << (has_directory && nx_file >= 0 ? " + " : "") << (nx_file >= 0 ? ("nx(" + nx_path + ")") : ""));
+			LOG(LOG_INFO, "[ImgLib] {}: {}{}{}",
+				name, has_directory ? ("img(" + stem + ")") : "", has_directory && nx_file >= 0 ? " + " : "",
+				nx_file >= 0 ? ("nx(" + nx_path + ")") : "");
 
 			g_roots[name] = prop.get();
 			g_root_storage.emplace_back(std::move(prop));
@@ -554,7 +556,7 @@ namespace nl
 
 	void img_log_error(std::string const& message)
 	{
-		LOG(LOG_ERROR, message);
+		LOG(LOG_ERROR, "{}", message);
 		OutputDebugStringA((message + "\n").c_str());
 	}
 }

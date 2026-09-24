@@ -39,7 +39,7 @@ namespace ms
 
 			if (rescode != 0)
 			{
-				LOG(LOG_NETWORK, "[NpcDialogueHandler] Quiz failed with answer code " << (int)rescode);
+				LOG(LOG_NETWORK, "[NpcDialogueHandler] Quiz failed with answer code {}", (int)rescode);
 				return "";
 			}
 
@@ -50,8 +50,8 @@ namespace ms
 			int16_t maxinput = recv.read_short();
 			int32_t remaining = recv.read_int();
 
-			LOG(LOG_NETWORK, "[NpcDialogueHandler] Quiz '" << title << "' is not wired up: answer between "
-				<< mininput << " and " << maxinput << ", " << remaining << " ms to answer");
+			LOG(LOG_NETWORK, "[NpcDialogueHandler] Quiz '{}' is not wired up: answer between {} and {}, {} ms to answer",
+				title, mininput, maxinput, remaining);
 
 			return problem;
 		}
@@ -67,8 +67,8 @@ namespace ms
 		dialogue.msgtype = recv.read_byte();
 		dialogue.speaker = recv.read_byte();
 
-		LOG(LOG_NETWORK, "[NpcDialogueHandler] npc=[" << dialogue.npcid << "] msgType=["
-			<< static_cast<int32_t>(dialogue.msgtype) << "] speaker=[" << static_cast<int32_t>(dialogue.speaker) << "]");
+		LOG(LOG_NETWORK, "[NpcDialogueHandler] npc=[{}] msgType=[{}] speaker=[{}]",
+			dialogue.npcid, static_cast<int32_t>(dialogue.msgtype), static_cast<int32_t>(dialogue.speaker));
 
 		if (dialogue.msgtype == 0x06)
 		{
@@ -135,8 +135,8 @@ namespace ms
 					for (int8_t i = 0; i < count; i++)
 						recv.skip_int();	// style
 
-					LOG(LOG_NETWORK, "[NpcDialogueHandler] Cosmetic style dialog with " << (int)count
-						<< " styles is not wired up");
+					LOG(LOG_NETWORK, "[NpcDialogueHandler] Cosmetic style dialog with {} styles is not wired up",
+						(int)count);
 				}
 				else
 				{
@@ -144,7 +144,7 @@ namespace ms
 					if (count == 0 && recv.length() >= 20)
 						recv.skip(20);	// type, answer, correct, remaining and time to answer
 
-					LOG(LOG_NETWORK, "[NpcDialogueHandler] Speed quiz is not wired up, answer code " << (int)count);
+					LOG(LOG_NETWORK, "[NpcDialogueHandler] Speed quiz is not wired up, answer code {}", (int)count);
 				}
 
 				break;
@@ -156,8 +156,8 @@ namespace ms
 		}
 
 		if (recv.length() > 0)
-			LOG(LOG_NETWORK, "[NpcDialogueHandler] msgType " << (int)dialogue.msgtype << ": "
-				<< recv.length() << " unconsumed bytes");
+			LOG(LOG_NETWORK, "[NpcDialogueHandler] msgType {}: {} unconsumed bytes",
+				(int)dialogue.msgtype, recv.length());
 
 		UI::get().emplace<UINpcTalk>();
 		UI::get().enable();
@@ -223,7 +223,7 @@ namespace ms
 			{
 				// The transaction went through; with a bought, sold or recharged item
 				// the server also sends the inventory change
-				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Transaction done, result code " << (int)code);
+				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Transaction done, result code {}", (int)code);
 				break;
 			}
 			case 0x01:
@@ -248,7 +248,7 @@ namespace ms
 			case 0x06:
 			case 0x07:
 			{
-				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Trade error, result code " << (int)code);
+				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Trade error, result code {}", (int)code);
 				UI::get().emplace<UIOk>("Due to an error, the trade did not happen.", [](bool) {});
 				break;
 			}
@@ -260,7 +260,7 @@ namespace ms
 			}
 			default:
 			{
-				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Unknown result code " << (int)code);
+				LOG(LOG_NETWORK, "[ConfirmShopTransactionHandler] Unknown result code {}", (int)code);
 				break;
 			}
 		}

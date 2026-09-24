@@ -238,7 +238,7 @@ namespace ms
 			{
 				log_history.push_back(message);
 
-				LOG(LOG_DEBUG, message);
+				LOG(LOG_DEBUG, "{}", message);
 			}
 		}
 	}

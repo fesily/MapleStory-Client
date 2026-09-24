@@ -337,6 +337,14 @@ namespace ms
 		LogFile() : BoolEntry("LogFile", "true") {}
 	};
 
+	// The level the log runs at: what is below it never reaches the console, the
+	// file or the window. The names are spdlog's: trace, debug, info, warn,
+	// error, critical, off
+	struct LogLevel : public Configuration::StringEntry
+	{
+		LogLevel() : StringEntry("LogLevel", "debug") {}
+	};
+
 	// How much the debug windows are scaled on top of the scale the desktop reports,
 	// in percent: 150 makes them half again as large, 100 leaves them the size the
 	// desktop asks for

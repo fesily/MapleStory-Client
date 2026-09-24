@@ -378,8 +378,8 @@ namespace ms
 		}
 		else if (recv.available())
 		{
-			LOG(LOG_NETWORK, "[ShowForeignEffectHandler] Unhandled effect " << static_cast<int16_t>(effect)
-				<< ", " << recv.length() << " bytes left unconsumed");
+			LOG(LOG_NETWORK, "[ShowForeignEffectHandler] Unhandled effect {}, {} bytes left unconsumed",
+				static_cast<int16_t>(effect), recv.length());
 		}
 		else
 		{

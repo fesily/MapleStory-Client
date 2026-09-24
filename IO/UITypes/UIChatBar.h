@@ -166,7 +166,7 @@ namespace ms
 		std::vector<std::string> user_message_history;
 		size_t user_message_history_index;
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		ColorBox dimension_box;
 		ColorBox dragarea_box;
 		ColorBox top_box;

@@ -68,7 +68,7 @@ Default settings are defined in **Configuration.h**. A **Settings** file is gene
 
 The client draws two windows over the game (Dear ImGui, vendored in `includes/imgui`), one per stream:
 
-- **Log** shows what the `LOG` macro produces. Those lines are written to the **error stream** as well and appended to a rotating file, so `2> log.txt` captures the log of a session and nothing else.
+- **Log** shows what the `LOG` macro produces. Those lines are written to the **error stream** as well and appended to a rotating file, so `2> log.txt` captures the log of a session and nothing else. The sinks are [spdlog](https://github.com/gabime/spdlog) (vendored unpatched in `includes/spdlog`, `Util/Log.h` is the client's side of it): a line is written through the logger of its **channel** - `client`, `network` or `ui`, which is what the tag of a network or ui line shows - and carries one of spdlog's **levels**, `ERROR`, `WARN`, `INFO`, `DEBUG` or `TRACE`, which is what the tag of a client line shows. The macro takes a format string and its arguments (`LOG(LOG_NETWORK, "Received Packet: {}", OpcodeName(opcode))`); the string has to be a literal and is checked against the arguments when the client is compiled, so a placeholder that does not match its value does not build. Nothing is evaluated in a release build, which compiles the macro out.
 - **Console** shows the commands that were entered and what they answered. That is the **input and output stream**, so `1> console.txt` captures the commands of a session and nothing else. The commands the window takes in go through the same reader as the ones typed into the terminal the client was started in (`Util/DebugConsole.h`), so prompts asking for a line work in either of them. The field the next command is typed in completes like one of an editor: it lists the commands the typed name is the beginning of, with the arguments they take and what they do, the arrows pick one of them and `tab` takes the pick (it starts on the command the name is complete as, which is the one `enter` runs). While a command waits for a line, the hint says that the line answers it and that `cancel` drops the prompt.
 
 Either window dragged out of the game window becomes a window of its own, which is what lets them stay in sight next to a full screen client. A release build compiles the `LOG` macro out, so the log window stays empty there; the console window works in both.
@@ -79,11 +79,14 @@ Either window dragged out of the game window becomes a window of its own, which 
 | `LogSeconds` | `900` | How long the log keeps a line in memory, in seconds |
 | `LogFile` | `true` | Whether the log is written to a rotating file as well |
 | `LogFileMB` | `8` | Size at which the log file rolls over, in megabytes |
+| `LogLevel` | `debug` | The level the log runs at: anything below it never reaches the console, the file or the window. `MAPLESTORY_LOGLEVEL=trace` shows the trace lines of the client and the ui notes, `off` silences the log |
 | `DebugUIScale` | `100` | How much the two windows are scaled, in percent, on top of the scale the desktop reports |
 
 The windows follow the scale the desktop reports for the monitor the game window is on (GLFW's content scale, so Windows per monitor DPI and the X11 scale on Linux behave the same), and ImGui re-rasterizes the font when a window is dragged to a monitor with another scale. `DebugUIScale` is for the displays which report no scale at all: `MAPLESTORY_DEBUGUISCALE=150` makes the windows half again as large there.
 
-The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. `log [on|off|clear]` shows, hides and clears the log window, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
+The file sink writes `log/client.log` and rolls it over to `client.1.log` and `client.2.log`, so the three files together hold three times `LogFileMB`. A line of the error level is on the disk as soon as it is written and the rest follow every 120 frames, which is what keeps the frame time from depending on the disk. `log [on|off|clear|level <name>]` shows, hides and clears the log window and puts the log on a level while the client runs, `console [on|off|clear]` does the same for the console window, and `shot [file]` writes the frame the client draws next (a bitmap, `frame.bmp` by default), which is what the client is showing without asking the screen for it.
+
+The project compiles with `/utf-8`, which fmt refuses to build without, and with `/wd4828`, which is about the Latin-1 bytes in the comments of the vendored headers next to it (`NoLifeNx`, GLFW, ImGui); `/utf-8` is safe for the client's own sources because they are ASCII by the rule above.
 
 ---
 

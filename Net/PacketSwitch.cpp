@@ -272,16 +272,16 @@ namespace ms
 			opcode_error = true;
 		}
 
-#if LOG_LEVEL >= LOG_NETWORK
+#if LOG_PACKET_TRACE
 		if (!opcode_error)
-			LOG(LOG_NETWORK, "Received Packet: " << OpcodeName(opcode));
+			LOG(LOG_NETWORK, "Received Packet: {}", OpcodeName(opcode));
 #endif
 	}
 
 	void PacketSwitch::warn(const std::string& message, size_t opcode) const
 	{
 		std::string opcode_msg = OpcodeName(opcode);
-		LOG(LOG_NETWORK, "[PacketSwitch::warn]: Opcode [" << opcode_msg << "] Error: " << message);
+		LOG(LOG_NETWORK, "[PacketSwitch::warn]: Opcode [{}] Error: {}", opcode_msg, message);
 	}
 
 	std::string PacketSwitch::OpcodeName(size_t opcode) const

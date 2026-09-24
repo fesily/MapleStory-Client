@@ -17,7 +17,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-// The sink the LOG macro below feeds (the line builder it expands to)
+// The levels, the channels and the LOG macro below; what a line goes to (console,
+// rotating file, the buffer the log window reads) is settled in Util/Log.cpp
 #include "Util/Log.h"
 
 // If defined use Asio for networking, otherwise use Winsock.
@@ -46,28 +47,3 @@
 // includes/ImgLib.
 #define USE_IMG
 
-// Debug options
-#define LOG_ERROR	1
-#define LOG_WARN	2
-#define LOG_INFO	3
-#define LOG_DEBUG	4
-#define LOG_NETWORK	5
-#define LOG_UI		6
-#define LOG_TRACE	7
-
-// Log Level
-#ifdef _DEBUG
-	#define LOG_LEVEL LOG_NETWORK
-#else
-	#define LOG_LEVEL LOG_WARN
-#endif
-
-// Log Commands
-// A line is assembled by the sink (Util/Log.h) and written to the console, kept
-// in memory for the log window and appended to a rotating file. The level names
-// are log::level_name(); a release build compiles the lines out entirely.
-#ifdef _DEBUG
-	#define LOG(level, message) ms::log::Line(level, (level) <= LOG_LEVEL) << message
-#else
-	#define LOG(level, message) void(0)
-#endif

@@ -577,7 +577,7 @@ namespace ms
 			if (map.second == key)
 				return std::to_string(map.first);
 
-		LOG(LOG_DEBUG, "Could not find index for key [" << key << "] in KeyMap.");
+		LOG(LOG_DEBUG, "Could not find index for key [{}] in KeyMap.", key);
 
 		return "Blank";
 	}
@@ -593,7 +593,7 @@ namespace ms
 			return highCase ? key : string_format::tolower(key);
 		}
 
-		LOG(LOG_DEBUG, "Could not find key at index [" << index << "] in KeyMap.");
+		LOG(LOG_DEBUG, "Could not find key at index [{}] in KeyMap.", index);
 
 		return "Blank";
 	}

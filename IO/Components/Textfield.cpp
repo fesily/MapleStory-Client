@@ -34,7 +34,7 @@ namespace ms
 		textlabel = Text(font, alignment, text_color, "", 0, false);
 		marker = ColorLine(marker_height, text_color, 1.0f, true);
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		boundsoutline = ColorBox(bounds.width(), bounds.height(), Color::Name::RED, 0.5f);
 #endif
 
@@ -53,7 +53,7 @@ namespace ms
 	{
 		Point<int16_t> absp = bounds.get_left_top();
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		boundsoutline.draw(absp);
 #endif
 
@@ -97,7 +97,7 @@ namespace ms
 
 		bounds = Rectangle<int16_t>(position, position + dimensions);
 
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 		boundsoutline.setwidth(bounds.width());
 		boundsoutline.setheight(bounds.height());
 #endif
@@ -298,7 +298,7 @@ namespace ms
 		}
 		else
 		{
-#if LOG_LEVEL >= LOG_UI
+#if LOG_UI_DRAW
 			Point<int16_t> lt = bounds.get_left_top();
 			int16_t lt_x = lt.x();
 			int16_t lt_y = lt.y();
@@ -310,12 +310,8 @@ namespace ms
 			int16_t cur_x = cursorpos.x();
 			int16_t cur_y = cursorpos.y();
 
-			LOG(LOG_UI,
-				"(" << lt_x << ", " << lt_y << ") != (" << rb_x << ", " << rb_y << ") && "
-				<< cur_x << " >= (" << lt_x << ") && "
-				<< cur_x << " <= (" << rb_x << ") && "
-				<< cur_y << " >= (" << lt_y << ") && "
-				<< cur_y << " <= (" << rb_y << ")");
+			LOG(LOG_UI, "({}, {}) != ({}, {}) && {} >= ({}) && {} <= ({}) && {} >= ({}) && {} <= ({})",
+				lt_x, lt_y, rb_x, rb_y, cur_x, lt_x, cur_x, rb_x, cur_y, lt_y, cur_y, rb_y);
 #endif
 
 			if (clicked && state == State::FOCUSED)

@@ -192,7 +192,8 @@ namespace ms
 			}
 			else
 			{
-				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: unknown mode 0 sub mode [" << static_cast<int32_t>(mode2) << "], " << recv.length() << " bytes dropped.");
+				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: unknown mode 0 sub mode [{}], {} bytes dropped.",
+					static_cast<int32_t>(mode2), recv.length());
 
 				recv.skip(recv.length());
 			}
@@ -208,7 +209,7 @@ namespace ms
 			{
 				int64_t time = recv.read_long();
 
-				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [" << quest << "] completed at [" << time << "].");
+				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [{}] completed at [{}].", quest, time);
 			}
 			else if (recv.available())
 			{
@@ -216,11 +217,12 @@ namespace ms
 
 				recv.skip(5);	// unused
 
-				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [" << quest << "] status [" << static_cast<int32_t>(status) << "], progress [" << progress << "].");
+				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [{}] status [{}], progress [{}].",
+					quest, static_cast<int32_t>(status), progress);
 			}
 			else
 			{
-				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [" << quest << "] status [" << static_cast<int32_t>(status) << "].");
+				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: quest [{}] status [{}].", quest, static_cast<int32_t>(status));
 			}
 
 			std::string message = "Quest " + std::to_string(quest);
@@ -263,12 +265,11 @@ namespace ms
 			int32_t cafe = recv.read_int();			// Internet cafe bonus
 			int32_t rainbow = recv.read_int();		// Rainbow week bonus
 
-			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: experience gain [" << gain << "], in chat [" << inchat
-				<< "], bonus [" << bonus << "], kill [" << static_cast<int32_t>(kill)
-				<< "], unused [" << static_cast<int32_t>(unused) << "], wedding [" << wedding
-				<< "], quest rate [" << static_cast<int32_t>(questrate) << "], party type [" << static_cast<int32_t>(partytype)
-				<< "], party [" << party << "], equip [" << equip << "], cafe [" << cafe
-				<< "], rainbow [" << rainbow << "].");
+			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: experience gain [{}], in chat [{}]"
+				", bonus [{}], kill [{}], unused [{}], wedding [{}], quest rate [{}], party type [{}], party [{}]"
+				", equip [{}], cafe [{}], rainbow [{}].",
+				gain, inchat, bonus, static_cast<int32_t>(kill), static_cast<int32_t>(unused), wedding,
+				static_cast<int32_t>(questrate), static_cast<int32_t>(partytype), party, equip, cafe, rainbow);
 
 			show_status(white ? Color::Name::WHITE : Color::Name::YELLOW, "You have gained experience (+" + std::to_string(gain) + ")");
 
@@ -315,7 +316,7 @@ namespace ms
 			if (idata.is_valid())
 				show_status(Color::Name::WHITE, idata.get_name() + ": " + idata.get_desc());
 			else
-				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: item message for unknown item [" << itemid << "].");
+				LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: item message for unknown item [{}].", itemid);
 		}
 		else if (mode == 9)	// info text
 		{
@@ -331,7 +332,7 @@ namespace ms
 			else
 				text = recv.read_padded_string(13);
 
-			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: info text [" << text << "].");
+			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: info text [{}].", text);
 
 			show_status(Color::Name::WHITE, text);
 		}
@@ -340,13 +341,14 @@ namespace ms
 			int16_t info = recv.read_short();
 			std::string text = recv.read_string();
 
-			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: info number [" << info << "], text [" << text << "].");
+			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: info number [{}], text [{}].", info, text);
 
 			show_status(Color::Name::WHITE, text);
 		}
 		else
 		{
-			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: unknown mode [" << static_cast<int32_t>(mode) << "], " << recv.length() << " bytes dropped.");
+			LOG(LOG_NETWORK, "[ShowStatusInfoHandler]: unknown mode [{}], {} bytes dropped.",
+				static_cast<int32_t>(mode), recv.length());
 
 			recv.skip(recv.length());
 		}
@@ -379,7 +381,7 @@ namespace ms
 			int8_t ticker = recv.read_byte();
 
 			if (ticker != 1)
-				LOG(LOG_NETWORK, "[ServerMessageHandler]: unexpected ticker flag [" << static_cast<int32_t>(ticker) << "].");
+				LOG(LOG_NETWORK, "[ServerMessageHandler]: unexpected ticker flag [{}].", static_cast<int32_t>(ticker));
 		}
 
 		std::string message = recv.read_string();
@@ -391,7 +393,8 @@ namespace ms
 
 			std::string text = "[Super Megaphone] " + message;
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: super megaphone on channel [" << static_cast<int32_t>(channel) + 1 << "], ear [" << megaEar << "]: " << text);
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: super megaphone on channel [{}], ear [{}]: {}",
+				static_cast<int32_t>(channel) + 1, megaEar, text);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(text.c_str(), UIChatBar::MessageType::YELLOW);
@@ -410,7 +413,7 @@ namespace ms
 		{
 			int32_t unused = recv.read_int();
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: lightblue text [" << message << "], unused [" << unused << "].");
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: lightblue text [{}], unused [{}].", message, unused);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(message.c_str(), UIChatBar::MessageType::WHITE);
@@ -419,7 +422,7 @@ namespace ms
 		{
 			int32_t npc = recv.read_int();
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: message from NPC [" << npc << "]: " << message);
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: message from NPC [{}]: {}", npc, message);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(message.c_str(), UIChatBar::MessageType::WHITE);
@@ -430,14 +433,14 @@ namespace ms
 			bool whisper = recv.read_bool();
 			int8_t position = recv.read_byte();
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: item megaphone on channel [" << static_cast<int32_t>(channel) + 1
-				<< "], whisper [" << whisper << "], slot [" << static_cast<int32_t>(position) << "]: " << message);
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: item megaphone on channel [{}], whisper [{}], slot [{}]: {}",
+				static_cast<int32_t>(channel) + 1, whisper, static_cast<int32_t>(position), message);
 
 			if (recv.available())	// the server only writes the item block when an item is attached
 			{
 				int32_t itemid = skip_item_info(recv);
 
-				LOG(LOG_NETWORK, "[ServerMessageHandler]: item megaphone attachment [" << itemid << "].");
+				LOG(LOG_NETWORK, "[ServerMessageHandler]: item megaphone attachment [{}].", itemid);
 			}
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
@@ -456,7 +459,7 @@ namespace ms
 			bool showEar = recv.read_bool();
 			recv.read_byte();	// unused
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: multi megaphone, ear [" << showEar << "]: " << text);
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: multi megaphone, ear [{}]: {}", showEar, text);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(text.c_str(), UIChatBar::MessageType::YELLOW);
@@ -472,21 +475,22 @@ namespace ms
 
 			std::string text = message + " " + itemname + " (" + town + ")";
 
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: gachapon [" << text << "], unused [" << unused << "].");
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: gachapon [{}], unused [{}].", text, unused);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(text.c_str(), UIChatBar::MessageType::YELLOW);
 		}
 		else	// notice, popup and megaphone text
 		{
-			LOG(LOG_NETWORK, "[ServerMessageHandler]: notice [" << static_cast<int32_t>(type) << "]: " << message);
+			LOG(LOG_NETWORK, "[ServerMessageHandler]: notice [{}]: {}", static_cast<int32_t>(type), message);
 
 			if (auto chatbar = UI::get().get_element<UIChatBar>())
 				chatbar->show_message(message.c_str(), UIChatBar::MessageType::YELLOW);
 
 			if (recv.available())
 			{
-				LOG(LOG_NETWORK, "[ServerMessageHandler]: unknown type [" << static_cast<int32_t>(type) << "], " << recv.length() << " bytes dropped.");
+				LOG(LOG_NETWORK, "[ServerMessageHandler]: unknown type [{}], {} bytes dropped.",
+					static_cast<int32_t>(type), recv.length());
 
 				recv.skip(recv.length());
 			}
@@ -533,7 +537,7 @@ namespace ms
 			}
 			else if (type != 0)	// the plain line type is sent as zero
 			{
-				LOG(LOG_NETWORK, "[ChatReceivedHandler]: unknown line type [" << static_cast<int32_t>(type) << "].");
+				LOG(LOG_NETWORK, "[ChatReceivedHandler]: unknown line type [{}].", static_cast<int32_t>(type));
 
 				linetype = UIChatBar::MessageType::RED;
 			}
@@ -551,9 +555,8 @@ namespace ms
 		bool legendary = recv.read_bool();	// legendary spirit was used
 		bool white = recv.read_bool();		// white scroll was used
 
-		LOG(LOG_NETWORK, "[ScrollResultHandler]: scroll for [" << cid << "], success [" << success
-			<< "], destroyed [" << destroyed << "], legendary spirit [" << legendary
-			<< "], white scroll [" << white << "].");
+		LOG(LOG_NETWORK, "[ScrollResultHandler]: scroll for [{}], success [{}], destroyed [{}], legendary spirit [{}], white scroll [{}].",
+			cid, success, destroyed, legendary, white);
 
 		CharEffect::Id effect;
 		Messages::Type message;
@@ -634,7 +637,8 @@ namespace ms
 			}
 			else
 			{
-				LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: unknown item gain mode [" << static_cast<int32_t>(mode2) << "], " << recv.length() << " bytes dropped.");
+				LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: unknown item gain mode [{}], {} bytes dropped.",
+					static_cast<int32_t>(mode2), recv.length());
 
 				recv.skip(recv.length());
 			}
@@ -644,13 +648,14 @@ namespace ms
 			int8_t unused = recv.read_byte();
 			int8_t index = recv.read_byte();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: pet [" << static_cast<int32_t>(index) << "] leveled up, unused [" << static_cast<int32_t>(unused) << "].");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: pet [{}] leveled up, unused [{}].",
+				static_cast<int32_t>(index), static_cast<int32_t>(unused));
 		}
 		else if (mode1 == 0x0A)	// recovery
 		{
 			int8_t heal = recv.read_byte();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: recovered [" << static_cast<int32_t>(heal) << "] hp.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: recovered [{}] hp.", static_cast<int32_t>(heal));
 		}
 		else if (mode1 == 0x0D)	// monster card gain
 		{
@@ -660,30 +665,32 @@ namespace ms
 		{
 			std::string path = recv.read_string();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: intro effect [" << path << "] is not displayed.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: intro effect [{}] is not displayed.", path);
 		}
 		else if (mode1 == 0x15)	// wheels of fortune left
 		{
 			int8_t left = recv.read_byte();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: [" << static_cast<int32_t>(left) << "] wheels of fortune left.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: [{}] wheels of fortune left.", static_cast<int32_t>(left));
 		}
 		else if (mode1 == 0x17)	// info
 		{
 			std::string path = recv.read_string();
 			int32_t unused = recv.read_int();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: info effect [" << path << "] with [" << unused << "] is not displayed.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: info effect [{}] with [{}] is not displayed.",
+				path, unused);
 		}
 		else if (mode1 == 16)	// maker skill
 		{
 			int32_t failed = recv.read_int();
 
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: maker skill effect, failed [" << failed << "] is not displayed.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: maker skill effect, failed [{}] is not displayed.",
+				failed);
 		}
 		else	// payload free effects, showSpecialEffect only writes the effect byte
 		{
-			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: effect [" << static_cast<int32_t>(mode1) << "] is not displayed.");
+			LOG(LOG_NETWORK, "[ShowItemGainInChatHandler]: effect [{}] is not displayed.", static_cast<int32_t>(mode1));
 		}
 	}
 }

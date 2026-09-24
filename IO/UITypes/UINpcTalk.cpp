@@ -667,8 +667,8 @@ namespace ms
 				break;
 		}
 
-		LOG(LOG_NETWORK, "[UINpcTalk] Closing dialog: msgType=[" << static_cast<int32_t>(msgtype)
-			<< "] response=[" << static_cast<int32_t>(response) << "]");
+		LOG(LOG_NETWORK, "[UINpcTalk] Closing dialog: msgType=[{}] response=[{}]",
+			static_cast<int32_t>(msgtype), static_cast<int32_t>(response));
 
 		NpcTalkMorePacket(msgtype, response).dispatch();
 

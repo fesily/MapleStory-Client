@@ -31,7 +31,7 @@ namespace ms
 		if (reason == 0)
 			UI::get().emplace<UILoginNotice>(UILoginNotice::Message::INCORRECT_PIC);
 		else
-			LOG(LOG_NETWORK, "[CheckSpwResultHandler]: Unknown reason: [" << reason << "]");
+			LOG(LOG_NETWORK, "[CheckSpwResultHandler]: Unknown reason: [{}]", reason);
 
 		UI::get().enable();
 	}
@@ -50,6 +50,6 @@ namespace ms
 			return;
 		}
 
-		LOG(LOG_NETWORK, "[FieldEffectHandler]: Unknown value: [" << rand << "]");
+		LOG(LOG_NETWORK, "[FieldEffectHandler]: Unknown value: [{}]", rand);
 	}
 }

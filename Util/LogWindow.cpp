@@ -32,13 +32,32 @@
 
 namespace
 {
-	// The levels the window offers, in the order it lists them. The levels above
-	// LOG_LEVEL never reach the sink, so they are not offered.
-	const int OFFERED[] = { LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG, LOG_NETWORK };
-	const size_t OFFERED_COUNT = sizeof(OFFERED) / sizeof(OFFERED[0]);
+	// The severities and the channels the window offers, in the order it lists
+	// them. A line is drawn when both of the two it has are switched on.
+	const int OFFEREDSEVERITIES[] = {
+		spdlog::level::err,
+		spdlog::level::warn,
+		spdlog::level::info,
+		spdlog::level::debug,
+		spdlog::level::trace
+	};
+	const size_t SEVERITYCOUNT = sizeof(OFFEREDSEVERITIES) / sizeof(OFFEREDSEVERITIES[0]);
+
+	const ms::log::Channel OFFEREDCHANNELS[] = {
+		ms::log::Channel::CLIENT,
+		ms::log::Channel::NETWORK,
+		ms::log::Channel::UI
+	};
+	const size_t CHANNELCOUNT = sizeof(OFFEREDCHANNELS) / sizeof(OFFEREDCHANNELS[0]);
 
 	bool windowshown = true;
-	bool levelshown[LOG_TRACE + 1] = { false, true, true, true, true, true, false, false };
+	// Indexed by the severity a line was written with. The trace lines only reach
+	// the sink when the log is put on the trace level, so they may be switched on
+	// and still show nothing.
+	bool severityshown[spdlog::level::n_levels] = { true, true, true, true, true, true, false };
+	// The lines the network and the ui wrote are out of sight until they are asked
+	// for: they are the noisiest of the three channels
+	bool channelshown[static_cast<size_t>(ms::log::Channel::COUNT)] = { true, true, false };
 	char filtertext[64] = {};
 	bool follow = true;
 
@@ -74,25 +93,40 @@ namespace
 		return lowered;
 	}
 
-	ImVec4 level_color(int level)
+	// The color of a row: the channel decides for the lines the network and the ui
+	// wrote, the severity for a client line, which is how the window colored the
+	// rows before the two were channels
+	ImVec4 line_color(int severity, ms::log::Channel channel)
 	{
-		switch (level)
+		switch (channel)
 		{
-			case LOG_ERROR:
-				return ImVec4(1.00f, 0.42f, 0.42f, 1.00f);
-			case LOG_WARN:
-				return ImVec4(0.98f, 0.75f, 0.28f, 1.00f);
-			case LOG_INFO:
-				return ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
-			case LOG_NETWORK:
+			case ms::log::Channel::NETWORK:
 				return ImVec4(0.55f, 0.80f, 0.95f, 1.00f);
-			case LOG_UI:
+			case ms::log::Channel::UI:
 				return ImVec4(0.78f, 0.72f, 0.96f, 1.00f);
-			case LOG_TRACE:
+			case ms::log::Channel::CLIENT:
+				break;
+		}
+
+		switch (severity)
+		{
+			case spdlog::level::err:
+				return ImVec4(1.00f, 0.42f, 0.42f, 1.00f);
+			case spdlog::level::warn:
+				return ImVec4(0.98f, 0.75f, 0.28f, 1.00f);
+			case spdlog::level::info:
+				return ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+			case spdlog::level::trace:
 				return ImVec4(0.62f, 0.62f, 0.62f, 1.00f);
 		}
 
 		return ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
+	}
+
+	// Whether the switches of the toolbar let a line through
+	bool line_shown(const ms::log::Entry& entry)
+	{
+		return severityshown[entry.level] && channelshown[static_cast<size_t>(entry.channel)];
 	}
 
 	// A row shows one line, so the newlines a message carries (a dialog, a dump)
@@ -103,7 +137,7 @@ namespace
 
 		ms::log::format_clock(entry.wall_ms, clock, sizeof(clock));
 
-		const std::string* shown = &entry.text;
+		const std::string* rowtext = &entry.text;
 		std::string flattened;
 
 		if (entry.text.find_first_of("\r\n") != std::string::npos)
@@ -114,11 +148,11 @@ namespace
 				if (c == '\r' || c == '\n')
 					c = ' ';
 
-			shown = &flattened;
+			rowtext = &flattened;
 		}
 
-		ImGui::PushStyleColor(ImGuiCol_Text, level_color(entry.level));
-		ImGui::Text("%s [%s] %s", clock, ms::log::level_name(entry.level), shown->c_str());
+		ImGui::PushStyleColor(ImGuiCol_Text, line_color(entry.level, entry.channel));
+		ImGui::Text("%s [%s] %s", clock, ms::log::line_tag(entry.level, entry.channel), rowtext->c_str());
 		ImGui::PopStyleColor();
 	}
 
@@ -147,7 +181,7 @@ namespace
 		{
 			// The lines that were looked at before only pass by; the filter runs on
 			// the ones that are new
-			if (ordinal >= scanned && levelshown[entry.level] && contains_ignoring_case(entry.text, needle))
+			if (ordinal >= scanned && line_shown(entry) && contains_ignoring_case(entry.text, needle))
 				matches.push_back(ordinal);
 
 			ordinal++;
@@ -163,14 +197,14 @@ namespace
 
 		for (const ms::log::Entry& entry : locked.lines())
 		{
-			if (!levelshown[entry.level] || !contains_ignoring_case(entry.text, needle))
+			if (!line_shown(entry) || !contains_ignoring_case(entry.text, needle))
 				continue;
 
 			char clock[13];
 
 			ms::log::format_clock(entry.wall_ms, clock, sizeof(clock));
 
-			all += std::string("[") + clock + "] [" + ms::log::level_name(entry.level) + "] " + entry.text + '\n';
+			all += std::string("[") + clock + "] [" + ms::log::line_tag(entry.level, entry.channel) + "] " + entry.text + '\n';
 		}
 
 		if (!all.empty())
@@ -179,21 +213,33 @@ namespace
 
 	void draw_toolbar(const ms::log::Locked& locked)
 	{
-		// One checkbox per level, so a noisy one can be switched off while the rest
-		// stays in sight, in the color its rows are drawn in
-		for (size_t i = 0; i < OFFERED_COUNT; i++)
+		// One checkbox per severity and one per channel, so a noisy part of the log
+		// can be switched off while the rest stays in sight, in the color its rows
+		// are drawn in
+		for (size_t i = 0; i < SEVERITYCOUNT; i++)
 		{
-			int level = OFFERED[i];
+			int severity = OFFEREDSEVERITIES[i];
 
 			if (i > 0)
 				ImGui::SameLine();
 
-			ImGui::PushStyleColor(ImGuiCol_Text, level_color(level));
-			ImGui::Checkbox(ms::log::level_name(level), &levelshown[level]);
+			ImGui::PushStyleColor(ImGuiCol_Text, line_color(severity, ms::log::Channel::CLIENT));
+			ImGui::Checkbox(ms::log::severity_name(severity), &severityshown[severity]);
 			ImGui::PopStyleColor();
 		}
 
-		ImGui::SameLine();
+		for (size_t i = 0; i < CHANNELCOUNT; i++)
+		{
+			ms::log::Channel channel = OFFEREDCHANNELS[i];
+
+			if (i > 0)
+				ImGui::SameLine();
+
+			ImGui::PushStyleColor(ImGuiCol_Text, line_color(spdlog::level::info, channel));
+			ImGui::Checkbox(ms::log::channel_name(channel), &channelshown[static_cast<size_t>(channel)]);
+			ImGui::PopStyleColor();
+		}
+
 		ImGui::Checkbox("Follow", &follow);
 
 		ImGui::SetNextItemWidth(220.0f);
