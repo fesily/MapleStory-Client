@@ -102,6 +102,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;$(ProjectDir)includes\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +128,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;$(ProjectDir)includes\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,6 +156,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;$(ProjectDir)includes\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -183,6 +186,7 @@ copy /y /d "$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(Platfor
       <AdditionalIncludeDirectories>$(ProjectDir)includes\imgui;$(ProjectDir)includes\imgui\backends;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include;$(ProjectDir)includes\glew-2.1.0\include\GL;$(ProjectDir)includes\freetype\include;$(ProjectDir)includes\glfw-3.3.2.bin.WIN$(PlatformArchitecture)\include\GLFW;$(ProjectDir)includes\stb;$(ProjectDir)includes\bass24\c;$(ProjectDir)includes\NoLifeNx;$(ProjectDir)includes\NoLifeNx\nlnx\includes\lz4_v1_8_2_win$(PlatformArchitecture)\include;$(ProjectDir)includes\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
